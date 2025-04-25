@@ -1,0 +1,336 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-stroke {
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke-color: rgb(249 115 22 / var(--tw-text-opacity));
+    -webkit-text-stroke-width: 0.0625rem; /* 1px */
+  }
+  .bg-gradient-overlay-home {
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.7), transparent);
+  }
+  .bg-gradient-overlay-card {
+    background: linear-gradient(57deg, #f97316 7.3%, #351e14 92.81%);
+  }
+}
+
+/* Styles généraux */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Styles d'en-tête et navigation */
+.nav-link {
+  @apply font-sans font-bold text-white hover:underline underline-offset-8 decoration-orange-600;
+}
+
+.header-scrolled {
+  @apply bg-black/70 backdrop-blur-md shadow-lg;
+  transition: all 0.3s ease;
+}
+
+.logo-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.logo-container:hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(249, 115, 22, 0.3) 0%,
+    transparent 70%
+  );
+  z-index: 1;
+}
+
+.mobile-menu {
+  animation: menuAppear 0.3s ease forwards;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation des effets de lumière */
+@keyframes light-effect {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2) rotate(45deg);
+  }
+}
+
+.light-effect {
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 70%
+  );
+  top: -25%;
+  left: -25%;
+  animation: light-effect 6s infinite;
+  pointer-events: none;
+}
+
+/* Styles spécifiques à la page des partenaires */
+.partner-card {
+  @apply bg-zinc-800/80 rounded-lg overflow-hidden transition-all duration-300;
+}
+
+.partner-card:hover {
+  @apply transform -translate-y-1;
+  box-shadow: 0 10px 25px -5px rgba(255, 87, 34, 0.3);
+}
+
+.hexagon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-gap: 30px;
+  padding: 20px;
+}
+
+.partner-logo {
+  @apply transition-all duration-300;
+}
+
+.partner-logo:hover {
+  @apply brightness-110 scale-105;
+}
+
+@media (min-width: 768px) {
+  .spotlight-partners {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+  }
+}
+
+/* Styles du carousel des partenaires */
+.carousel-container {
+  @apply relative;
+}
+
+.carousel-track {
+  @apply flex transition-transform duration-500 space-x-4 py-4 px-2;
+}
+
+.carousel-button {
+  @apply absolute top-1/2 transform -translate-y-1/2 bg-black/70 rounded-full p-2 text-white hover:bg-orange-500 transition-colors z-10 hidden md:block;
+}
+
+.carousel-button-prev {
+  @apply -left-2;
+}
+
+.carousel-button-next {
+  @apply -right-2;
+}
+
+/* Styles des éléments partenaires */
+.partner-item {
+  @apply bg-white rounded-lg flex items-center justify-center transition-all;
+}
+
+.partner-item-main {
+  @apply p-6 h-32 hover:shadow-xl transform hover:scale-105;
+}
+
+.partner-item-carousel {
+  @apply p-4 h-32 min-w-[200px] shrink-0 hover:bg-gray-100;
+}
+
+.partner-item-hover-overlay {
+  @apply opacity-0 group-hover:opacity-100 absolute inset-0 bg-black/80 flex items-center justify-center transition-opacity rounded-lg p-3;
+}
+
+.partner-item-name {
+  @apply text-white text-center text-sm font-semibold;
+}
+
+/* Style du slider de partenaires */
+.partners-slider {
+  @apply relative overflow-hidden py-8;
+}
+
+.partners-slider-track {
+  @apply flex transition-transform duration-500;
+}
+
+.partner-slide {
+  @apply flex-none p-4 transition-all duration-300;
+  flex: 0 0 100%;
+}
+
+@media (min-width: 640px) {
+  .partner-slide {
+    flex: 0 0 50%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .partner-slide {
+    flex: 0 0 33.333%;
+  }
+}
+
+.partner-card-new {
+  @apply h-full bg-white/5 rounded-2xl overflow-hidden shadow-lg border border-white/10 transition-all duration-300;
+}
+
+.partner-card-new:hover {
+  @apply -translate-y-2;
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3);
+}
+
+.partner-logo-container {
+  @apply bg-white p-6 h-40 flex items-center justify-center;
+}
+
+.partner-info {
+  @apply p-6 text-white;
+}
+
+.partner-category-badge {
+  @apply inline-block bg-orange-500/20 text-orange-500 px-3 py-1 rounded-full text-xs mb-2;
+}
+
+.partner-name {
+  @apply text-xl font-bold mb-2 text-white;
+}
+
+.partner-description {
+  @apply text-sm text-gray-300 mb-4 leading-relaxed;
+}
+
+.partner-link {
+  @apply inline-flex items-center text-orange-500 font-semibold no-underline transition-colors duration-300;
+}
+
+.partner-link:hover {
+  @apply text-white;
+}
+
+.partner-link svg {
+  @apply ml-1;
+}
+
+.slider-controls {
+  @apply flex justify-center mt-8 gap-4;
+}
+
+.slider-control {
+  @apply w-12 h-12 border-none bg-orange-500/20 text-white rounded-full flex items-center justify-center cursor-pointer transition-all duration-300;
+}
+
+.slider-control:hover {
+  @apply bg-orange-500;
+}
+
+.pagination-container {
+  @apply flex justify-center mt-6 gap-2;
+}
+
+.pagination-dot {
+  @apply w-3 h-3 rounded-full bg-gray-600 transition-all duration-300 cursor-pointer;
+}
+
+.pagination-dot.active {
+  @apply bg-orange-500 scale-125;
+}
+
+.filter-buttons {
+  @apply flex flex-wrap justify-center gap-2 mb-8;
+}
+
+.filter-btn {
+  @apply px-4 py-2 rounded-full font-medium transition-all duration-300 cursor-pointer;
+}
+
+.view-toggle {
+  @apply flex rounded-lg overflow-hidden;
+}
+
+.view-btn {
+  @apply px-6 py-2 cursor-pointer transition-all duration-300;
+}
+
+/* Pattern de fond pour la section actualités */
+.bg-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Animations pour les éléments de la section actualités */
+@keyframes subtleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+#actualites .carousel-container img {
+  transition: filter 0.5s ease;
+}
+
+#actualites .carousel-container:hover img {
+  filter: brightness(1.1) contrast(1.05);
+}
+
+#actualites .recent-news-container > div,
+#actualites .brief-news-container > div {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#actualites .recent-news-container > div:hover,
+#actualites .brief-news-container > div:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}

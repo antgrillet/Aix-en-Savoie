@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inscription Club Handball</title>
+    <!-- <link rel="stylesheet" href="./src/styles.css" /> -->
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="module" src="./src/form.js"></script>
+  </head>
+  <body class="bg-zinc-900 text-white font-mont flex flex-col items-center justify-center">
+    <div class="flex items-center justify-center absolute z-20">
+      <div class="bg-zinc-800 rounded-lg shadow-md w-full max-w-lg p-6">
+        <h2 class="text-2xl font-bold text-center text-orange-500 mb-6">
+          Formulaire d'inscription du hbca
+        </h2>
+        <form action="./src/send.php" method="post" class="space-y-4">
+          <!-- Nom complet -->
+          <div>
+            <label
+              for="full_name"
+              class="block text-sm font-medium text-orange-500"
+              >Nom complet</label
+            >
+            <input
+              type="text"
+              id="full_name"
+              name="full_name"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              placeholder="Ex. Jean Dupont"
+              required
+            />
+          </div>
+
+          <!-- Date de naissance -->
+          <div>
+            <label
+              for="event_date"
+              class="block text-sm font-medium text-orange-500"
+              >Date de naissance</label
+            >
+            <input
+              type="date"
+              id="event_date"
+              name="event_date"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              placeholder="jj/mm/aaaa"
+              required
+            />
+          </div>
+
+          <!-- Adresse e-mail -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-orange-500"
+              >Adresse e-mail</label
+            >
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              placeholder="votre.email@example.com"
+              required
+            />
+          </div>
+
+          <!-- Numéro de téléphone -->
+          <div>
+            <label for="phone" class="block text-sm font-medium text-orange-500"
+              >Numéro de téléphone</label
+            >
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              placeholder="+33 6 12 34 56 78"
+              required
+            />
+          </div>
+
+          <!-- Message ou remarques -->
+          <div>
+            <label
+              for="message"
+              class="block text-sm font-medium text-orange-500"
+              >Remarques</label
+            >
+            <textarea
+              id="message"
+              name="message"
+              rows="4"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              placeholder="Ajoutez des informations complémentaires ici (facultatif)"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="main" class="block text-sm font-medium text-orange-500"
+              >Main principal</label
+            >
+            <select
+              id="main"
+              name="main"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+              required
+            >
+              <option value="" disabled selected>Choisissez une main</option>
+              <option value="Droite">Droite</option>
+              <option value="gauche">Gauche</option>
+              <option value="ambidextre">Ambidextre</option>
+            </select>
+          </div>
+          <div>
+            <label
+              for="Taille"
+              class="block text-sm font-medium text-orange-500"
+              >Taille actuelle (en cm)</label
+            >
+            <input
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900"
+              type="number"
+              name=""
+              id=""
+              required
+            />
+          </div>
+
+          <!--Pratique du Handball-->
+          <div class="my-4" id="alreadyhandball">
+            <label
+              for="alreadyhandball"
+              class="block text-sm font-medium text-orange-500 mb-2"
+            >
+              J'ai déjà pratiqué le Handball ? (Case cochée = oui)
+            </label>
+            <div class="flex items-center space-x-4">
+              <label
+                for="alreadyhandball-oui"
+                class="flex items-center space-x-2"
+              >
+                <input
+                  type="radio"
+                  name="alreadyhandball"
+                  id="alreadyhandball-oui"
+                  value="oui"
+                  class="h-4 w-4 border-orange-300 text-orange-500 focus:ring-orange-400 accent-orange-500"
+                />
+                <span class="text-sm text-orange-500">Oui</span>
+              </label>
+              <label
+                for="alreadyhandball-non"
+                class="flex items-center space-x-2"
+              >
+                <input
+                  type="radio"
+                  name="alreadyhandball"
+                  id="alreadyhandball-non"
+                  value="non"
+                  checked
+                  class="h-4 w-4 border-orange-300 text-orange-500 focus:ring-orange-400 accent-orange-500"
+                />
+                <span class="text-sm text-orange-500">Non</span>
+              </label>
+            </div>
+          </div>
+          <div id="form-handball" class="flex flex-col gap-2">
+            <div>
+              <label
+                for="level"
+                class="flex flex-col gap-1 text-sm font-medium text-orange-500"
+                >Niveau de pratique
+                <select
+                  id="level"
+                  name="level"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                  required
+                >
+                  <option value="" disabled selected>
+                    Choisissez un niveau
+                  </option>
+                  <option value="Division">Division</option>
+                  <option value="excellence">Excellence</option>
+                  <option value="Aura">Aura</option>
+                  <option value="France">France</option>
+                </select>
+              </label>
+            </div>
+            <div>
+              <!-- Label principal -->
+              <label
+                for="handballPositions"
+                class="block text-sm font-medium text-orange-500 mb-2"
+              >
+                Quels sont vos postes préférés au handball ? (choix multiple
+                possible)
+              </label>
+        
+                <div class="mb-2">
+                  <input
+                    type="checkbox"
+                    id="posteGardien"
+                    name="postes"
+                    value="gardien"
+                    class="h-4 w-4 text-orange-500 border-gray-300 focus:ring-orange-400 accent-orange-500"
+                  />
+                  <label for="posteGardien" class="ml-2 text-orange-500"
+                    >Gardien</label
+                  >
+                </div>
+
+                <div class="mb-2">
+                  <input
+                    type="checkbox"
+                    id="posteAilier"
+                    name="postes"
+                    value="ailier"
+                    class="h-4 w-4 text-orange-500 border-gray-300 focus:ring-orange-400 accent-orange-500"
+                  />
+                  <label for="posteAilier" class="ml-2 text-orange-500"
+                    >Ailier</label
+                  >
+                </div>
+
+                <div class="mb-2">
+                  <input
+                    type="checkbox"
+                    id="posteArrière"
+                    name="postes"
+                    value="arrière"
+                    class="h-4 w-4 text-orange-500 border-gray-300 focus:ring-orange-400 accent-orange-500"
+                  />
+                  <label for="posteArrière" class="ml-2 text-orange-500"
+                    >Arrière</label
+                  >
+                </div>
+
+                <div class="mb-2">
+                  <input
+                    type="checkbox"
+                    id="postePivot"
+                    name="postes"
+                    value="pivot"
+                    class="h-4 w-4 text-orange-500 border-gray-300 focus:ring-orange-400 accent-orange-500"
+                  />
+                  <label for="postePivot" class="ml-2 text-orange-500"
+                    >Pivot</label
+                  >
+                </div>
+
+                <div class="mb-2">
+                  <input
+                    type="checkbox"
+                    id="posteDemiCentre"
+                    name="postes"
+                    value="demi-centre"
+                    class="h-4 w-4 text-orange-500 border-gray-300 focus:ring-orange-400 accent-orange-500"
+                  />
+                  <label for="posteDemiCentre" class="ml-2 text-orange-500"
+                    >Demi-centre</label
+                  >
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Bouton de soumission -->
+          <div id="button">
+            <button
+              type="submit"
+              class="w-full bg-orange-500 text-white font-semibold py-2 px-4 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-offset-2"
+            >
+              Soumettre l'inscription
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Image de fond et overlay -->
+      <div
+        class="bg-gradient-to-b from-black via-transparent to-black w-screen h-screen absolute z-10"
+      ></div>
+      <img
+        id="home_img"
+        src="./form_background.jpg"
+        alt="Équipe féminine"
+        class="object-cover w-full h-screen transition-all"
+      />
+  </body>
+</html>

@@ -1,0 +1,28 @@
+[
+	{
+	  "name": "La confirmation d'une dynamique victorieuse",
+	  "categorie": "Seniors féminines",
+	  "princ_img": "img/home/photo_equipe_fem.jpg",
+	  "img": [
+		"img/article/photo_equipe_fem.jpg",
+		"img/article/photo_equipe_fem.jpg",
+		"img/article/photo_equipe_fem.jpg"
+	  ]
+	},
+	{
+	  "name": "Terrible déception pour les tigres",
+	  "categorie": "Seniors masculins",
+	  "princ_img": "img/home/terrible-deception-pour-les-tigres.jpg",
+	  "img": [
+		"img/article/terrible-deception-pour-les-tigres.jpg",
+		"img/article/terrible-deception-pour-les-tigres.jpg",
+		"img/article/terrible-deception-pour-les-tigres.jpg"
+	  ]
+	},
+	{
+	  "name": "Tous les matchs de la saison, ça n'a pas de prix",
+	  "categorie": "Seniors masculins",
+	  "princ_img": "img/home/abonnement.jpg",
+	  "img": []
+	}
+  ]

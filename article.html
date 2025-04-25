@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Articles du club de handball d'Aix-en-Savoie"
+    />
+    <meta
+      name="keywords"
+      content="handball, Aix-en-Savoie, actualités, article"
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <script src="main.js" type="module" defer></script>
+    <link rel="icon" href="img/home/logo.png" type="image/png" />
+    <title>Article - HBC Aix-en-savoie</title>
+  </head>
+  <body class="bg-zinc-950 w-screen overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="w-full bg-black" aria-label="Navigation principale">
+      <!-- Header -->
+      <header class="w-full z-40 xl:px-8">
+        <div class="flex justify-between items-center px-4 xl:px-0 py-4">
+          <!-- Logo et liens de gauche -->
+          <div class="flex items-center gap-16">
+            <a href="index.html" aria-label="Accueil">
+              <img
+                class="w-12 md:w-24"
+                src="img/home/logo.png"
+                alt="Logo HBC Aix-en-Savoie"
+              />
+            </a>
+            <div class="hidden xl:flex gap-8">
+              <a
+                href="form.html"
+                class="font-mont font-bold text-white uppercase text-sm hover:text-orange-500 transition-colors"
+                >Inscription</a
+              >
+              <a
+                href="https://sports-services-conseils.fr/clubs/hbc-aix-en-savoie/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-mont font-bold text-white uppercase text-sm hover:text-orange-500 transition-colors"
+                >Boutique</a
+              >
+            </div>
+          </div>
+          <!-- Liens de navigation -->
+          <div
+            class="hidden xl:flex flex-row justify-around items-center gap-16 pr-24"
+          >
+            <a
+              href="actus.html"
+              class="font-sans font-bold text-white hover:underline underline-offset-8 decoration-orange-600"
+              >Nos actus</a
+            >
+            <a
+              href="equipes.html"
+              class="font-sans font-bold text-white hover:underline underline-offset-8 decoration-orange-600"
+              >Nos équipes</a
+            >
+            <a
+              href="partner.html"
+              class="font-sans font-bold text-white hover:underline underline-offset-8 decoration-orange-600"
+              >Nos partenaires</a
+            >
+            <a
+              href="contact.php"
+              class="font-sans font-bold text-white hover:underline underline-offset-8 decoration-orange-600"
+              >Contact</a
+            >
+          </div>
+          <!-- Bouton menu mobile -->
+          <button
+            type="button"
+            id="mobile_button"
+            class="xl:hidden"
+            aria-label="Menu"
+            aria-expanded="false"
+            aria-controls="nav_mobile"
+          >
+            <img src="img/home/boutton_menu.svg" class="w-8" alt="Icône menu" />
+          </button>
+        </div>
+        <div
+          id="nav_mobile"
+          class="bg-orange-400 font-mont text-2xl font-bold text-center mt-8 hidden"
+          aria-hidden="true"
+        >
+          <ul>
+            <a href="form.html"
+              ><li class="border-y-2 py-6 border-zinc-950">Inscription ➞</li></a
+            >
+            <a
+              href="https://sports-services-conseils.fr/clubs/hbc-aix-en-savoie/"
+              target="_blank"
+              rel="noopener noreferrer"
+              ><li class="border-b-2 py-6 border-zinc-950">Boutique ➞</li></a
+            >
+            <a href="actus.html"
+              ><li class="border-b-2 py-6 border-zinc-950">Actualités ➞</li></a
+            >
+            <a href="equipes.html"
+              ><li class="border-b-2 py-6 border-zinc-950">Équipes ➞</li></a
+            >
+            <a href="partner.html"
+              ><li class="border-b-2 py-6 border-zinc-950">Partenaires ➞</li></a
+            >
+            <a href="contact.php"
+              ><li class="border-b-2 py-6 border-zinc-950">Contact ➞</li></a
+            >
+          </ul>
+        </div>
+      </header>
+    </nav>
+
+    <main>
+      <!-- Contenu de l'article -->
+      <section class="bg-white py-12 px-4 sm:px-8">
+        <div class="max-w-4xl mx-auto">
+          <!-- Image d'en-tête -->
+          <div class="relative mb-8">
+            <img
+              id="articleImage"
+              src=""
+              alt=""
+              class="w-full h-96 object-cover rounded-lg shadow-lg"
+            />
+            <span
+              id="articleTag"
+              class="absolute top-4 left-4 bg-orange-500 text-black px-3 py-1 rounded-full text-xs font-bold"
+            ></span>
+          </div>
+
+          <!-- Contenu de l'article -->
+          <div class="mb-8">
+            <div class="flex items-center mb-4">
+              <span
+                id="articleCategorie"
+                class="bg-zinc-800 text-white px-3 py-1 rounded-md text-sm font-bold mr-4"
+              ></span>
+              <span id="articleDate" class="text-zinc-500 text-sm"></span>
+            </div>
+            <h1
+              id="articleTitre"
+              class="text-3xl md:text-4xl font-bold mb-6"
+            ></h1>
+            <div id="articleContenu" class="prose prose-lg max-w-none">
+              <!-- Le contenu de l'article sera inséré ici par JavaScript -->
+            </div>
+          </div>
+
+          <!-- Navigation entre articles -->
+          <div class="flex justify-between border-t border-gray-200 pt-8 mt-12">
+            <a
+              href="#"
+              id="articlePrecedent"
+              class="flex items-center text-orange-600 hover:text-orange-800"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Article précédent
+            </a>
+            <a
+              href="actus.html"
+              class="px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700 transition-colors"
+            >
+              Toutes les actualités
+            </a>
+            <a
+              href="#"
+              id="articleSuivant"
+              class="flex items-center text-orange-600 hover:text-orange-800"
+            >
+              Article suivant
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 ml-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Articles connexes -->
+      <section class="bg-zinc-100 py-12 px-4 sm:px-8">
+        <div class="max-w-6xl mx-auto">
+          <h2 class="text-2xl font-bold mb-8">Articles connexes</h2>
+          <div
+            id="articlesConnexes"
+            class="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            <!-- Les articles connexes seront insérés ici par JavaScript -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <!-- About Section -->
+          <div>
+            <h3 class="text-lg font-bold mb-4">À propos</h3>
+            <p class="text-gray-400">
+              Le Handball Club d'Aix-en-Savoie est un club sportif familial
+              fondé en 1973. Nous partageons les valeurs de respect, solidarité
+              et passion pour le handball.
+            </p>
+          </div>
+
+          <!-- Links Section -->
+          <div>
+            <h3 class="text-lg font-bold mb-4">Liens rapides</h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="index.html"
+                  class="text-gray-400 hover:text-white transition"
+                  >Accueil</a
+                >
+              </li>
+              <li>
+                <a
+                  href="actus.html"
+                  class="text-gray-400 hover:text-white transition"
+                  >Actualités</a
+                >
+              </li>
+              <li>
+                <a
+                  href="equipes.html"
+                  class="text-gray-400 hover:text-white transition"
+                  >Nos équipes</a
+                >
+              </li>
+              <li>
+                <a
+                  href="partner.html"
+                  class="text-gray-400 hover:text-white transition"
+                  >Partenaires</a
+                >
+              </li>
+              <li>
+                <a
+                  href="contact.php"
+                  class="text-gray-400 hover:text-white transition"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Contact Section -->
+          <div>
+            <h3 class="text-lg font-bold mb-4">Contact</h3>
+            <ul class="space-y-2 text-gray-400">
+              <li>Gymnase des Prés Riants</li>
+              <li>73100 Aix-les-Bains</li>
+              <li>Téléphone: 04 79 35 XX XX</li>
+              <li>Email: contact@hbc-aix-en-savoie.fr</li>
+            </ul>
+          </div>
+
+          <!-- Social Media Section -->
+          <div>
+            <h3 class="text-lg font-bold mb-4">Réseaux sociaux</h3>
+            <div class="flex space-x-4">
+              <a
+                href="https://www.facebook.com/hbcaixensavoie"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-white transition"
+                >Facebook</a
+              >
+              <a
+                href="https://www.instagram.com/hbcaixensavoie"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-white transition"
+                >Instagram</a
+              >
+              <a
+                href="https://www.youtube.com/channel/UCxxxxxx"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-white transition"
+                >YouTube</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div
+          class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400"
+        >
+          <p>&copy; 2024 HBC Aix-en-Savoie. Tous droits réservés.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+      AOS.init();
+
+      // Chargement de l'article depuis le JSON
+      document.addEventListener("DOMContentLoaded", async function () {
+        try {
+          // Récupérer l'ID de l'article depuis l'URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const articleId = parseInt(urlParams.get("id"));
+
+          if (!articleId) {
+            window.location.href = "actus.html";
+            return;
+          }
+
+          // Charger les données des actualités
+          const response = await fetch("./data/actualites.json");
+          if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+          }
+
+          const actualites = await response.json();
+
+          // Trouver l'article correspondant à l'ID
+          const article = actualites.find((a) => a.id === articleId);
+
+          if (!article) {
+            window.location.href = "actus.html";
+            return;
+          }
+
+          // Mettre à jour le titre de la page
+          document.title = `${article.titre} - HBC Aix-en-Savoie`;
+
+          // Remplir les informations de l'article
+          document.getElementById("articleImage").src = article.image;
+          document.getElementById("articleImage").alt = article.titre;
+          document.getElementById("articleTag").textContent = article.tag;
+          document.getElementById("articleCategorie").textContent =
+            article.categorie;
+          document.getElementById("articleDate").textContent = article.date;
+          document.getElementById("articleTitre").textContent = article.titre;
+
+          // Générer des paragraphes pour le contenu
+          const contenuHTML = article.contenu
+            .split(". ")
+            .map(
+              (phrase) => `<p>${phrase}${phrase.endsWith(".") ? "" : "."}</p>`
+            )
+            .join("");
+
+          document.getElementById("articleContenu").innerHTML = contenuHTML;
+
+          // Mise en place de la navigation entre articles
+          const indexActuel = actualites.findIndex((a) => a.id === articleId);
+          const articlePrecedent = actualites[indexActuel - 1];
+          const articleSuivant = actualites[indexActuel + 1];
+
+          const btnPrecedent = document.getElementById("articlePrecedent");
+          const btnSuivant = document.getElementById("articleSuivant");
+
+          if (articlePrecedent) {
+            btnPrecedent.href = `article.html?id=${articlePrecedent.id}`;
+          } else {
+            btnPrecedent.classList.add("opacity-50", "cursor-default");
+            btnPrecedent.href = "javascript:void(0)";
+          }
+
+          if (articleSuivant) {
+            btnSuivant.href = `article.html?id=${articleSuivant.id}`;
+          } else {
+            btnSuivant.classList.add("opacity-50", "cursor-default");
+            btnSuivant.href = "javascript:void(0)";
+          }
+
+          // Afficher des articles connexes (de la même catégorie)
+          const articlesConnexes = actualites
+            .filter(
+              (a) => a.categorie === article.categorie && a.id !== articleId
+            )
+            .slice(0, 3);
+
+          const conteneurConnexes = document.getElementById("articlesConnexes");
+
+          articlesConnexes.forEach((actu) => {
+            const articleElement = document.createElement("div");
+            articleElement.className =
+              "bg-white rounded-lg shadow-lg overflow-hidden";
+            articleElement.innerHTML = `
+						<img src="${actu.image}" alt="${actu.titre}" class="w-full h-48 object-cover" />
+						<div class="p-4">
+							<p class="text-gray-600 text-sm mb-2">${actu.date}</p>
+							<h3 class="text-lg font-bold mb-2">${actu.titre}</h3>
+							<a href="article.html?id=${actu.id}" class="text-orange-600 font-semibold hover:text-orange-800 flex items-center gap-1 text-sm">
+								Lire l'article
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+								</svg>
+							</a>
+						</div>
+					`;
+            conteneurConnexes.appendChild(articleElement);
+          });
+
+          // Si pas assez d'articles connexes, compléter avec d'autres actualités
+          if (articlesConnexes.length < 3) {
+            const autresArticles = actualites
+              .filter(
+                (a) => a.categorie !== article.categorie && a.id !== articleId
+              )
+              .slice(0, 3 - articlesConnexes.length);
+
+            autresArticles.forEach((actu) => {
+              const articleElement = document.createElement("div");
+              articleElement.className =
+                "bg-white rounded-lg shadow-lg overflow-hidden";
+              articleElement.innerHTML = `
+							<img src="${actu.image}" alt="${actu.titre}" class="w-full h-48 object-cover" />
+							<div class="p-4">
+								<p class="text-gray-600 text-sm mb-2">${actu.date}</p>
+								<h3 class="text-lg font-bold mb-2">${actu.titre}</h3>
+								<a href="article.html?id=${actu.id}" class="text-orange-600 font-semibold hover:text-orange-800 flex items-center gap-1 text-sm">
+									Lire l'article
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+										<path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+									</svg>
+								</a>
+							</div>
+						`;
+              conteneurConnexes.appendChild(articleElement);
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors du chargement de l'article:", error);
+          window.location.href = "actus.html";
+        }
+      });
+    </script>
+  </body>
+</html>
