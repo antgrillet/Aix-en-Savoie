@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// BETTER-AUTH MODELS
+// Généré automatiquement par better-auth
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sessions      Session[]
+  accounts      Account[]
+
+  // Admin role
+  role          String    @default("user")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  expiresAt         DateTime?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@map("verifications")
+}
+
+// ============================================
+// APPLICATION MODELS
+// ============================================
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  titre       String
+  categorie   String   // "ÉVÉNEMENTS", "ÉQUIPES", "FORMATION", "RECRUTEMENT", "CLUB"
+  date        DateTime
+  image       String
+  resume      String   @db.Text
+  contenu     String   @db.Text
+  vedette     Boolean  @default(false)
+  tag         String?
+  tags        String[]
+  slug        String   @unique
+  published   Boolean  @default(true)
+  views       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  @@index([categorie])
+  @@index([vedette])
+  @@index([published])
+  @@index([date(sort: Desc)])
+  @@map("articles")
+}
+
+model Equipe {
+  id            Int            @id @default(autoincrement())
+  nom           String
+  categorie     String         // "N2F", "N2M", "Prénationale", "Elite", etc.
+  description   String         @db.Text
+  entraineur    String
+  matches       String?
+  photo         String
+  ordre         Int
+  slug          String         @unique
+  published     Boolean        @default(true)
+
+  entrainements Entrainement[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdBy     String?
+
+  @@index([categorie])
+  @@index([published])
+  @@index([ordre])
+  @@map("equipes")
+}
+
+model Entrainement {
+  id        Int     @id @default(autoincrement())
+  jour      String  // "Lundi", "Mardi", etc.
+  horaire   String  // "18h00 - 20h00"
+  lieu      String? // Optionnel
+  equipeId  Int
+
+  equipe    Equipe  @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+
+  @@index([equipeId])
+  @@map("entrainements")
+}
+
+model Partenaire {
+  id                Int      @id @default(autoincrement())
+  nom               String
+  categorie         String   // "Équipementier", "Institution", "Banque", etc.
+  logo              String
+  description       String   @db.Text
+  site              String?
+  partenaire_majeur Boolean  @default(false)
+  ordre             Int      @default(0)
+  published         Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+
+  @@index([partenaire_majeur])
+  @@index([published])
+  @@index([ordre])
+  @@map("partenaires")
+}
+
+model ContactMessage {
+  id            Int      @id @default(autoincrement())
+  nom           String
+  prenom        String
+  email         String
+  telephone     String?
+  message       String   @db.Text
+
+  // Champs handball (optionnels)
+  experience    Boolean  @default(false)
+  niveau        String?
+  positions     String[]
+
+  read          Boolean  @default(false)
+  archived      Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+
+  @@index([read])
+  @@index([createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String   @db.Text
+  type        String   // "string", "image", "boolean", "json"
+  description String?  @db.Text
+
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@index([key])
+  @@map("settings")
+}
