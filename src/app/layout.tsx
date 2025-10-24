@@ -74,7 +74,8 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${montserrat.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
-        <Toaster />
+        {/* Toaster temporarily disabled due to React 19 SSR compatibility */}
+        {/* <Toaster /> */}
       </body>
     </html>
   )

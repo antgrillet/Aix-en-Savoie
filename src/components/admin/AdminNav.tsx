@@ -12,12 +12,14 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  Trophy,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Articles', href: '/admin/articles', icon: Newspaper },
   { name: 'Équipes', href: '/admin/equipes', icon: Users },
+  { name: 'Matchs', href: '/admin/matchs', icon: Trophy },
   { name: 'Partenaires', href: '/admin/partenaires', icon: Handshake },
   { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { name: 'Paramètres', href: '/admin/parametres', icon: Settings },

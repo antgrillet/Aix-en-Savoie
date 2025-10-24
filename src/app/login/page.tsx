@@ -1,6 +1,8 @@
 import { LoginForm } from '@/components/forms/LoginForm'
 import Image from 'next/image'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 p-4">

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
-import Image from 'next/image'
 import { TeamsPageClient } from '@/components/teams/TeamsPageClient'
+import { PageBackground } from '@/components/layout/PageBackground'
+import { getPageBackgroundImage } from '@/lib/settings'
 
 export const revalidate = 1800
 
@@ -9,41 +10,50 @@ export default async function EquipesPage() {
     orderBy: { ordre: 'asc' },
     include: {
       entrainements: true,
+      classement: {
+        orderBy: {
+          position: 'asc',
+        },
+      },
+      matchs: {
+        where: {
+          published: true,
+          termine: false,
+          date: {
+            gte: new Date(),
+          },
+        },
+        orderBy: {
+          date: 'asc',
+        },
+        take: 1,
+      },
     },
   })
 
+  // Récupérer l'image de fond
+  const backgroundImage = await getPageBackgroundImage('equipes')
+
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
+      {/* Background */}
+      <PageBackground imageUrl={backgroundImage} />
+
       {/* Hero Section */}
-      <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
-        {/* Overlays */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 z-20"></div>
-
-        {/* Image de fond */}
-        <div className="absolute inset-0">
-          <Image
-            src="/img/equipes/n2f.jpg"
-            alt="Équipe de handball d'Aix-en-Savoie"
-            fill
-            className="object-cover filter brightness-75"
-            priority
-          />
-        </div>
-
+      <section className="relative pt-32 pb-16 overflow-hidden z-10">
         {/* Contenu */}
         <div className="relative z-30 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display animate-fade-in-up">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-display">
             Nos Équipes
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 font-display mb-8 animate-fade-in-up">
+          <p className="text-lg md:text-xl text-white/90 font-display">
             Découvrez les équipes qui font la fierté du HBC Aix-en-Savoie
           </p>
         </div>
       </section>
 
       {/* Contenu principal */}
-      <main className="py-12 md:py-16 lg:py-20">
+      <main className="py-12 md:py-16 lg:py-20 relative z-10">
         <TeamsPageClient equipes={equipes} />
       </main>
     </div>

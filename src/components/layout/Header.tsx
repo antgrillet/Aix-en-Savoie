@@ -33,16 +33,36 @@ const allNavigation: NavigationItem[] = [
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      const currentScrollY = window.scrollY
+
+      // Mettre à jour isScrolled
+      setIsScrolled(currentScrollY > 50)
+
+      // Si on est tout en haut, toujours visible
+      if (currentScrollY < 10) {
+        setIsVisible(true)
+      }
+      // Si on scroll vers le bas, cacher le header
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false)
+      }
+      // Si on scroll vers le haut, afficher le header
+      else if (currentScrollY < lastScrollY) {
+        setIsVisible(true)
+      }
+
+      setLastScrollY(currentScrollY)
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [lastScrollY])
 
   return (
     <>
@@ -51,7 +71,10 @@ export function Header() {
           isScrolled
             ? 'header-scrolled fixed z-40'
             : 'absolute bg-black/30 backdrop-blur-md border-b border-white/10 z-40'
+        } ${
+          !isVisible ? '-translate-y-full' : 'translate-y-0'
         }`}
+        style={{ transition: 'transform 0.3s ease-in-out' }}
       >
         <div className="px-4 xl:px-8 py-3 md:py-4 transition-all duration-300">
           <div className="flex items-center justify-between">

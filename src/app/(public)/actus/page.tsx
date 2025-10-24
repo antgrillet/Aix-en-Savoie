@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { ArticlesGrid } from '@/components/news/ArticlesGrid'
 import { NewsFilters } from '@/components/news/NewsFilters'
+import { PageBackground } from '@/components/layout/PageBackground'
+import { getPageBackgroundImage } from '@/lib/settings'
 
 export const revalidate = 600
 
@@ -26,7 +28,7 @@ export default async function ActusPage({
   }
 
   // Récupérer les articles
-  const [articles, total] = await Promise.all([
+  const [articles, total, backgroundImage] = await Promise.all([
     prisma.article.findMany({
       where,
       orderBy: {
@@ -45,6 +47,7 @@ export default async function ActusPage({
       },
     }),
     prisma.article.count({ where }),
+    getPageBackgroundImage('actus'),
   ])
 
   // Récupérer toutes les catégories disponibles
@@ -57,13 +60,12 @@ export default async function ActusPage({
   const totalPages = Math.ceil(total / perPage)
 
   return (
-    <div className="pt-24 min-h-screen bg-zinc-900">
+    <div className="pt-24 min-h-screen bg-zinc-900 relative overflow-hidden">
+      {/* Background */}
+      <PageBackground imageUrl={backgroundImage} />
+
       {/* Header */}
-      <section className="py-12 bg-zinc-900 text-white relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-500/20 rounded-full filter blur-[128px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-secondary-500/20 rounded-full filter blur-[128px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-600/10 rounded-full filter blur-[100px]" />
+      <section className="py-12 text-white relative overflow-hidden z-10">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h1 className="text-3xl md:text-4xl font-display font-bold mb-4 text-white">

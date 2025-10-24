@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Clock, Calendar, User } from 'lucide-react'
+import { Clock, Calendar, User, Trophy, MapPin } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 
 interface Entrainement {
@@ -11,6 +11,22 @@ interface Entrainement {
   jour: string
   horaire: string
   lieu?: string | null
+}
+
+interface Classement {
+  id: number
+  position: number
+  club: string
+  points: number
+}
+
+interface Match {
+  id: number
+  adversaire: string
+  date: Date
+  lieu: string | null
+  domicile: boolean
+  logoAdversaire: string | null
 }
 
 interface Equipe {
@@ -23,6 +39,8 @@ interface Equipe {
   photo: string
   slug: string
   entrainements: Entrainement[]
+  classement: Classement[]
+  matchs: Match[]
 }
 
 interface TeamCardDetailedProps {
@@ -95,13 +113,67 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
             ))}
           </ul>
 
-          {/* Matchs */}
-          {equipe.matches && (
-            <div className="flex items-center text-gray-300 text-sm mb-6">
-              <Calendar className="w-4 h-4 mr-2 text-primary-500" />
-              <span>Matchs : {equipe.matches}</span>
-            </div>
-          )}
+          {/* Position au classement */}
+          {equipe.classement.length > 0 && (() => {
+            const ourTeam = equipe.classement.find(team =>
+              team.club.toUpperCase().includes('AIX') ||
+              team.club.toUpperCase().includes('SAVOIE')
+            )
+            return ourTeam ? (
+              <div className="flex items-center justify-between text-gray-300 text-sm mb-4">
+                <div className="flex items-center">
+                  <Trophy className="w-4 h-4 mr-2 text-primary-500" />
+                  <span className="text-white font-semibold">Classement</span>
+                </div>
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-500 text-white font-bold text-sm">
+                  {ourTeam.position}
+                </span>
+              </div>
+            ) : null
+          })()}
+
+          {/* Prochain match */}
+          {equipe.matchs.length > 0 && (() => {
+            const nextMatch = equipe.matchs[0]
+            return (
+              <div className="mb-4">
+                <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary-500" />
+                  Prochain match
+                </h4>
+                <div className="text-gray-300 text-sm space-y-1 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-white">{nextMatch.adversaire}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      nextMatch.domicile
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {nextMatch.domicile ? 'Domicile' : 'Extérieur'}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs">
+                    <Calendar className="w-3 h-3 mr-1 text-primary-500" />
+                    <span>
+                      {new Date(nextMatch.date).toLocaleDateString('fr-FR', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                  {nextMatch.lieu && (
+                    <div className="flex items-center text-xs">
+                      <MapPin className="w-3 h-3 mr-1 text-primary-500" />
+                      <span>{nextMatch.lieu}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Bouton voir l'équipe */}

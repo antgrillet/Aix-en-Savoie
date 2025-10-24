@@ -28,11 +28,12 @@ export function ArticleCard({ article }: ArticleCardProps) {
       initial="rest"
       whileHover="hover"
       whileTap="tap"
+      className="h-full"
     >
-      <Link href={`/actus/${article.slug}`} className="group block">
-        <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300">
+      <Link href={`/actus/${article.slug}`} className="group block h-full">
+        <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300 flex flex-col">
           {/* Image */}
-          <div className="relative h-48 overflow-hidden">
+          <div className="relative h-48 overflow-hidden flex-shrink-0">
             <Image
               src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
               alt={article.titre}
@@ -48,7 +49,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="p-6 flex flex-col flex-1">
             <div className="flex items-center gap-2 text-neutral-400 text-sm mb-3">
               <Calendar className="w-4 h-4" />
               <time dateTime={new Date(article.date).toISOString()}>
@@ -64,11 +65,11 @@ export function ArticleCard({ article }: ArticleCardProps) {
               {article.titre}
             </h3>
 
-            <p className="text-neutral-300 text-sm line-clamp-3 mb-4 whitespace-pre-line">
+            <p className="text-neutral-300 text-sm line-clamp-3 mb-4 whitespace-pre-line flex-1">
               {article.resume}
             </p>
 
-            <div className="flex items-center text-primary-500 font-semibold text-sm group-hover:gap-2 transition-all">
+            <div className="flex items-center text-primary-500 font-semibold text-sm group-hover:gap-2 transition-all mt-auto">
               Lire la suite
               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </div>

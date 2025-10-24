@@ -112,15 +112,21 @@ model Equipe {
   id            Int            @id @default(autoincrement())
   nom           String
   categorie     String         // "N2F", "N2M", "Prénationale", "Elite", etc.
+  genre         String         @default("MASCULIN") // "MASCULIN" ou "FEMININ"
   description   String         @db.Text
   entraineur    String
   matches       String?
   photo         String
+  banniere      String?        // Image de fond pour la page équipe
   ordre         Int
   slug          String         @unique
   published     Boolean        @default(true)
+  featured      Boolean        @default(false) // Afficher sur la page d'accueil
 
   entrainements Entrainement[]
+  matchs        Match[]
+  syncLogs      SyncLog[]
+  classement    Classement[]
 
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -129,6 +135,8 @@ model Equipe {
   @@index([categorie])
   @@index([published])
   @@index([ordre])
+  @@index([featured])
+  @@index([genre])
   @@map("equipes")
 }
 
@@ -148,10 +156,31 @@ model Entrainement {
 model Partenaire {
   id                Int      @id @default(autoincrement())
   nom               String
+  slug              String?  @unique // Nullable pour migration, sera rempli automatiquement
   categorie         String   // "Équipementier", "Institution", "Banque", etc.
+  typePartenariat   String   @default("Partenaire") // "Équipementier", "Principal", "Institutionnel", "Technique", "Média"
   logo              String
   description       String   @db.Text
   site              String?
+  email             String?
+  telephone         String?
+
+  // Réseaux sociaux (JSON: {facebook, instagram, linkedin, twitter, youtube})
+  reseauxSociaux    Json?
+
+  // Informations complémentaires
+  anneeDemarrage    Int?     // Année du début du partenariat
+  valeurs           String[] // Tags: "Innovation", "Local", "Jeunesse", etc.
+  galerie           String[] // URLs des photos de la galerie
+
+  // Storytelling & Branding
+  accroche          String?  // Phrase d'accroche pour le hero
+  couleurPrincipale String?  // Couleur de marque en hex (#FF5733)
+  photoCouverture   String?  // Image de fond pour le hero
+  apports           String[] // Ce qu'ils apportent au club (ex: "Équipement des coachs")
+  temoignage        Json?    // {citation: string, auteur: string, role: string, photo?: string}
+  projetsCommuns    String[] // Projets en collaboration avec le club
+
   partenaire_majeur Boolean  @default(false)
   ordre             Int      @default(0)
   published         Boolean  @default(true)
@@ -160,9 +189,11 @@ model Partenaire {
   updatedAt         DateTime @updatedAt
   createdBy         String?
 
+  @@index([slug])
   @@index([partenaire_majeur])
   @@index([published])
   @@index([ordre])
+  @@index([typePartenariat])
   @@map("partenaires")
 }
 
@@ -201,4 +232,78 @@ model Setting {
 
   @@index([key])
   @@map("settings")
+}
+
+model Match {
+  id          Int      @id @default(autoincrement())
+  equipeId    Int
+  adversaire  String   // Nom de l'équipe adverse
+  date        DateTime // Date et heure du match
+  lieu        String   // Lieu du match
+  domicile    Boolean  @default(true) // true = domicile, false = extérieur
+  competition String?  // Type de compétition (championnat, coupe, etc.)
+
+  // Scores (null si match à venir)
+  scoreEquipe     Int?
+  scoreAdversaire Int?
+
+  // Logo de l'équipe adverse (URL depuis FFHANDBALL)
+  logoAdversaire  String?
+
+  // Statut
+  termine     Boolean  @default(false) // Match joué ou à venir
+  published   Boolean  @default(true)
+
+  // Relations
+  equipe      Equipe   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  @@index([equipeId])
+  @@index([date(sort: Desc)])
+  @@index([termine])
+  @@index([published])
+  @@map("matchs")
+}
+
+model SyncLog {
+  id              Int      @id @default(autoincrement())
+  equipeId        Int
+  type            String   // "matches", "classement", etc.
+  status          String   // "success", "error", "warning"
+  message         String   @db.Text
+
+  // Statistiques de synchronisation
+  matchesCreated  Int      @default(0)
+  matchesUpdated  Int      @default(0)
+  matchesSkipped  Int      @default(0)
+
+  // Relations
+  equipe          Equipe   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@index([equipeId])
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+  @@map("sync_logs")
+}
+
+model Classement {
+  id        Int      @id @default(autoincrement())
+  equipeId  Int
+  position  Int
+  club      String
+  points    Int
+
+  // Relations
+  equipe    Equipe   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([equipeId])
+  @@map("classements")
 }

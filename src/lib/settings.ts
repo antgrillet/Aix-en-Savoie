@@ -44,3 +44,17 @@ export async function updateHeroBackgroundImage(
 ) {
   return await updateSetting('hero_background_image', imageUrl, updatedBy)
 }
+
+// Page backgrounds
+export async function getPageBackgroundImage(page: string): Promise<string | null> {
+  const setting = await getSetting(`${page}_background_image`)
+  return setting?.value || null
+}
+
+export async function updatePageBackgroundImage(
+  page: string,
+  imageUrl: string,
+  updatedBy?: string
+) {
+  return await updateSetting(`${page}_background_image`, imageUrl, updatedBy)
+}

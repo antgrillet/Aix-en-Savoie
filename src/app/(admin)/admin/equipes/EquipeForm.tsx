@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { LoadingButton } from '@/components/admin/LoadingButton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +24,10 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [photo, setPhoto] = useState(initialData?.photo || '')
+  const [banniere, setBanniere] = useState(initialData?.banniere || '')
+  const [published, setPublished] = useState(initialData?.published ?? true)
+  const [featured, setFeatured] = useState(initialData?.featured ?? false)
+  const [genre, setGenre] = useState(initialData?.genre || 'MASCULIN')
   const [entrainements, setEntrainements] = useState<Array<{
     jour: string
     horaire: string
@@ -67,21 +72,30 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
     try {
       const formData = new FormData(e.currentTarget)
       formData.set('photo', photo)
+      if (banniere) {
+        formData.set('banniere', banniere)
+      }
+      formData.set('published', published.toString())
+      formData.set('featured', featured.toString())
+      formData.set('genre', genre)
       formData.set('entrainements', JSON.stringify(entrainements))
 
       await action(formData)
-      toast.success(initialData ? 'Équipe modifiée' : 'Équipe créée')
-    } catch (error) {
+      // Le redirect se fait automatiquement, pas besoin de toast ici
+    } catch (error: any) {
+      // Next.js redirect lance une erreur NEXT_REDIRECT, ce n'est pas une vraie erreur
+      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+        return
+      }
       console.error(error)
       toast.error('Une erreur est survenue')
-    } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="nom">Nom de l'équipe *</Label>
           <Input
@@ -103,17 +117,46 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
             placeholder="Ex: N2F, Elite, etc."
           />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="genre">Genre *</Label>
+          <Select value={genre} onValueChange={setGenre}>
+            <SelectTrigger id="genre">
+              <SelectValue placeholder="Sélectionner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MASCULIN">Masculin</SelectItem>
+              <SelectItem value="FEMININ">Féminin</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Photo de l'équipe *</Label>
-        <ImageUpload
-          value={photo}
-          onChange={setPhoto}
-          onRemove={() => setPhoto('')}
-          disabled={isSubmitting}
-          folder="equipes"
-        />
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label>Photo de l'équipe *</Label>
+          <ImageUpload
+            value={photo}
+            onChange={setPhoto}
+            onRemove={() => setPhoto('')}
+            disabled={isSubmitting}
+            folder="equipes"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Image de fond (bannière)</Label>
+          <ImageUpload
+            value={banniere}
+            onChange={setBanniere}
+            onRemove={() => setBanniere('')}
+            disabled={isSubmitting}
+            folder="equipes"
+          />
+          <p className="text-xs text-neutral-500">
+            Image de fond pour la page de l'équipe (optionnel)
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -234,8 +277,19 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
             <Label htmlFor="published">Publié</Label>
             <Switch
               id="published"
-              name="published"
-              defaultChecked={initialData?.published ?? true}
+              checked={published}
+              onCheckedChange={setPublished}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="featured">Afficher sur la page d'accueil</Label>
+              <p className="text-sm text-muted-foreground">Les matchs de cette équipe seront affichés</p>
+            </div>
+            <Switch
+              id="featured"
+              checked={featured}
+              onCheckedChange={setFeatured}
             />
           </div>
         </div>

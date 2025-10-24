@@ -27,7 +27,7 @@ export function ArticlesGrid({ articles }: ArticlesGridProps) {
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
     >
       {articles.map((article) => (
-        <motion.div key={article.id} variants={staggerItem}>
+        <motion.div key={article.id} variants={staggerItem} className="h-full">
           <ArticleCard article={article} />
         </motion.div>
       ))}

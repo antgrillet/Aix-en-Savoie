@@ -2,12 +2,29 @@
 
 import { useState } from 'react'
 import { TeamsFilters } from './TeamsFilters'
+import { TeamCardDetailed } from './TeamCardDetailed'
 
 interface Entrainement {
   id: number
   jour: string
   horaire: string
   lieu?: string | null
+}
+
+interface Classement {
+  id: number
+  position: number
+  club: string
+  points: number
+}
+
+interface Match {
+  id: number
+  adversaire: string
+  date: Date
+  lieu: string | null
+  domicile: boolean
+  logoAdversaire: string | null
 }
 
 interface Equipe {
@@ -20,6 +37,8 @@ interface Equipe {
   photo: string
   slug: string
   entrainements: Entrainement[]
+  classement: Classement[]
+  matchs: Match[]
 }
 
 interface TeamsPageClientProps {
@@ -29,70 +48,48 @@ interface TeamsPageClientProps {
 export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
   const [activeCategory, setActiveCategory] = useState('all')
 
+  // Filtrer les équipes en fonction de la catégorie active
+  const filteredEquipes =
+    activeCategory === 'all'
+      ? equipes
+      : equipes.filter((equipe) => equipe.categorie === activeCategory)
+
   return (
     <div>
-      {/* Section principale avec filtres et carte unique */}
-      <section className="py-16 relative overflow-hidden">
+      {/* Section principale avec filtres */}
+      <section className="mb-16 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-pattern"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-12 text-center">
-            Découvrez nos équipes
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center relative inline-block w-full">
+            Accès rapide
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-primary-500 to-transparent"></span>
           </h2>
 
           {/* Filtres par catégorie */}
-          <div className="flex flex-wrap justify-center items-center gap-4 mb-12">
-            <TeamsFilters activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
-          </div>
+          <TeamsFilters activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+        </div>
+      </section>
 
-          {/* Carte unique centrée */}
-          <div className="max-w-2xl mx-auto">
-            <a
-              href="#liste-equipes"
-              className="block bg-white p-8 md:p-12 rounded-2xl text-center shadow-2xl hover:shadow-3xl transition-all hover:-translate-y-2 group"
-            >
-              <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-600 rounded-full shadow-xl shadow-primary-500/30">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-16 h-16 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
+      {/* Liste des équipes */}
+      <section id="liste-equipes" className="py-16 bg-zinc-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-12 text-center relative inline-block w-full">
+            Découvrez nos équipes
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-primary-500 to-transparent"></span>
+          </h2>
 
-              <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 mb-4 group-hover:text-primary-600 transition-colors">
-                Explorez toutes nos équipes
-              </h3>
-
-              <p className="text-zinc-600 text-base md:text-lg mb-6 leading-relaxed">
-                Des jeunes aux seniors, découvrez toutes nos équipes, leurs entraîneurs, horaires d'entraînement et bien plus encore.
-              </p>
-
-              <div className="inline-flex items-center gap-2 text-primary-600 font-semibold text-lg">
-                <span>Voir toutes les équipes</span>
-                <svg
-                  className="w-5 h-5 transform group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
-              </div>
-            </a>
-          </div>
+          {/* Conteneur des équipes */}
+          {filteredEquipes.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-white text-xl">Aucune équipe ne correspond à ce filtre.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {filteredEquipes.map((equipe) => (
+                <TeamCardDetailed key={equipe.id} equipe={equipe} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
