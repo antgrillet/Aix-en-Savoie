@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendContactEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +28,23 @@ export async function POST(request: NextRequest) {
         positions: positions || [],
       },
     })
+
+    // Envoyer l'email via Resend
+    const emailResult = await sendContactEmail({
+      nom,
+      prenom,
+      email,
+      telephone,
+      message,
+      experience,
+      niveau,
+      positions,
+    })
+
+    if (!emailResult.success) {
+      console.error('Failed to send email:', emailResult.error)
+      // On continue même si l'email échoue, car le message est sauvegardé en BDD
+    }
 
     return NextResponse.json(
       { success: true, message: 'Message envoyé avec succès' },

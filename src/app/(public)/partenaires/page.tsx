@@ -45,17 +45,17 @@ export default async function PartenairesPage() {
       />
 
       {/* Hero Section - Réduit */}
-      <section className="relative pt-32 pb-12 overflow-hidden">
+      <section className="relative pt-24 pb-8 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center space-y-4 mb-12">
+          <div className="text-center space-y-3 mb-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold">
-              <Handshake className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-xs font-semibold">
+              <Handshake className="w-3.5 h-3.5" />
               Ensemble plus forts
             </div>
 
             {/* Titre */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
               Nos{' '}
               <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-secondary-500 text-transparent bg-clip-text">
                 Partenaires
@@ -63,7 +63,7 @@ export default async function PartenairesPage() {
             </h1>
 
             {/* Sous-titre */}
-            <p className="text-lg md:text-xl text-neutral-300 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-neutral-300 max-w-2xl mx-auto">
               Ils croient en notre projet et nous accompagnent au quotidien
             </p>
           </div>
@@ -71,16 +71,16 @@ export default async function PartenairesPage() {
       </section>
 
       {/* Liste des partenaires */}
-      <section className="py-16 relative z-10">
+      <section className="py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <PartnersPageClient partenaires={partenaires} categories={categories} />
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 relative z-10">
+      <section className="py-12 pb-16 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl">
+          <div className="relative overflow-hidden rounded-2xl">
             {/* Background gradient */}
             <div className="absolute inset-0 bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500" />
 
@@ -88,31 +88,31 @@ export default async function PartenairesPage() {
             <div className="absolute inset-0 opacity-10 bg-pattern" />
 
             {/* Content */}
-            <div className="relative z-10 p-12 md:p-16 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
-                <Handshake className="w-8 h-8 text-white" />
+            <div className="relative z-10 p-8 md:p-10 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-4">
+                <Handshake className="w-6 h-6 text-white" />
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                 Devenez Partenaire
               </h2>
 
-              <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-white/90 mb-6 max-w-2xl mx-auto">
                 Rejoignez nos partenaires et contribuez au développement du handball local.
                 Ensemble, faisons grandir notre passion !
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary-600 rounded-lg font-bold hover:bg-neutral-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-600 rounded-lg font-bold hover:bg-neutral-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
                 >
                   Contactez-nous
-                  <Heart className="w-5 h-5" />
+                  <Heart className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/equipes"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-lg font-bold hover:bg-white/20 transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-lg font-bold hover:bg-white/20 transition-all"
                 >
                   Découvrir nos équipes
                 </Link>

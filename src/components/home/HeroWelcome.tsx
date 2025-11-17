@@ -95,7 +95,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
 
       {/* Content */}
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Column - Main Content */}
           <motion.div
             variants={containerVariants}
@@ -203,7 +203,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
           </motion.div>
 
           {/* Right Column - Tabs Widget */}
-          <div className="w-full max-w-md mx-auto lg:mx-0">
+          <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
             {/* Tabs Header */}
             <div className="flex gap-2 mb-6">
               <button

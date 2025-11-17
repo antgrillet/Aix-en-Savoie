@@ -75,7 +75,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-xl p-8 shadow-lg border border-neutral-200">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="nom">Nom *</Label>
@@ -140,7 +140,7 @@ export function ContactForm() {
       </div>
 
       {/* Section pour les joueurs intéressés */}
-      <div className="pt-4 border-t border-neutral-200">
+      <div className="pt-4 border-t border-zinc-700">
         <div className="flex items-center space-x-2 mb-4">
           <Checkbox
             id="experience"
@@ -162,7 +162,7 @@ export function ContactForm() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4 bg-neutral-50 p-4 rounded-lg"
+              className="space-y-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-700"
             >
               <div>
                 <Label htmlFor="niveau">Niveau de pratique</Label>

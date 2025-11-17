@@ -79,10 +79,10 @@ export default async function ContactPage() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Email</h3>
                       <a
-                        href="mailto:contact@hbc-aix.fr"
+                        href="mailto:contact@hbcaixensavoie.fr"
                         className="text-neutral-400 hover:text-primary-500 transition-colors"
                       >
-                        contact@hbc-aix.fr
+                        contact@hbcaixensavoie.fr
                       </a>
                     </div>
                   </div>

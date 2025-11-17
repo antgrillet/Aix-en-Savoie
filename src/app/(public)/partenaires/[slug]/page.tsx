@@ -102,10 +102,10 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
       <div className="relative z-10">
         {/* Bouton retour */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
           <Link
             href="/partenaires"
-            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour aux partenaires
@@ -113,9 +113,9 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
         </div>
 
         {/* 🏁 HERO SECTION DÉDIÉE */}
-        <section className="py-12">
+        <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden rounded-3xl">
+            <div className="relative overflow-hidden rounded-2xl">
               {/* Background avec image ou dégradé */}
               {partenaire.photoCouverture ? (
                 <div className="absolute inset-0 z-0">
@@ -138,11 +138,11 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
               )}
 
               {/* Contenu Hero */}
-              <div className="relative z-10 px-8 md:px-16 py-16 md:py-24">
-                <div className="max-w-4xl mx-auto text-center space-y-8">
+              <div className="relative z-10 px-6 md:px-12 py-10 md:py-14">
+                <div className="max-w-4xl mx-auto text-center space-y-5">
                   {/* Logo */}
                   <div className="flex justify-center">
-                    <div className="relative w-64 h-32 md:w-80 md:h-40 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="relative w-48 h-24 md:w-64 md:h-32 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                       <Image
                         src={normalizeImagePath(partenaire.logo, '/img/partenaires/default.png')}
                         alt={partenaire.nom}
@@ -175,14 +175,14 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                   </div>
 
                   {/* Titre */}
-                  <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+                  <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                     {partenaire.nom}
                   </h1>
 
                   {/* Accroche personnalisée */}
                   {partenaire.accroche && (
                     <p
-                      className="text-2xl md:text-3xl font-semibold"
+                      className="text-lg md:text-xl font-semibold"
                       style={{ color: brandColor }}
                     >
                       {partenaire.accroche}
@@ -190,16 +190,16 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                   )}
 
                   {/* Catégorie */}
-                  <p className="text-xl text-neutral-300">{partenaire.categorie}</p>
+                  <p className="text-base text-neutral-300">{partenaire.categorie}</p>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-wrap justify-center gap-4 pt-4">
+                  <div className="flex flex-wrap justify-center gap-3 pt-3">
                     {partenaire.site && (
                       <a
                         href={partenaire.site}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
                         style={{
                           backgroundColor: brandColor,
                           boxShadow: `0 10px 40px ${brandColor}40`
@@ -213,9 +213,9 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                     {partenaire.email && (
                       <a
                         href={`mailto:${partenaire.email}`}
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
                       >
-                        <Mail className="w-5 h-5" />
+                        <Mail className="w-4 h-4" />
                         Nous contacter
                       </a>
                     )}
@@ -223,8 +223,8 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
                   {/* Année de partenariat */}
                   {partenaire.anneeDemarrage && (
-                    <div className="flex items-center justify-center gap-2 text-neutral-400 pt-4">
-                      <Calendar className="w-5 h-5" style={{ color: brandColor }} />
+                    <div className="flex items-center justify-center gap-2 text-neutral-400 pt-2 text-sm">
+                      <Calendar className="w-4 h-4" style={{ color: brandColor }} />
                       <span>Partenaire depuis {partenaire.anneeDemarrage}</span>
                     </div>
                   )}
@@ -235,21 +235,21 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
         </section>
 
         {/* 📖 SECTION "À PROPOS DU PARTENAIRE" */}
-        <section className="py-12">
+        <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {/* Description principale */}
-              <div className="md:col-span-2 space-y-6">
-                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-2xl p-8">
-                  <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+              <div className="md:col-span-2 space-y-4">
+                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6">
+                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
                     <div
                       className="w-1 h-8 rounded-full"
                       style={{ backgroundColor: brandColor }}
                     />
                     À propos de {partenaire.nom}
                   </h2>
-                  <div className="prose prose-invert prose-lg max-w-none">
-                    <p className="text-neutral-300 leading-relaxed whitespace-pre-line text-lg">
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-neutral-300 leading-relaxed whitespace-pre-line text-base">
                       {partenaire.description}
                     </p>
                   </div>
@@ -257,16 +257,16 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
                 {/* Valeurs partagées */}
                 {partenaire.valeurs && partenaire.valeurs.length > 0 && (
-                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-2xl p-8">
-                    <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                      <Heart className="w-6 h-6" style={{ color: brandColor }} />
+                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                      <Heart className="w-5 h-5" style={{ color: brandColor }} />
                       Valeurs partagées
                     </h3>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                       {partenaire.valeurs.map((valeur, index) => (
                         <span
                           key={index}
-                          className="px-5 py-3 rounded-lg font-semibold text-white border-2 transition-all hover:scale-105"
+                          className="px-4 py-2 rounded-lg font-semibold text-white text-sm border-2 transition-all hover:scale-105"
                           style={{
                             backgroundColor: `${brandColor}15`,
                             borderColor: `${brandColor}40`
@@ -281,9 +281,9 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
               </div>
 
               {/* Sidebar Contact */}
-              <div className="space-y-6">
-                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-2xl p-6 space-y-4">
-                  <h3 className="text-xl font-bold text-white mb-4">Contact</h3>
+              <div className="space-y-4">
+                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5 space-y-3">
+                  <h3 className="text-lg font-bold text-white mb-3">Contact</h3>
 
                   {partenaire.site && (
                     <a
@@ -321,8 +321,8 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
                 {/* Réseaux sociaux */}
                 {reseaux && Object.values(reseaux).some(v => v) && (
-                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-2xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4">Réseaux sociaux</h3>
+                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5">
+                    <h3 className="text-lg font-bold text-white mb-3">Réseaux sociaux</h3>
                     <div className="flex flex-wrap gap-3">
                       {reseaux.facebook && (
                         <a
@@ -389,25 +389,25 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
         {/* 🎯 SECTION "CE QU'ILS APPORTENT AU CLUB" */}
         {partenaire.apports && partenaire.apports.length > 0 && (
-          <section className="py-16 bg-gradient-to-br from-zinc-800/30 to-transparent">
+          <section className="py-8 bg-gradient-to-br from-zinc-800/30 to-transparent">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-white mb-4">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                   Ce qu'ils apportent au club
                 </h2>
                 <div
-                  className="w-24 h-1 rounded-full mx-auto"
+                  className="w-20 h-1 rounded-full mx-auto"
                   style={{ backgroundColor: brandColor }}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {partenaire.apports.map((apport, index) => {
                   const Icon = apportIcons[index % apportIcons.length]
                   return (
                     <div
                       key={index}
-                      className="group bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6 hover:border-opacity-100 transition-all hover:scale-105"
+                      className="group bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5 hover:border-opacity-100 transition-all hover:scale-105"
                       style={{
                         borderColor: `${brandColor}40`,
                       }}
@@ -419,10 +419,10 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                             backgroundColor: `${brandColor}20`,
                           }}
                         >
-                          <Icon className="w-6 h-6" style={{ color: brandColor }} />
+                          <Icon className="w-5 h-5" style={{ color: brandColor }} />
                         </div>
                         <div className="flex-1">
-                          <p className="text-white font-medium text-lg leading-relaxed">
+                          <p className="text-white font-medium text-base leading-relaxed">
                             {apport}
                           </p>
                         </div>
@@ -437,19 +437,19 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
         {/* 📸 SECTION "EN IMAGES" / GALERIE */}
         {partenaire.galerie && partenaire.galerie.length > 0 && (
-          <section className="py-16">
+          <section className="py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-white mb-4">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                   En images
                 </h2>
                 <div
-                  className="w-24 h-1 rounded-full mx-auto"
+                  className="w-20 h-1 rounded-full mx-auto"
                   style={{ backgroundColor: brandColor }}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {partenaire.galerie.map((image, index) => (
                   <div
                     key={index}
@@ -474,28 +474,28 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
         {/* 💬 SECTION TÉMOIGNAGE */}
         {temoignage && temoignage.citation && (
-          <section className="py-16 bg-gradient-to-br from-zinc-800/30 to-transparent">
+          <section className="py-8 bg-gradient-to-br from-zinc-800/30 to-transparent">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
               <div
-                className="relative bg-zinc-800/60 backdrop-blur-sm border-2 rounded-3xl p-12 md:p-16"
+                className="relative bg-zinc-800/60 backdrop-blur-sm border-2 rounded-2xl p-8 md:p-10"
                 style={{
                   borderColor: `${brandColor}40`
                 }}
               >
                 {/* Quote icon */}
                 <Quote
-                  className="absolute top-8 left-8 w-16 h-16 opacity-20"
+                  className="absolute top-6 left-6 w-12 h-12 opacity-20"
                   style={{ color: brandColor }}
                 />
 
-                <div className="relative z-10 space-y-8">
+                <div className="relative z-10 space-y-6">
                   {/* Citation */}
-                  <blockquote className="text-2xl md:text-3xl font-semibold text-white leading-relaxed text-center">
+                  <blockquote className="text-lg md:text-xl font-semibold text-white leading-relaxed text-center">
                     "{temoignage.citation}"
                   </blockquote>
 
                   {/* Auteur */}
-                  <div className="flex items-center justify-center gap-6 pt-6">
+                  <div className="flex items-center justify-center gap-4 pt-4">
                     {temoignage.photo && (
                       <div className="relative w-16 h-16 rounded-full overflow-hidden border-2" style={{ borderColor: brandColor }}>
                         <Image
@@ -525,26 +525,26 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
         {/* 🤝 SECTION "NOS PROJETS COMMUNS" */}
         {partenaire.projetsCommuns && partenaire.projetsCommuns.length > 0 && (
-          <section className="py-16">
+          <section className="py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-white mb-4">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                   Nos projets communs
                 </h2>
                 <div
-                  className="w-24 h-1 rounded-full mx-auto mb-4"
+                  className="w-20 h-1 rounded-full mx-auto mb-3"
                   style={{ backgroundColor: brandColor }}
                 />
-                <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
+                <p className="text-neutral-400 text-base max-w-2xl mx-auto">
                   Ensemble, nous construisons l'avenir du handball à Aix-en-Savoie
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {partenaire.projetsCommuns.map((projet, index) => (
                   <div
                     key={index}
-                    className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-8 hover:border-opacity-100 transition-all group"
+                    className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6 hover:border-opacity-100 transition-all group"
                     style={{
                       borderColor: `${brandColor}30`,
                     }}
@@ -558,7 +558,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                       >
                         <CheckCircle className="w-6 h-6" style={{ color: brandColor }} />
                       </div>
-                      <p className="text-white text-lg font-medium leading-relaxed flex-1">
+                      <p className="text-white text-base font-medium leading-relaxed flex-1">
                         {projet}
                       </p>
                     </div>
@@ -570,39 +570,39 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
         )}
 
         {/* 🎯 SECTION CTA FINALE */}
-        <section className="py-20">
+        <section className="py-10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div
-              className="relative overflow-hidden rounded-3xl p-12 md:p-16 text-center"
+              className="relative overflow-hidden rounded-2xl p-8 md:p-10 text-center"
               style={{
                 background: `linear-gradient(135deg, ${brandColor}20 0%, ${brandColor}05 100%)`
               }}
             >
               {/* Background decoration */}
               <div
-                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20"
+                className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl opacity-20"
                 style={{ backgroundColor: brandColor }}
               />
               <div
-                className="absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl opacity-20"
+                className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl opacity-20"
                 style={{ backgroundColor: brandColor }}
               />
 
-              <div className="relative z-10 space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <div className="relative z-10 space-y-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-white">
                   Intéressé par {partenaire.nom} ?
                 </h2>
-                <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
+                <p className="text-base md:text-lg text-neutral-300 max-w-2xl mx-auto">
                   Découvrez comment ce partenaire contribue au développement du handball
                 </p>
 
-                <div className="flex flex-wrap justify-center gap-4 pt-4">
+                <div className="flex flex-wrap justify-center gap-3 pt-3">
                   {partenaire.site && (
                     <a
                       href={partenaire.site}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
                       style={{
                         backgroundColor: brandColor,
                         boxShadow: `0 10px 40px ${brandColor}40`
@@ -616,9 +616,9 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                   {partenaire.email && (
                     <a
                       href={`mailto:${partenaire.email}`}
-                      className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
                     >
-                      <Mail className="w-5 h-5" />
+                      <Mail className="w-4 h-4" />
                       Les contacter
                     </a>
                   )}
@@ -630,10 +630,10 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
         {/* Autres partenaires */}
         {autresPartenaires.length > 0 && (
-          <section className="py-16 border-t border-zinc-800">
+          <section className="py-10 border-t border-zinc-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold text-white mb-8">Autres partenaires</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Autres partenaires</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {autresPartenaires.map((p) => (
                   <PartnerCard key={p.id} partenaire={p} featured={p.partenaire_majeur} />
                 ))}

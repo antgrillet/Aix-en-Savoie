@@ -138,7 +138,7 @@ export function Footer() {
             </p>
             <div className="flex gap-3">
               <a
-                href="https://facebook.com/hbcaix"
+                href="https://www.facebook.com/hbcaixensavoie"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300"
@@ -147,7 +147,7 @@ export function Footer() {
                 <Facebook className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
               </a>
               <a
-                href="https://instagram.com/hbcaix"
+                href="https://www.instagram.com/hbcaixensavoie/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300"

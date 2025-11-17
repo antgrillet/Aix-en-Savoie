@@ -119,14 +119,18 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
               team.club.toUpperCase().includes('AIX') ||
               team.club.toUpperCase().includes('SAVOIE')
             )
+            const getOrdinal = (n: number) => {
+              if (n === 1) return '1er'
+              return `${n}e`
+            }
             return ourTeam ? (
-              <div className="flex items-center justify-between text-gray-300 text-sm mb-4">
+              <div className="flex items-center justify-between text-gray-300 text-sm mb-4 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
                 <div className="flex items-center">
                   <Trophy className="w-4 h-4 mr-2 text-primary-500" />
                   <span className="text-white font-semibold">Classement</span>
                 </div>
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-500 text-white font-bold text-sm">
-                  {ourTeam.position}
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-500 text-white font-bold text-sm">
+                  {getOrdinal(ourTeam.position)}
                 </span>
               </div>
             ) : null

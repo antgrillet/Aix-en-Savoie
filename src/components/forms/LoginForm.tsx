@@ -51,7 +51,7 @@ export function LoginForm() {
           name="email"
           type="email"
           required
-          placeholder="admin@hbc-aix.fr"
+          placeholder="admin@hbcaixensavoie.fr"
           autoComplete="email"
         />
       </div>

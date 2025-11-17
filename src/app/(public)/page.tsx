@@ -5,8 +5,6 @@ import { FeaturedNews } from '@/components/home/FeaturedNews'
 import { FeaturedMatches } from '@/components/home/FeaturedMatches'
 import { UpcomingMatches } from '@/components/home/UpcomingMatches'
 import { FeaturedPartners } from '@/components/home/FeaturedPartners'
-import { CTASection } from '@/components/home/CTASection'
-import { NewsletterSection } from '@/components/home/NewsletterSection'
 import { OrganizationSchema } from '@/components/seo/StructuredData'
 
 export const revalidate = 300
@@ -244,12 +242,6 @@ export default async function HomePage() {
       {featuredPartenaires.length > 0 && (
         <FeaturedPartners partenaires={featuredPartenaires} />
       )}
-
-      {/* Call to Action - Rejoignez-nous */}
-      <CTASection />
-
-      {/* Section Newsletter + Club Info */}
-      <NewsletterSection />
     </>
   )
 }
