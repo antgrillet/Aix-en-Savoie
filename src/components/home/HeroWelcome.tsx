@@ -94,7 +94,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
       </div>
 
       {/* Content */}
-      <div className="container max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 relative z-10 py-20">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
           {/* Left Column - Main Content */}
           <motion.div

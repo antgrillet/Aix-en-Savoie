@@ -95,7 +95,7 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
                       className="object-contain p-2"
                     />
                   </div>
-                  <p className="text-xs text-white/80 mt-1 line-clamp-1 font-medium">HBC Aix</p>
+                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.equipe.nom}</p>
                 </div>
                 <span className="text-white text-lg font-bold">VS</span>
                 <div className="text-center">
@@ -116,7 +116,7 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
                       </span>
                     </div>
                   )}
-                  <p className="text-xs text-white/80 mt-1 line-clamp-1 font-medium">{match.adversaire.split(' ').slice(0, 2).join(' ')}</p>
+                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.adversaire.split(' ').slice(0, 2).join(' ')}</p>
                 </div>
               </div>
 
@@ -144,7 +144,7 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
                   <div className={`text-3xl font-bold ${isWin ? 'text-green-500' : 'text-white/60'}`}>
                     {match.scoreEquipe}
                   </div>
-                  <p className="text-xs text-white/60 mt-1 line-clamp-1 font-medium">HBC Aix</p>
+                  <p className="text-xs text-white/60 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.equipe.nom}</p>
                 </div>
                 <div className="text-white/40 text-xl font-bold">-</div>
                 <div className="text-center flex-1">

@@ -76,7 +76,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Back Button */}
-        <div className="container-padding py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/equipes"
             className="inline-flex items-center text-neutral-400 hover:text-primary-500 transition-colors"
@@ -87,7 +87,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
         </div>
 
         {/* Team Header */}
-        <div className="container-padding pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="max-w-7xl mx-auto">
           {/* Featured Image */}
           <div className="relative h-96 rounded-2xl overflow-hidden mb-8">
