@@ -58,7 +58,8 @@ export async function scrapeFFHandballMatches(url: string, equipeNom: string): P
 
     // Fermer la popup de cookies si elle existe
     try {
-      const cookieButton = page.locator('button:has-text("Continuer sans accepter")')
+      // Le texte du bouton a changé sur le site FFHB
+      const cookieButton = page.locator('button:has-text("Accepter & Fermer")')
       if (await cookieButton.isVisible({ timeout: 3000 })) {
         await cookieButton.click()
         await page.waitForTimeout(1000)
@@ -104,7 +105,8 @@ export async function scrapeFFHandballMatches(url: string, equipeNom: string): P
           if (!fullText) continue
 
           // Extraire la date et l'heure
-          const dateRegex = /(\w+\s+)?(\d{1,2})\s+(\w+)\s+(\d{4})\s+à\s+(\d{1,2})H(\d{2})/
+          // Utiliser [^\d\s]+ au lieu de \w+ pour matcher les caractères accentués (décembre, février, août)
+          const dateRegex = /([^\d\s]+\s+)?(\d{1,2})\s+([^\d\s]+)\s+(\d{4})\s+à\s+(\d{1,2})H(\d{2})/
           const dateMatch = fullText.match(dateRegex)
           if (!dateMatch) continue
 
@@ -269,7 +271,8 @@ export async function scrapeFFHandballClassement(url: string): Promise<ScrapedCl
 
     // Fermer la popup de cookies si elle existe
     try {
-      const cookieButton = page.locator('button:has-text("Continuer sans accepter")')
+      // Le texte du bouton a changé sur le site FFHB
+      const cookieButton = page.locator('button:has-text("Accepter & Fermer")')
       if (await cookieButton.isVisible({ timeout: 3000 })) {
         await cookieButton.click()
         await page.waitForTimeout(1000)

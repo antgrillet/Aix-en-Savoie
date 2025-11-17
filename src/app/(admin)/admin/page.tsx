@@ -19,29 +19,25 @@ export default async function AdminDashboard() {
       title: 'Articles',
       value: articlesCount,
       icon: Newspaper,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      gradient: 'from-primary-500 to-secondary-500',
     },
     {
       title: 'Équipes',
       value: equipesCount,
       icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      gradient: 'from-secondary-500 to-primary-500',
     },
     {
       title: 'Partenaires',
       value: partenairesCount,
       icon: Handshake,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      gradient: 'from-primary-600 to-secondary-600',
     },
     {
       title: 'Messages non lus',
       value: messagesCount,
       icon: MessageSquare,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      gradient: 'from-secondary-600 to-primary-600',
     },
   ]
 
@@ -74,17 +70,17 @@ export default async function AdminDashboard() {
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.title}>
-              <CardContent className="p-6">
+            <Card key={stat.title} className="overflow-hidden border-0 shadow-lg">
+              <CardContent className={`p-6 bg-gradient-to-br ${stat.gradient}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-600">
+                    <p className="text-sm font-medium text-white/90">
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                    <p className="text-3xl font-bold mt-2 text-white">{stat.value}</p>
                   </div>
-                  <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg">
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -94,16 +90,18 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Recent Articles */}
-      <Card>
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
         <CardHeader>
-          <CardTitle>Derniers articles</CardTitle>
+          <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Derniers articles
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {recentArticles.map((article) => (
               <div
                 key={article.id}
-                className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg"
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-neutral-50 to-orange-50 rounded-lg hover:shadow-md transition-shadow"
               >
                 <div>
                   <h3 className="font-semibold">{article.titre}</h3>
@@ -116,8 +114,8 @@ export default async function AdminDashboard() {
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       article.published
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-neutral-200 text-neutral-700'
+                        ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white'
+                        : 'bg-gradient-to-r from-neutral-400 to-neutral-500 text-white'
                     }`}
                   >
                     {article.published ? 'Publié' : 'Brouillon'}

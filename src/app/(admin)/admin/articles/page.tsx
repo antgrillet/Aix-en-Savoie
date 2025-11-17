@@ -12,12 +12,14 @@ export default async function ArticlesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Articles</h1>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Articles
+          </h1>
           <p className="text-muted-foreground">
             Gérez les articles et actualités du club
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700">
           <Link href="/admin/articles/new">
             <Plus className="w-4 h-4 mr-2" />
             Nouvel article
@@ -25,9 +27,11 @@ export default async function ArticlesPage() {
         </Button>
       </div>
 
-      <Card>
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
         <CardHeader>
-          <CardTitle>Liste des articles</CardTitle>
+          <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Liste des articles
+          </CardTitle>
           <CardDescription>
             {articles.length} article{articles.length > 1 ? 's' : ''}
           </CardDescription>

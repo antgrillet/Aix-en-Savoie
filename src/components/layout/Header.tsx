@@ -21,6 +21,7 @@ const leftNavigation: NavigationItem[] = [
 const mainNavigation: NavigationItem[] = [
   { name: 'Nos actus', href: '/actus' },
   { name: 'Nos équipes', href: '/equipes' },
+  { name: 'Calendrier', href: '/calendrier' },
   { name: 'Nos partenaires', href: '/partenaires' },
   { name: 'Contact', href: '/contact' },
 ]
@@ -69,10 +70,12 @@ export function Header() {
       <header
         className={`top-0 left-0 right-0 transition-all duration-500 ${
           isScrolled
-            ? 'header-scrolled fixed z-40'
-            : 'absolute bg-black/30 backdrop-blur-md border-b border-white/10 z-40'
+            ? 'header-scrolled fixed'
+            : 'absolute bg-black/30 backdrop-blur-md border-b border-white/10'
         } ${
-          !isVisible ? '-translate-y-full' : 'translate-y-0'
+          !isVisible && !isMobileMenuOpen ? '-translate-y-full' : 'translate-y-0'
+        } ${
+          isMobileMenuOpen ? 'z-[70]' : 'z-40'
         }`}
         style={{ transition: 'transform 0.3s ease-in-out' }}
       >
@@ -149,15 +152,17 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`xl:hidden p-2 transition-transform duration-200 hover:scale-110 ${
-                isMobileMenuOpen ? 'fixed top-4 right-4 z-[60]' : 'relative z-50'
+              className={`xl:hidden transition-all duration-200 hover:scale-110 ${
+                isMobileMenuOpen
+                  ? 'fixed top-4 right-4 z-[60] p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20'
+                  : 'relative z-50 p-2'
               }`}
               aria-label="Menu"
               aria-expanded={isMobileMenuOpen}
             >
               <span className="sr-only">{isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
               {isMobileMenuOpen ? (
-                <X className="w-6 h-6 text-white" />
+                <X className="w-7 h-7 text-white" />
               ) : (
                 <Menu className="w-6 h-6 text-white" />
               )}

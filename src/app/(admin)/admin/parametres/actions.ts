@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
 import { updateHeroBackgroundImage, getSetting, updatePageBackgroundImage, getPageBackgroundImage } from '@/lib/settings'
+import { prisma } from '@/lib/prisma'
 
 export async function getHeroBackground() {
   await requireAdmin()
@@ -88,5 +89,44 @@ export async function removePageBackground(page: string) {
   await updatePageBackgroundImage(page, '', session.user.id)
 
   revalidatePath(`/${page}`)
+  revalidatePath('/admin/parametres')
+}
+
+// Calendrier password
+export async function getCalendrierPassword() {
+  await requireAdmin()
+
+  const setting = await prisma.setting.findUnique({
+    where: { key: 'calendrier_password' },
+  })
+
+  return setting?.value || ''
+}
+
+export async function updateCalendrierPassword(formData: FormData) {
+  const session = await requireAdmin()
+
+  const password = formData.get('password') as string
+
+  if (!password) {
+    throw new Error('Mot de passe requis')
+  }
+
+  await prisma.setting.upsert({
+    where: { key: 'calendrier_password' },
+    create: {
+      key: 'calendrier_password',
+      value: password,
+      type: 'string',
+      description: 'Mot de passe pour accéder au calendrier interactif',
+      updatedBy: session.user.id,
+    },
+    update: {
+      value: password,
+      updatedBy: session.user.id,
+    },
+  })
+
+  revalidatePath('/calendrier')
   revalidatePath('/admin/parametres')
 }

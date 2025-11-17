@@ -1,7 +1,8 @@
 import { Settings } from 'lucide-react'
 import { HeroBackgroundForm } from './HeroBackgroundForm'
 import { PageBackgroundForm } from './PageBackgroundForm'
-import { getHeroBackground, getPageBackground } from './actions'
+import { CalendrierPasswordForm } from './CalendrierPasswordForm'
+import { getHeroBackground, getPageBackground, getCalendrierPassword } from './actions'
 import { Separator } from '@/components/ui/separator'
 
 export const metadata = {
@@ -13,19 +14,24 @@ export default async function ParametresPage() {
   const heroBackgroundSetting = await getHeroBackground()
 
   // Récupérer les backgrounds de toutes les pages
-  const [partnersBackground, newsBackground, teamsBackground, contactBackground] = await Promise.all([
+  const [partnersBackground, newsBackground, teamsBackground, contactBackground, calendrierPassword] = await Promise.all([
     getPageBackground('partenaires'),
     getPageBackground('actus'),
     getPageBackground('equipes'),
     getPageBackground('contact'),
+    getCalendrierPassword(),
   ])
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Settings className="h-8 w-8" />
+        <div className="p-3 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500">
+          <Settings className="h-8 w-8 text-white" />
+        </div>
         <div>
-          <h1 className="text-3xl font-bold">Paramètres</h1>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Paramètres
+          </h1>
           <p className="text-muted-foreground">
             Gérez les paramètres généraux du site
           </p>
@@ -34,7 +40,21 @@ export default async function ParametresPage() {
 
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold mb-4">Images de fond</h2>
+          <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Calendrier Interactif
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Configurez le mot de passe pour accéder au calendrier des matchs
+          </p>
+          <CalendrierPasswordForm initialPassword={calendrierPassword} />
+        </div>
+
+        <Separator />
+
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+            Images de fond
+          </h2>
           <p className="text-muted-foreground mb-6">
             Gérez les images de fond affichées sur les différentes pages du site
           </p>

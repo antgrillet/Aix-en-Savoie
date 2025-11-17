@@ -13,7 +13,7 @@ export default async function AdminLayout({
   await requireAdmin()
 
   return (
-    <div className="min-h-screen bg-neutral-100">
+    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-orange-50 to-orange-200">
       <AdminNav />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
     </div>

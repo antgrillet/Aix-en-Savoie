@@ -255,7 +255,8 @@ model Match {
   published   Boolean  @default(true)
 
   // Relations
-  equipe      Equipe   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  equipe       Equipe        @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  inscriptions Inscription[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -306,4 +307,32 @@ model Classement {
 
   @@index([equipeId])
   @@map("classements")
+}
+
+// ============================================
+// CALENDRIER INTERACTIF
+// ============================================
+
+enum RoleInscription {
+  TABLE_DE_MARQUE
+  ARBITRE
+  RESPONSABLE_SALLE
+  BUVETTE
+}
+
+model Inscription {
+  id        Int              @id @default(autoincrement())
+  matchId   Int
+  nom       String
+  prenom    String
+  role      RoleInscription
+
+  // Relations
+  match     Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@index([matchId])
+  @@index([role])
+  @@map("inscriptions")
 }

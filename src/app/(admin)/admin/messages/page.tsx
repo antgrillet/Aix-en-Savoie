@@ -11,14 +11,16 @@ export default async function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Messages</h1>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+          Messages
+        </h1>
         <p className="text-muted-foreground">
           Gérez les messages de contact
         </p>
       </div>
 
       <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
+        <TabsList className="bg-gradient-to-r from-orange-100 to-blue-100">
           <TabsTrigger value="all">
             Tous ({allMessages.length})
           </TabsTrigger>
@@ -31,9 +33,11 @@ export default async function MessagesPage() {
         </TabsList>
 
         <TabsContent value="all">
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
             <CardHeader>
-              <CardTitle>Tous les messages</CardTitle>
+              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+                Tous les messages
+              </CardTitle>
               <CardDescription>{allMessages.length} message{allMessages.length > 1 ? 's' : ''}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -43,9 +47,11 @@ export default async function MessagesPage() {
         </TabsContent>
 
         <TabsContent value="unread">
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
             <CardHeader>
-              <CardTitle>Messages non lus</CardTitle>
+              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+                Messages non lus
+              </CardTitle>
               <CardDescription>{unreadMessages.length} message{unreadMessages.length > 1 ? 's' : ''}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -55,9 +61,11 @@ export default async function MessagesPage() {
         </TabsContent>
 
         <TabsContent value="archived">
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
             <CardHeader>
-              <CardTitle>Messages archivés</CardTitle>
+              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+                Messages archivés
+              </CardTitle>
               <CardDescription>{archivedMessages.length} message{archivedMessages.length > 1 ? 's' : ''}</CardDescription>
             </CardHeader>
             <CardContent>

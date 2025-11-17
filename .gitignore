@@ -17,6 +17,13 @@ dist
 dist-ssr
 *.local
 
+# TypeScript
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Playwright
+.playwright-mcp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
