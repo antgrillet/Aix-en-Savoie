@@ -53,8 +53,9 @@ Main entities: Article, Equipe (team), Match, Partenaire (partner), ContactMessa
 - **Vercel Blob** - Image uploads (`@vercel/blob`)
 - **Resend** - Email sending
 - **FFHANDBALL** - Match data scraping via Playwright (`src/lib/scraping/`)
-  - In production: requires `BROWSERLESS_TOKEN` env var (browserless.io)
-  - In dev: uses local Chromium
+  - Sync runs via GitHub Actions (`.github/workflows/sync-matches.yml`)
+  - Schedule: daily 7h, Friday 18h, Sunday 20h
+  - Can trigger manually from GitHub Actions tab
 
 ## Conventions
 

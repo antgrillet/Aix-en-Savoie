@@ -1,0 +1,46 @@
+name: Sync FFHANDBALL Matches
+
+on:
+  schedule:
+    # Quotidien a 7h00 (UTC+1, donc 6h UTC)
+    - cron: '0 6 * * *'
+    # Vendredi a 18h00 (UTC+1, donc 17h UTC)
+    - cron: '0 17 * * 5'
+    # Dimanche a 20h00 (UTC+1, donc 19h UTC)
+    - cron: '0 19 * * 0'
+  workflow_dispatch: # Permet de lancer manuellement
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
+      - name: Run sync
+        run: pnpm sync:matches
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}

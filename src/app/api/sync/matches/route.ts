@@ -1,43 +1,62 @@
 import { NextResponse } from 'next/server';
-import { syncAllMatches } from '@/lib/sync-matches';
 import { requireAdmin } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes max
 
 /**
- * Route pour synchroniser les matchs de toutes les équipes
- * GET /api/sync/matches
+ * Déclenche le workflow GitHub Actions pour synchroniser les matchs
+ * POST /api/sync/matches
  */
-export async function GET(request: Request) {
+export async function POST() {
   try {
     // Vérifier l'authentification admin
     await requireAdmin();
 
-    console.log('🚀 Démarrage de la synchronisation des matchs...');
+    const githubToken = process.env.GITHUB_TOKEN;
+    const githubRepo = process.env.GITHUB_REPO; // format: "owner/repo"
 
-    // Lancer la synchronisation
-    const results = await syncAllMatches();
+    if (!githubToken || !githubRepo) {
+      return NextResponse.json(
+        { success: false, error: 'Configuration GitHub manquante (GITHUB_TOKEN, GITHUB_REPO)' },
+        { status: 500 }
+      );
+    }
 
-    // Calculer les statistiques
-    const totalCreated = results.reduce((sum, r) => sum + r.matchesCreated, 0);
-    const totalUpdated = results.reduce((sum, r) => sum + r.matchesUpdated, 0);
-    const totalSkipped = results.reduce((sum, r) => sum + r.matchesSkipped, 0);
-    const errors = results.filter((r) => r.status === 'error');
+    console.log('🚀 Déclenchement du workflow GitHub Actions...');
 
-    return NextResponse.json({
-      success: true,
-      message: 'Synchronisation terminée',
-      stats: {
-        totalCreated,
-        totalUpdated,
-        totalSkipped,
-        totalErrors: errors.length,
-      },
-      results,
-    });
+    // Déclencher le workflow via l'API GitHub
+    const response = await fetch(
+      `https://api.github.com/repos/${githubRepo}/actions/workflows/sync-matches.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+        }),
+      }
+    );
+
+    if (response.status === 204) {
+      console.log('✅ Workflow GitHub Actions déclenché avec succès');
+      return NextResponse.json({
+        success: true,
+        message: 'Synchronisation lancée via GitHub Actions',
+      });
+    }
+
+    const errorText = await response.text();
+    console.error('❌ Erreur GitHub API:', response.status, errorText);
+
+    return NextResponse.json(
+      { success: false, error: `Erreur GitHub: ${response.status}` },
+      { status: 500 }
+    );
   } catch (error) {
-    console.error('❌ Erreur lors de la synchronisation:', error);
+    console.error('❌ Erreur lors du déclenchement:', error);
 
     return NextResponse.json(
       {
@@ -50,65 +69,66 @@ export async function GET(request: Request) {
 }
 
 /**
- * Route pour vérifier le statut de la synchronisation via un cron job
- * Cette route peut être appelée par un service externe (Vercel Cron, etc.)
- * POST /api/sync/matches
+ * Récupère le statut du dernier workflow
+ * GET /api/sync/matches
  */
-export async function POST(request: Request) {
+export async function GET() {
   try {
-    // Vérifier l'authentification via un token secret pour les cron jobs
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
+    await requireAdmin();
 
-    if (!cronSecret) {
-      console.error('❌ CRON_SECRET non configuré');
+    const githubToken = process.env.GITHUB_TOKEN;
+    const githubRepo = process.env.GITHUB_REPO;
+
+    if (!githubToken || !githubRepo) {
       return NextResponse.json(
-        { success: false, error: 'Configuration manquante' },
+        { success: false, error: 'Configuration GitHub manquante' },
         { status: 500 }
       );
     }
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error('❌ Token cron invalide');
+    // Récupérer les dernières exécutions du workflow
+    const response = await fetch(
+      `https://api.github.com/repos/${githubRepo}/actions/workflows/sync-matches.yml/runs?per_page=1`,
+      {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${githubToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: 'Non autorisé' },
-        { status: 401 }
+        { success: false, error: 'Impossible de récupérer le statut' },
+        { status: 500 }
       );
     }
 
-    console.log('🚀 Synchronisation automatique démarrée (cron job)...');
+    const data = await response.json();
+    const lastRun = data.workflow_runs?.[0];
 
-    // Lancer la synchronisation
-    const results = await syncAllMatches();
-
-    // Calculer les statistiques
-    const totalCreated = results.reduce((sum, r) => sum + r.matchesCreated, 0);
-    const totalUpdated = results.reduce((sum, r) => sum + r.matchesUpdated, 0);
-    const totalSkipped = results.reduce((sum, r) => sum + r.matchesSkipped, 0);
-    const errors = results.filter((r) => r.status === 'error');
-
-    console.log('✅ Synchronisation automatique terminée');
+    if (!lastRun) {
+      return NextResponse.json({
+        success: true,
+        lastRun: null,
+        message: 'Aucune exécution trouvée',
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Synchronisation automatique terminée',
-      stats: {
-        totalCreated,
-        totalUpdated,
-        totalSkipped,
-        totalErrors: errors.length,
+      lastRun: {
+        status: lastRun.status,
+        conclusion: lastRun.conclusion,
+        created_at: lastRun.created_at,
+        updated_at: lastRun.updated_at,
+        html_url: lastRun.html_url,
       },
-      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Erreur lors de la synchronisation automatique:', error);
-
+    console.error('❌ Erreur:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
-        timestamp: new Date().toISOString(),
-      },
+      { success: false, error: 'Erreur inconnue' },
       { status: 500 }
     );
   }

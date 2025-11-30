@@ -6,6 +6,13 @@
 export async function register() {
   // Vérifier qu'on est sur le serveur (pas dans le build)
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Désactiver les cron jobs sur Vercel (Playwright ne fonctionne pas en serverless)
+    // La synchronisation est gérée par GitHub Actions
+    if (process.env.VERCEL) {
+      console.log('⏸️  Cron jobs désactivés sur Vercel (sync via GitHub Actions)');
+      return;
+    }
+
     // Importer dynamiquement pour éviter les problèmes de build
     const { startCronJobs } = await import('./lib/cron');
 
