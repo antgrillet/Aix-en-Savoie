@@ -82,8 +82,28 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
+    const formData = new FormData(e.currentTarget)
+    const nom = formData.get('nom') as string
+    const description = formData.get('description') as string
+
+    // Validation avec messages utilisateur
+    const errors: string[] = []
+
+    if (!nom?.trim()) {
+      errors.push('Le nom du partenaire est requis')
+    }
+    if (!categorie) {
+      errors.push('La catégorie est requise')
+    }
     if (!logo) {
-      toast.error('Veuillez ajouter un logo')
+      errors.push('Le logo est requis')
+    }
+    if (!description?.trim()) {
+      errors.push('La description est requise')
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0])
       return
     }
 
@@ -171,7 +191,6 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
             <Input
               id="nom"
               name="nom"
-              required
               defaultValue={initialData?.nom}
               placeholder="Nom du partenaire"
             />
@@ -182,7 +201,6 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
             <Select
               value={categorie}
               onValueChange={setCategorie}
-              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionnez une catégorie" />
@@ -235,7 +253,6 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
           <Textarea
             id="description"
             name="description"
-            required
             defaultValue={initialData?.description}
             placeholder="Description du partenaire"
             rows={6}

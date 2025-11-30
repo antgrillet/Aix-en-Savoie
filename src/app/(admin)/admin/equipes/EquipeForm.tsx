@@ -57,13 +57,36 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
+    const formData = new FormData(e.currentTarget)
+    const nom = formData.get('nom') as string
+    const categorie = formData.get('categorie') as string
+    const description = formData.get('description') as string
+    const entraineur = formData.get('entraineur') as string
+
+    // Validation avec messages utilisateur
+    const errors: string[] = []
+
+    if (!nom?.trim()) {
+      errors.push('Le nom de l\'équipe est requis')
+    }
+    if (!categorie?.trim()) {
+      errors.push('La catégorie est requise')
+    }
+    if (!description?.trim()) {
+      errors.push('La description est requise')
+    }
+    if (!entraineur?.trim()) {
+      errors.push('Le nom de l\'entraîneur est requis')
+    }
     if (!photo) {
-      toast.error('Veuillez ajouter une photo')
-      return
+      errors.push('La photo de l\'équipe est requise')
+    }
+    if (entrainements.some(e => !e.jour?.trim() || !e.horaire?.trim())) {
+      errors.push('Chaque entraînement doit avoir un jour et un horaire')
     }
 
-    if (entrainements.some(e => !e.jour || !e.horaire)) {
-      toast.error('Tous les entraînements doivent avoir un jour et un horaire')
+    if (errors.length > 0) {
+      toast.error(errors[0])
       return
     }
 
@@ -101,7 +124,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
           <Input
             id="nom"
             name="nom"
-            required
             defaultValue={initialData?.nom}
             placeholder="Ex: N2 Féminin"
           />
@@ -112,7 +134,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
           <Input
             id="categorie"
             name="categorie"
-            required
             defaultValue={initialData?.categorie}
             placeholder="Ex: N2F, Elite, etc."
           />
@@ -164,7 +185,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
         <Textarea
           id="description"
           name="description"
-          required
           defaultValue={initialData?.description}
           placeholder="Description de l'équipe"
           rows={4}
@@ -177,7 +197,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
           <Input
             id="entraineur"
             name="entraineur"
-            required
             defaultValue={initialData?.entraineur}
             placeholder="Nom de l'entraîneur"
           />
@@ -224,7 +243,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
                   value={entrainement.jour}
                   onChange={(e) => updateEntrainement(index, 'jour', e.target.value)}
                   placeholder="Lundi"
-                  required
                 />
               </div>
               <div className="col-span-3 space-y-2">
@@ -233,7 +251,6 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
                   value={entrainement.horaire}
                   onChange={(e) => updateEntrainement(index, 'horaire', e.target.value)}
                   placeholder="18h00 - 20h00"
-                  required
                 />
               </div>
               <div className="col-span-5 space-y-2">

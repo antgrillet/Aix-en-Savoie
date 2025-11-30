@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +13,8 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingButton } from '@/components/admin/LoadingButton'
+import { toast } from 'sonner'
 
 interface Equipe {
   id: number
@@ -41,19 +42,12 @@ interface MatchFormProps {
   action: (formData: FormData) => Promise<void>
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Enregistrement...' : 'Enregistrer'}
-    </Button>
-  )
-}
-
 export function MatchForm({ match, equipes, action }: MatchFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [termine, setTermine] = useState(match?.termine ?? false)
   const [domicile, setDomicile] = useState(match?.domicile ?? true)
   const [published, setPublished] = useState(match?.published ?? true)
+  const [equipeId, setEquipeId] = useState(match?.equipeId?.toString() || '')
 
   // Format date for input[type="datetime-local"]
   const formatDateForInput = (date: Date) => {
@@ -66,8 +60,56 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
     return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+
+    const formData = new FormData(e.currentTarget)
+    const adversaire = formData.get('adversaire') as string
+    const date = formData.get('date') as string
+    const lieu = formData.get('lieu') as string
+
+    // Validation avec messages utilisateur
+    const errors: string[] = []
+
+    if (!equipeId) {
+      errors.push('L\'équipe est requise')
+    }
+    if (!adversaire?.trim()) {
+      errors.push('Le nom de l\'adversaire est requis')
+    }
+    if (!date) {
+      errors.push('La date et l\'heure sont requises')
+    }
+    if (!lieu?.trim()) {
+      errors.push('Le lieu est requis')
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0])
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      formData.set('equipeId', equipeId)
+      formData.set('domicile', domicile.toString())
+      formData.set('termine', termine.toString())
+      formData.set('published', published.toString())
+
+      await action(formData)
+    } catch (error: any) {
+      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+        return
+      }
+      console.error(error)
+      toast.error('Une erreur est survenue')
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <form action={action} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Informations générales</CardTitle>
@@ -75,7 +117,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="equipeId">Équipe *</Label>
-            <Select name="equipeId" defaultValue={match?.equipeId?.toString()} required>
+            <Select value={equipeId} onValueChange={setEquipeId}>
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une équipe" />
               </SelectTrigger>
@@ -95,7 +137,6 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
               id="adversaire"
               name="adversaire"
               defaultValue={match?.adversaire}
-              required
               placeholder="Nom de l'équipe adverse"
             />
           </div>
@@ -108,7 +149,6 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
                 name="date"
                 type="datetime-local"
                 defaultValue={match?.date ? formatDateForInput(match.date) : ''}
-                required
               />
             </div>
 
@@ -118,7 +158,6 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
                 id="lieu"
                 name="lieu"
                 defaultValue={match?.lieu}
-                required
                 placeholder="Gymnase des Prés Riants"
               />
             </div>
@@ -218,8 +257,10 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
       </Card>
 
       <div className="flex gap-4">
-        <SubmitButton />
-        <Button type="button" variant="outline" onClick={() => window.history.back()}>
+        <LoadingButton type="submit" isLoading={isSubmitting}>
+          Enregistrer
+        </LoadingButton>
+        <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting}>
           Annuler
         </Button>
       </div>

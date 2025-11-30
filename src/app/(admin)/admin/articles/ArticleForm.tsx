@@ -61,18 +61,35 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    if (!image) {
-      toast.error('Veuillez ajouter une image')
-      return
-    }
+    const formData = new FormData(e.currentTarget)
+    const titre = formData.get('titre') as string
+    const date = formData.get('date') as string
+    const resume = formData.get('resume') as string
 
-    if (!contenu) {
-      toast.error('Veuillez ajouter du contenu')
-      return
-    }
+    // Validation avec messages utilisateur
+    const errors: string[] = []
 
+    if (!titre?.trim()) {
+      errors.push('Le titre est requis')
+    }
     if (!categorie) {
-      toast.error('Veuillez sélectionner une catégorie')
+      errors.push('La catégorie est requise')
+    }
+    if (!date) {
+      errors.push('La date de publication est requise')
+    }
+    if (!image) {
+      errors.push('L\'image de couverture est requise')
+    }
+    if (!resume?.trim()) {
+      errors.push('Le résumé est requis')
+    }
+    if (!contenu?.trim()) {
+      errors.push('Le contenu de l\'article est requis')
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0])
       return
     }
 
@@ -103,7 +120,6 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
           <Input
             id="titre"
             name="titre"
-            required
             defaultValue={initialData?.titre}
             placeholder="Titre de l'article"
           />
@@ -111,7 +127,7 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="categorie">Catégorie *</Label>
-          <Select value={categorie} onValueChange={setCategorie} required>
+          <Select value={categorie} onValueChange={setCategorie}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
@@ -132,7 +148,6 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
           id="date"
           name="date"
           type="date"
-          required
           defaultValue={
             initialData
               ? new Date(initialData.date).toISOString().split('T')[0]
@@ -157,7 +172,6 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
         <Textarea
           id="resume"
           name="resume"
-          required
           defaultValue={initialData?.resume}
           placeholder="Résumé de l'article (affiché dans les listes)"
           rows={3}
