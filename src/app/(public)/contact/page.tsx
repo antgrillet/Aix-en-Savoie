@@ -47,8 +47,9 @@ export default async function ContactPage() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Adresse</h3>
                       <p className="text-neutral-400">
-                        Gymnase Municipal<br />
-                        73100 Aix-les-Bains
+                        7 rue des Prés Riants<br />
+                        73100 Aix-les-Bains<br />
+                        France
                       </p>
                     </div>
                   </div>
@@ -62,10 +63,10 @@ export default async function ContactPage() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Téléphone</h3>
                       <a
-                        href="tel:+33479000000"
+                        href="tel:+33479884550"
                         className="text-neutral-400 hover:text-primary-500 transition-colors"
                       >
-                        04 79 00 00 00
+                        04 79 88 45 50
                       </a>
                     </div>
                   </div>

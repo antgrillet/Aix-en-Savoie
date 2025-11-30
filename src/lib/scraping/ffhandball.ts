@@ -1,4 +1,19 @@
-import { chromium } from 'playwright'
+import { chromium, Browser } from 'playwright'
+
+// Helper to get browser - uses Browserless.io in production, local Chromium in dev
+async function getBrowser(): Promise<Browser> {
+  const browserlessToken = process.env.BROWSERLESS_TOKEN
+
+  if (browserlessToken) {
+    // Production: use Browserless.io
+    console.log('🌐 Connexion à Browserless.io...')
+    return chromium.connect(`wss://chrome.browserless.io?token=${browserlessToken}`)
+  }
+
+  // Development: use local Chromium
+  console.log('🖥️ Lancement de Chromium local...')
+  return chromium.launch({ headless: true })
+}
 
 export interface ScrapedMatch {
   adversaire: string
@@ -41,7 +56,7 @@ function cleanTeamName(name: string): string {
 }
 
 export async function scrapeFFHandballMatches(url: string, equipeNom: string): Promise<ScrapedMatch[]> {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await getBrowser()
   const page = await browser.newPage()
 
   try {
@@ -261,7 +276,7 @@ export async function getFFHandballMatchesFromAPI(url: string, equipeNom: string
 }
 
 export async function scrapeFFHandballClassement(url: string): Promise<ScrapedClassement[]> {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await getBrowser()
   const page = await browser.newPage()
 
   try {
