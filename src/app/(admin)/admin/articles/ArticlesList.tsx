@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink } from 'lucide-react'
+import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteArticle, togglePublished, toggleVedette } from './actions'
@@ -25,6 +26,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Article } from '@prisma/client'
 
 interface ArticlesListProps {
@@ -35,6 +43,40 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
   const [articles, setArticles] = useState(initialArticles)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Filtres
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  // Extraire les catégories uniques
+  const categories = useMemo(() => {
+    const cats = new Set(initialArticles.map(a => a.categorie))
+    return Array.from(cats).sort()
+  }, [initialArticles])
+
+  // Filtrer les articles
+  const filteredArticles = useMemo(() => {
+    return articles.filter(article => {
+      const matchesSearch = search === '' ||
+        article.titre.toLowerCase().includes(search.toLowerCase())
+      const matchesCategory = categoryFilter === 'all' ||
+        article.categorie === categoryFilter
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'published' && article.published) ||
+        (statusFilter === 'draft' && !article.published) ||
+        (statusFilter === 'featured' && article.vedette)
+      return matchesSearch && matchesCategory && matchesStatus
+    })
+  }, [articles, search, categoryFilter, statusFilter])
+
+  const clearFilters = () => {
+    setSearch('')
+    setCategoryFilter('all')
+    setStatusFilter('all')
+  }
+
+  const hasActiveFilters = search !== '' || categoryFilter !== 'all' || statusFilter !== 'all'
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -82,6 +124,54 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
 
   return (
     <>
+      {/* Filtres */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un article..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Catégorie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les catégories</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="published">Publiés</SelectItem>
+            <SelectItem value="draft">Brouillons</SelectItem>
+            <SelectItem value="featured">En vedette</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="w-4 h-4 mr-2" />
+            Effacer
+          </Button>
+        )}
+
+        <div className="ml-auto text-sm text-muted-foreground self-center">
+          {filteredArticles.length} article{filteredArticles.length > 1 ? 's' : ''}
+        </div>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -95,14 +185,14 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {articles.length === 0 ? (
+          {filteredArticles.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                Aucun article
+                {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
               </TableCell>
             </TableRow>
           ) : (
-            articles.map((article) => (
+            filteredArticles.map((article) => (
               <TableRow key={article.id}>
                 <TableCell>
                   <div className="relative w-16 h-16 rounded overflow-hidden bg-muted">

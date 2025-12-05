@@ -1,6 +1,5 @@
 import { prisma } from './prisma';
 import { scrapeFFHandballMatches } from './scraping/ffhandball';
-import { startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 
 interface SyncResult {
   equipeId: number;
@@ -30,24 +29,10 @@ export async function syncTeamMatches(
     // Scraper les matchs depuis FFHB
     const scrapedMatches = await scrapeFFHandballMatches(calendrierUrl, equipeNom);
 
-    // Filtrer pour garder uniquement cette semaine et la semaine prochaine
-    const now = new Date();
-    const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+    console.log(`  ℹ️  ${scrapedMatches.length} matchs trouvés`);
 
-    const relevantMatches = scrapedMatches.filter((match) =>
-      isWithinInterval(match.date, {
-        start: thisWeekStart,
-        end: nextWeekEnd,
-      })
-    );
-
-    console.log(
-      `  ℹ️  ${scrapedMatches.length} matchs trouvés, ${relevantMatches.length} pertinents (cette semaine + semaine prochaine)`
-    );
-
-    // Synchroniser chaque match
-    for (const matchData of relevantMatches) {
+    // Synchroniser chaque match (passés et futurs)
+    for (const matchData of scrapedMatches) {
       // Vérifier si le match existe déjà (même date et adversaire)
       const existingMatch = await prisma.match.findFirst({
         where: {

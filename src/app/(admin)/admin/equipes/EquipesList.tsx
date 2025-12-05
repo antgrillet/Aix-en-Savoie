@@ -1,15 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Edit, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react'
+import { Edit, Trash2, Eye, EyeOff, GripVertical, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteEquipe, togglePublished, deleteMultipleEquipes, updateOrdre } from './actions'
 import { toast } from 'sonner'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   DndContext,
   closestCenter,
@@ -150,6 +158,33 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [showBulkDelete, setShowBulkDelete] = useState(false)
 
+  // Filtres
+  const [search, setSearch] = useState('')
+  const [genreFilter, setGenreFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  // Filtrer les équipes
+  const filteredEquipes = useMemo(() => {
+    return equipes.filter(equipe => {
+      const matchesSearch = search === '' ||
+        equipe.nom.toLowerCase().includes(search.toLowerCase()) ||
+        equipe.entraineur.toLowerCase().includes(search.toLowerCase())
+      const matchesGenre = genreFilter === 'all' || equipe.genre === genreFilter
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'published' && equipe.published) ||
+        (statusFilter === 'draft' && !equipe.published)
+      return matchesSearch && matchesGenre && matchesStatus
+    })
+  }, [equipes, search, genreFilter, statusFilter])
+
+  const clearFilters = () => {
+    setSearch('')
+    setGenreFilter('all')
+    setStatusFilter('all')
+  }
+
+  const hasActiveFilters = search !== '' || genreFilter !== 'all' || statusFilter !== 'all'
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -253,6 +288,52 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
 
   return (
     <>
+      {/* Filtres */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher une équipe..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select value={genreFilter} onValueChange={setGenreFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Genre" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="MASCULIN">Masculin</SelectItem>
+            <SelectItem value="FEMININ">Féminin</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="published">Publiées</SelectItem>
+            <SelectItem value="draft">Brouillons</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="w-4 h-4 mr-2" />
+            Effacer
+          </Button>
+        )}
+
+        <div className="ml-auto text-sm text-muted-foreground self-center">
+          {filteredEquipes.length} équipe{filteredEquipes.length > 1 ? 's' : ''}
+        </div>
+      </div>
+
       {selectedIds.length > 0 && (
         <div className="mb-4 flex items-center gap-4 p-4 bg-muted rounded-lg">
           <span className="text-sm font-medium">
@@ -286,7 +367,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
             <TableRow>
               <TableHead className="w-[50px]">
                 <Checkbox
-                  checked={selectedIds.length === equipes.length && equipes.length > 0}
+                  checked={selectedIds.length === filteredEquipes.length && filteredEquipes.length > 0}
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
@@ -302,18 +383,18 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {equipes.length === 0 ? (
+            {filteredEquipes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                  Aucune équipe
+                  {hasActiveFilters ? 'Aucune équipe trouvée' : 'Aucune équipe'}
                 </TableCell>
               </TableRow>
             ) : (
               <SortableContext
-                items={equipes.map((e) => e.id)}
+                items={filteredEquipes.map((e) => e.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {equipes.map((equipe) => (
+                {filteredEquipes.map((equipe) => (
                   <SortableRow
                     key={equipe.id}
                     equipe={equipe}
