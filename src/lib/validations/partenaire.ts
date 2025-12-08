@@ -42,6 +42,14 @@ export const partenaireSchema = z.object({
   temoignage: temoignageSchema,
   projetsCommuns: z.array(z.string()).default([]),
 
+  // Offre promotionnelle
+  promoActive: z.boolean().default(false),
+  promoTitre: z.string().max(100, 'Le titre ne peut pas dépasser 100 caractères').optional().or(z.literal('')),
+  promoDescription: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional().or(z.literal('')),
+  promoCode: z.string().max(50, 'Le code ne peut pas dépasser 50 caractères').optional().or(z.literal('')),
+  promoExpiration: z.date().optional().nullable(),
+  promoConditions: z.string().max(300, 'Les conditions ne peuvent pas dépasser 300 caractères').optional().or(z.literal('')),
+
   // Paramètres
   partenaire_majeur: z.boolean().default(false),
   ordre: z.number().int().min(0),

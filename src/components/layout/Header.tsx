@@ -119,7 +119,7 @@ export function Header() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide"
+                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                     >
                       {item.name}
                     </a>
@@ -127,7 +127,7 @@ export function Header() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide"
+                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                     >
                       {item.name}
                     </Link>
@@ -142,7 +142,7 @@ export function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="nav-link text-base"
+                  className="nav-link text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                 >
                   {item.name}
                 </Link>
@@ -152,16 +152,16 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`xl:hidden transition-all duration-200 hover:scale-110 ${
+              className={`xl:hidden transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                 isMobileMenuOpen
                   ? 'fixed top-4 right-4 z-[60] p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20'
-                  : 'relative z-50 p-2'
+                  : 'relative z-50 p-3'
               }`}
-              aria-label="Menu"
+              aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
               aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
             >
-              <span className="sr-only">{isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
-              {isMobileMenuOpen ? (
+                            {isMobileMenuOpen ? (
                 <X className="w-7 h-7 text-white" />
               ) : (
                 <Menu className="w-6 h-6 text-white" />
@@ -179,6 +179,7 @@ export function Header() {
             initial="hidden"
             animate="visible"
             exit="exit"
+            id="mobile-menu"
             className="fixed inset-0 bg-gradient-to-br from-black/95 via-zinc-900/95 to-black/95 backdrop-blur-xl z-[45] overflow-auto pt-24"
           >
             <nav className="p-6">
@@ -195,7 +196,7 @@ export function Header() {
                         href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5"
+                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
                       >
                         <span>{item.name}</span>
                         <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />
@@ -204,7 +205,7 @@ export function Header() {
                       <Link
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5"
+                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
                       >
                         <span>{item.name}</span>
                         <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />

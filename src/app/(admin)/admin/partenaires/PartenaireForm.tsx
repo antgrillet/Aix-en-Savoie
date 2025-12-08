@@ -17,7 +17,7 @@ import {
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { LoadingButton } from '@/components/admin/LoadingButton'
 import { toast } from 'sonner'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Ticket } from 'lucide-react'
 import type { Partenaire } from '@prisma/client'
 
 // Catégories prédéfinies pour les partenaires
@@ -78,6 +78,14 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
   const [temoignageAuteur, setTemoignageAuteur] = useState(initialTemoignage.auteur || '')
   const [temoignageRole, setTemoignageRole] = useState(initialTemoignage.role || '')
   const [temoignagePhoto, setTemoignagePhoto] = useState(initialTemoignage.photo || '')
+
+  // Offre promotionnelle
+  const [promoActive, setPromoActive] = useState(initialData?.promoActive || false)
+  const [promoTitre, setPromoTitre] = useState(initialData?.promoTitre || '')
+  const [promoDescription, setPromoDescription] = useState(initialData?.promoDescription || '')
+  const [promoCode, setPromoCode] = useState(initialData?.promoCode || '')
+  const [promoExpiration, setPromoExpiration] = useState(initialData?.promoExpiration ? new Date(initialData.promoExpiration).toISOString().split('T')[0] : '')
+  const [promoConditions, setPromoConditions] = useState(initialData?.promoConditions || '')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -148,6 +156,14 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
         }
         formData.set('temoignage', JSON.stringify(temoignage))
       }
+
+      // Offre promotionnelle
+      formData.set('promoActive', promoActive.toString())
+      if (promoTitre) formData.set('promoTitre', promoTitre)
+      if (promoDescription) formData.set('promoDescription', promoDescription)
+      if (promoCode) formData.set('promoCode', promoCode)
+      if (promoExpiration) formData.set('promoExpiration', promoExpiration)
+      if (promoConditions) formData.set('promoConditions', promoConditions)
 
       await action(formData)
       // Le redirect se fait automatiquement, pas besoin de toast ici
@@ -636,6 +652,86 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
             </p>
           )}
         </div>
+      </div>
+
+      {/* OFFRE PARTENAIRE */}
+      <div className="bg-white rounded-lg border p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Ticket className="w-5 h-5 text-primary" />
+            Offre Partenaire
+          </h3>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="promoActive" className="text-sm">Activer l'offre</Label>
+            <Switch
+              id="promoActive"
+              checked={promoActive}
+              onCheckedChange={setPromoActive}
+            />
+          </div>
+        </div>
+
+        {promoActive && (
+          <div className="space-y-4 pt-2 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="promoTitre">Titre de l'offre *</Label>
+              <Input
+                id="promoTitre"
+                value={promoTitre}
+                onChange={(e) => setPromoTitre(e.target.value)}
+                placeholder="-10% sur votre première commande"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="promoDescription">Description</Label>
+              <Textarea
+                id="promoDescription"
+                value={promoDescription}
+                onChange={(e) => setPromoDescription(e.target.value)}
+                placeholder="Bénéficiez d'une réduction exclusive en tant que membre du HBC Aix-en-Savoie..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="promoCode">Code promo (optionnel)</Label>
+                <Input
+                  id="promoCode"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="HBCAIX10"
+                  className="font-mono uppercase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Si vide, le client devra mentionner le club en magasin
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="promoExpiration">Date d'expiration (optionnelle)</Label>
+                <Input
+                  id="promoExpiration"
+                  type="date"
+                  value={promoExpiration}
+                  onChange={(e) => setPromoExpiration(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="promoConditions">Conditions d'utilisation</Label>
+              <Textarea
+                id="promoConditions"
+                value={promoConditions}
+                onChange={(e) => setPromoConditions(e.target.value)}
+                placeholder="Non cumulable avec d'autres offres. Valable en magasin uniquement."
+                rows={2}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* PARAMÈTRES */}

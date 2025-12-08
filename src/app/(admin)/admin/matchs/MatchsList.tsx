@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Edit, Trash2, Calendar } from 'lucide-react'
+import { Edit, Trash2, Calendar, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
@@ -16,6 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Match {
   id: number
@@ -43,6 +50,24 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
   const [matchs, setMatchs] = useState(initialMatchs)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedEquipeId, setSelectedEquipeId] = useState<string>('all')
+
+  // Extraire les équipes uniques depuis les matchs
+  const equipes = useMemo(() => {
+    const uniqueEquipes = new Map<number, { id: number; nom: string; categorie: string }>()
+    initialMatchs.forEach((match) => {
+      if (!uniqueEquipes.has(match.equipe.id)) {
+        uniqueEquipes.set(match.equipe.id, match.equipe)
+      }
+    })
+    return Array.from(uniqueEquipes.values()).sort((a, b) => a.nom.localeCompare(b.nom))
+  }, [initialMatchs])
+
+  // Filtrer les matchs par équipe
+  const filteredMatchs = useMemo(() => {
+    if (selectedEquipeId === 'all') return matchs
+    return matchs.filter((match) => match.equipe.id === parseInt(selectedEquipeId))
+  }, [matchs, selectedEquipeId])
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -72,6 +97,32 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
 
   return (
     <>
+      {/* Filtre par équipe */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Filter className="w-4 h-4" />
+          <span>Filtrer par équipe :</span>
+        </div>
+        <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
+          <SelectTrigger className="w-[250px]">
+            <SelectValue placeholder="Toutes les équipes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les équipes</SelectItem>
+            {equipes.map((equipe) => (
+              <SelectItem key={equipe.id} value={equipe.id.toString()}>
+                {equipe.nom} ({equipe.categorie})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedEquipeId !== 'all' && (
+          <span className="text-sm text-muted-foreground">
+            {filteredMatchs.length} match{filteredMatchs.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -86,14 +137,14 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {matchs.length === 0 ? (
+            {filteredMatchs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Aucun match
+                  {selectedEquipeId === 'all' ? 'Aucun match' : 'Aucun match pour cette équipe'}
                 </TableCell>
               </TableRow>
             ) : (
-              matchs.map((match) => (
+              filteredMatchs.map((match) => (
                 <TableRow key={match.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 import { PartnerCard } from '@/components/partners/PartnerCard'
+import { PromoCard } from '@/components/partners/PromoCard'
 
 export const revalidate = 3600
 
@@ -627,6 +628,32 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        {/* 🎁 SECTION OFFRE PROMOTIONNELLE */}
+        {partenaire.promoActive && partenaire.promoTitre && (
+          <section className="py-8">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                  Offre Exclusive
+                </h2>
+                <div
+                  className="w-20 h-1 rounded-full mx-auto"
+                  style={{ backgroundColor: brandColor }}
+                />
+              </div>
+
+              <PromoCard
+                titre={partenaire.promoTitre}
+                description={partenaire.promoDescription}
+                code={partenaire.promoCode}
+                expiration={partenaire.promoExpiration}
+                conditions={partenaire.promoConditions}
+                brandColor={brandColor}
+              />
+            </div>
+          </section>
+        )}
 
         {/* Autres partenaires */}
         {autresPartenaires.length > 0 && (

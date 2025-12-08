@@ -181,6 +181,14 @@ model Partenaire {
   temoignage        Json?    // {citation: string, auteur: string, role: string, photo?: string}
   projetsCommuns    String[] // Projets en collaboration avec le club
 
+  // Offre promotionnelle
+  promoActive       Boolean   @default(false)  // Activer/désactiver l'offre
+  promoTitre        String?                     // Titre de l'offre (ex: "-10% sur votre commande")
+  promoDescription  String?   @db.Text          // Description libre de l'offre
+  promoCode         String?                     // Code promo (si vide = mention en magasin)
+  promoExpiration   DateTime?                   // Date d'expiration optionnelle
+  promoConditions   String?   @db.Text          // Conditions d'utilisation
+
   partenaire_majeur Boolean  @default(false)
   ordre             Int      @default(0)
   published         Boolean  @default(true)

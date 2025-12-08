@@ -88,6 +88,16 @@ export async function createPartenaire(formData: FormData) {
     temoignage,
     projetsCommuns,
 
+    // Offre promotionnelle
+    promoActive: formData.get('promoActive') === 'true',
+    promoTitre: (formData.get('promoTitre') as string) || '',
+    promoDescription: (formData.get('promoDescription') as string) || '',
+    promoCode: (formData.get('promoCode') as string) || '',
+    promoExpiration: formData.get('promoExpiration')
+      ? new Date(formData.get('promoExpiration') as string)
+      : null,
+    promoConditions: (formData.get('promoConditions') as string) || '',
+
     // Paramètres
     partenaire_majeur: formData.get('partenaire_majeur') === 'true',
     ordre: parseInt(formData.get('ordre') as string) || 0,
@@ -151,6 +161,16 @@ export async function updatePartenaire(id: number, formData: FormData) {
     apports,
     temoignage,
     projetsCommuns,
+
+    // Offre promotionnelle
+    promoActive: formData.get('promoActive') === 'true',
+    promoTitre: (formData.get('promoTitre') as string) || '',
+    promoDescription: (formData.get('promoDescription') as string) || '',
+    promoCode: (formData.get('promoCode') as string) || '',
+    promoExpiration: formData.get('promoExpiration')
+      ? new Date(formData.get('promoExpiration') as string)
+      : null,
+    promoConditions: (formData.get('promoConditions') as string) || '',
 
     // Paramètres
     partenaire_majeur: formData.get('partenaire_majeur') === 'true',

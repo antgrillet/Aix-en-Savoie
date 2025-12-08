@@ -50,7 +50,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
           {/* Content */}
           <div className="p-6 flex flex-col flex-1">
-            <div className="flex items-center gap-2 text-neutral-400 text-sm mb-3">
+            <div className="flex items-center gap-2 text-neutral-300 text-sm mb-3">
               <Calendar className="w-4 h-4" />
               <time dateTime={new Date(article.date).toISOString()}>
                 {new Date(article.date).toLocaleDateString('fr-FR', {

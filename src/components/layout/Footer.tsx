@@ -31,7 +31,7 @@ export function Footer() {
               <h3 className="font-display font-bold text-xl mb-3 text-white">
                 HBC Aix-en-Savoie
               </h3>
-              <p className="text-white/60 text-sm leading-relaxed">
+              <p className="text-neutral-300 text-sm leading-relaxed">
                 Club de handball passionné, engagé dans la formation et le développement des jeunes talents.
               </p>
             </div>
@@ -44,7 +44,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/"
-                  className="group inline-flex items-center text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
                   Accueil
@@ -53,7 +53,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/actus"
-                  className="group inline-flex items-center text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
                   Actualités
@@ -62,7 +62,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/equipes"
-                  className="group inline-flex items-center text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
                   Équipes
@@ -71,7 +71,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/partenaires"
-                  className="group inline-flex items-center text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
                   Partenaires
@@ -80,7 +80,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="group inline-flex items-center text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
                   Contact
@@ -97,7 +97,7 @@ export function Footer() {
                 <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">
                   <MapPin className="w-5 h-5 text-orange-500" />
                 </div>
-                <div className="text-white/70 text-sm leading-relaxed">
+                <div className="text-neutral-300 text-sm leading-relaxed">
                   7 rue des Prés Riants<br />
                   73100 Aix-les-Bains<br />
                   France
@@ -109,7 +109,7 @@ export function Footer() {
                 </div>
                 <a
                   href="tel:+33479884550"
-                  className="text-white/70 hover:text-orange-500 transition-colors text-sm"
+                  className="text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
                   04 79 88 45 50
                 </a>
@@ -133,7 +133,7 @@ export function Footer() {
             <h4 className="font-display font-bold text-lg mb-6 text-white">
               Suivez-nous
             </h4>
-            <p className="text-white/60 text-sm mb-6">
+            <p className="text-neutral-300 text-sm mb-6">
               Restez connectés avec notre club sur les réseaux sociaux.
             </p>
             <div className="flex gap-3">
@@ -141,19 +141,19 @@ export function Footer() {
                 href="https://www.facebook.com/hbcaixensavoie"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300"
+                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
+                <Facebook className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
               </a>
               <a
                 href="https://www.instagram.com/hbcaixensavoie/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300"
+                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
+                <Instagram className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
               </a>
             </div>
           </div>
@@ -162,15 +162,15 @@ export function Footer() {
         {/* Copyright */}
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-white/50 text-sm">
+            <p className="text-neutral-400 text-sm">
               &copy; {currentYear} HBC Aix-en-Savoie. Tous droits réservés.
             </p>
-            <div className="flex items-center gap-6 text-sm text-white/50">
-              <Link href="/contact" className="hover:text-orange-500 transition-colors">
+            <div className="flex items-center gap-6 text-sm text-neutral-400">
+              <Link href="/contact" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Mentions légales
               </Link>
               <span>•</span>
-              <Link href="/contact" className="hover:text-orange-500 transition-colors">
+              <Link href="/contact" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Politique de confidentialité
               </Link>
             </div>

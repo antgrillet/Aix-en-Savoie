@@ -75,7 +75,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
 
       {/* Contenu */}
       <div className="p-6">
-        <p className="text-gray-300 mb-4">{equipe.description}</p>
+        <p className="text-neutral-300 mb-4">{equipe.description}</p>
 
         {/* Entraîneur */}
         <div className="mb-4">
@@ -93,7 +93,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
             <Clock className="w-4 h-4 text-primary-500" />
             Entraînements
           </h4>
-          <ul className="text-gray-300 text-sm space-y-1 mb-4">
+          <ul className="text-neutral-300 text-sm space-y-1 mb-4">
             {equipe.entrainements.map((entrainement) => (
               <li key={entrainement.id} className="flex items-center">
                 <svg
@@ -124,7 +124,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
               return `${n}e`
             }
             return ourTeam ? (
-              <div className="flex items-center justify-between text-gray-300 text-sm mb-4 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
+              <div className="flex items-center justify-between text-neutral-300 text-sm mb-4 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
                 <div className="flex items-center">
                   <Trophy className="w-4 h-4 mr-2 text-primary-500" />
                   <span className="text-white font-semibold">Classement</span>
@@ -145,7 +145,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
                   <Calendar className="w-4 h-4 text-primary-500" />
                   Prochain match
                 </h4>
-                <div className="text-gray-300 text-sm space-y-1 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
+                <div className="text-neutral-300 text-sm space-y-1 bg-zinc-900/50 rounded-lg p-3 border border-zinc-700/50">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-white">{nextMatch.adversaire}</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${

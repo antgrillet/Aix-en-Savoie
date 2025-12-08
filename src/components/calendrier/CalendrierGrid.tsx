@@ -231,7 +231,7 @@ export function CalendrierGrid() {
                             Arbitre {match.stats.arbitre}/2
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            Resp. salle {match.stats.responsableSalle}/1
+                            Responsable salle {match.stats.responsableSalle}/1
                           </Badge>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export function CalendrierGrid() {
                             Arbitre {match.stats.arbitre}/2
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            Resp. salle {match.stats.responsableSalle}/1
+                            Responsable salle {match.stats.responsableSalle}/1
                           </Badge>
                         </div>
                       </div>
@@ -377,14 +377,14 @@ export function CalendrierGrid() {
                         </Badge>
                       )}
                       <div className="flex gap-1 text-xs flex-wrap">
-                        <Badge variant="outline" className="text-xs">
-                          TM {match.stats.tableDeMarque}/2
+                        <Badge variant="outline" className="text-xs" title="Table de marque">
+                          Table {match.stats.tableDeMarque}/2
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Arb {match.stats.arbitre}/2
+                        <Badge variant="outline" className="text-xs" title="Arbitre">
+                          Arb. {match.stats.arbitre}/2
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          RS {match.stats.responsableSalle}/1
+                        <Badge variant="outline" className="text-xs" title="Responsable salle">
+                          Resp. {match.stats.responsableSalle}/1
                         </Badge>
                       </div>
                     </div>
@@ -432,14 +432,14 @@ export function CalendrierGrid() {
                         </Badge>
                       )}
                       <div className="flex gap-1 text-xs flex-wrap">
-                        <Badge variant="outline" className="text-xs">
-                          TM {match.stats.tableDeMarque}/2
+                        <Badge variant="outline" className="text-xs" title="Table de marque">
+                          Table {match.stats.tableDeMarque}/2
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Arb {match.stats.arbitre}/2
+                        <Badge variant="outline" className="text-xs" title="Arbitre">
+                          Arb. {match.stats.arbitre}/2
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          RS {match.stats.responsableSalle}/1
+                        <Badge variant="outline" className="text-xs" title="Responsable salle">
+                          Resp. {match.stats.responsableSalle}/1
                         </Badge>
                       </div>
                     </div>

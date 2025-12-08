@@ -16,6 +16,10 @@ interface Partenaire {
   site?: string | null
   partenaire_majeur: boolean
   ordre: number
+  promoActive?: boolean
+  promoTitre?: string | null
+  promoCode?: string | null
+  promoExpiration?: Date | string | null
 }
 
 interface PartnersPageClientProps {
@@ -26,6 +30,17 @@ interface PartnersPageClientProps {
 export function PartnersPageClient({ partenaires, categories }: PartnersPageClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Tous')
+
+  // Partenaires avec offres actives (non expirées)
+  const partenairesAvecOffres = useMemo(() => {
+    return partenaires.filter(p => {
+      if (!p.promoActive || !p.promoTitre) return false
+      if (p.promoExpiration) {
+        return new Date(p.promoExpiration) >= new Date()
+      }
+      return true
+    })
+  }, [partenaires])
 
   // Filtrer les partenaires
   const filteredPartenaires = useMemo(() => {
@@ -70,7 +85,7 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
             placeholder="Rechercher un partenaire..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 bg-zinc-800/40 border border-zinc-700 rounded-lg text-white placeholder:text-neutral-400 focus:outline-none focus:border-primary-500 transition-colors text-sm"
+            className="w-full pl-10 pr-10 py-3 bg-zinc-800/40 border border-zinc-700 rounded-lg text-white placeholder:text-neutral-400 focus:outline-none focus:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500 transition-colors text-sm"
           />
           {searchQuery && (
             <button
@@ -91,7 +106,7 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory('Tous')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all text-sm ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                 selectedCategory === 'Tous'
                   ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                   : 'bg-zinc-800/40 text-neutral-300 hover:bg-zinc-700 border border-zinc-700'
@@ -105,7 +120,7 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all text-sm ${
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                     selectedCategory === cat
                       ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                       : 'bg-zinc-800/40 text-neutral-300 hover:bg-zinc-700 border border-zinc-700'
@@ -128,7 +143,7 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
         >
           <div className="text-5xl mb-3">🔍</div>
           <h3 className="text-xl font-bold text-white mb-2">Aucun partenaire trouvé</h3>
-          <p className="text-neutral-400 text-sm">
+          <p className="text-neutral-300 text-sm">
             Essayez de modifier votre recherche ou vos filtres
           </p>
         </motion.div>
@@ -205,31 +220,37 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        className="grid grid-cols-2 md:grid-cols-5 gap-3"
       >
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary-500 mb-1">
             {partenaires.length}
           </div>
-          <div className="text-xs text-neutral-400">Partenaires</div>
+          <div className="text-xs text-neutral-300">Partenaires</div>
         </div>
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary-500 mb-1">
             {partenairesMajeurs.length}
           </div>
-          <div className="text-xs text-neutral-400">Majeurs</div>
+          <div className="text-xs text-neutral-300">Majeurs</div>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-green-500 mb-1">
+            {partenairesAvecOffres.length}
+          </div>
+          <div className="text-xs text-neutral-300">Offres</div>
         </div>
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary-500 mb-1">
             {categories.length}
           </div>
-          <div className="text-xs text-neutral-400">Catégories</div>
+          <div className="text-xs text-neutral-300">Catégories</div>
         </div>
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary-500 mb-1">
             {filteredPartenaires.length}
           </div>
-          <div className="text-xs text-neutral-400">Affichés</div>
+          <div className="text-xs text-neutral-300">Affichés</div>
         </div>
       </motion.div>
     </div>

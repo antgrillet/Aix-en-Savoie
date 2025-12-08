@@ -144,11 +144,11 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                   variants={statsVariants}
                   className="text-center"
                 >
-                  <Icon className="w-5 h-5 text-primary-500 mb-1 mx-auto" />
+                  <Icon className="w-6 h-6 text-primary-500 mb-1 mx-auto" />
                   <div className="text-xl font-bold text-white">
                     {stat.value}
                   </div>
-                  <div className="text-[10px] text-neutral-400 font-medium leading-tight">
+                  <div className="text-xs text-neutral-300 font-medium leading-tight">
                     {stat.label}
                   </div>
                 </motion.div>
@@ -163,7 +163,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
           >
             <Link
               href="/equipes"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-all shadow-lg hover:shadow-xl hover:shadow-primary-500/50 transform hover:-translate-y-1 duration-300"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-all shadow-lg hover:shadow-xl hover:shadow-primary-500/50 transform hover:-translate-y-1 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
             >
               Découvrir nos équipes
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -176,7 +176,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
               variants={itemVariants}
               className="w-full"
             >
-              <h3 className="text-sm font-semibold text-neutral-400 mb-4 text-center lg:text-left">
+              <h3 className="text-sm font-semibold text-neutral-300 mb-4 text-center lg:text-left">
                 Nos partenaires principaux
               </h3>
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -208,10 +208,10 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => setActiveTab('matchs')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                   activeTab === 'matchs'
                     ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white'
+                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Trophy className="w-4 h-4" />
@@ -219,10 +219,10 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
               </button>
               <button
                 onClick={() => setActiveTab('articles')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                   activeTab === 'articles'
                     ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white'
+                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Newspaper className="w-4 h-4" />
@@ -257,13 +257,13 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[10px] text-primary-400 font-semibold mb-1">
+                            <div className="text-xs text-primary-400 font-semibold mb-1">
                               {article.categorie}
                             </div>
                             <h4 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-primary-400 transition-colors">
                               {article.titre}
                             </h4>
-                            <div className="text-[10px] text-neutral-500">
+                            <div className="text-xs text-neutral-400">
                               {new Date(article.date).toLocaleDateString('fr-FR', {
                                 day: 'numeric',
                                 month: 'short',
@@ -288,8 +288,8 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
           transition={{ delay: 1, duration: 0.6, repeat: Infinity, repeatType: 'reverse' as const }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
         >
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
-            <div className="w-1.5 h-2 bg-white/50 rounded-full" />
+          <div className="w-6 h-10 border-2 border-neutral-500 rounded-full flex items-start justify-center p-2">
+            <div className="w-1.5 h-2 bg-neutral-400 rounded-full" />
           </div>
         </motion.div>
       </div>

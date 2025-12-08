@@ -195,7 +195,7 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
     <div className="space-y-8">
       {/* Prochains matchs */}
       {upcomingMatches.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
           {upcomingMatches.slice(0, 2).map((match) => (
             <div key={match.id}>
               {renderMatchCard(match, true)}
@@ -206,7 +206,7 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
 
       {/* Derniers résultats */}
       {lastResults.filter(m => m.scoreEquipe !== null && m.scoreAdversaire !== null).length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
           {lastResults.filter(m => m.scoreEquipe !== null && m.scoreAdversaire !== null).slice(0, 2).map((match) => (
             <div key={match.id}>
               {renderMatchCard(match, false)}

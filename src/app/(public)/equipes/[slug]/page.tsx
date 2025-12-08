@@ -79,7 +79,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/equipes"
-            className="inline-flex items-center text-neutral-400 hover:text-primary-500 transition-colors"
+            className="inline-flex items-center text-neutral-300 hover:text-primary-500 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour aux équipes
@@ -137,12 +137,12 @@ export default async function EquipePage({ params }: EquipePageProps) {
                         <Calendar className="w-4 h-4 text-primary-500" />
                         <span className="font-semibold text-white">{entrainement.jour}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-neutral-400">
+                      <div className="flex items-center gap-2 text-sm text-neutral-300">
                         <Clock className="w-4 h-4" />
                         <span>{entrainement.horaire}</span>
                       </div>
                       {entrainement.lieu && (
-                        <div className="flex items-center gap-2 text-sm text-neutral-400 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-neutral-300 mt-1">
                           <MapPin className="w-4 h-4" />
                           <span>{entrainement.lieu}</span>
                         </div>
@@ -180,7 +180,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                         )}
                         <span className="font-semibold text-white">{match.adversaire}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-neutral-400">
+                      <div className="flex items-center gap-2 text-xs text-neutral-300">
                         <Calendar className="w-3 h-3" />
                         <span>
                           {new Date(match.date).toLocaleDateString('fr-FR', {
@@ -240,7 +240,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                             index % 2 === 0 ? 'bg-transparent' : 'bg-zinc-900/30'
                           }`}
                         >
-                          <td className="py-2 px-2 text-xs text-neutral-400">
+                          <td className="py-2 px-2 text-xs text-neutral-300">
                             {new Date(match.date).toLocaleDateString('fr-FR', {
                               day: '2-digit',
                               month: '2-digit',
@@ -285,7 +285,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                                 {match.scoreEquipe} - {match.scoreAdversaire}
                               </span>
                             ) : (
-                              <span className="text-neutral-500 text-xs">-</span>
+                              <span className="text-neutral-400 text-xs">-</span>
                             )}
                           </td>
                         </tr>
@@ -338,7 +338,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                                     ? 'bg-primary-500 text-white'
                                     : team.position <= 3
                                     ? 'bg-zinc-700 text-white font-semibold'
-                                    : 'text-neutral-400'
+                                    : 'text-neutral-300'
                                 }`}
                               >
                                 {team.position}
