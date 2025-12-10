@@ -130,33 +130,33 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-neutral-900">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-neutral-900">
           Dashboard
         </h1>
-        <p className="text-neutral-600 mt-2">
+        <p className="text-sm sm:text-base text-neutral-600 mt-1 sm:mt-2">
           Vue d'ensemble de votre site web
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
             <Link key={stat.title} href={stat.href}>
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                <CardContent className={`p-6 bg-gradient-to-br ${stat.gradient}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white/90">
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer h-full">
+                <CardContent className={`p-3 sm:p-6 bg-gradient-to-br ${stat.gradient}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-white/90 truncate">
                         {stat.title}
                       </p>
-                      <p className="text-3xl font-bold mt-1 text-white">{stat.value}</p>
-                      <p className="text-xs text-white/70 mt-1">{stat.subtitle}</p>
+                      <p className="text-xl sm:text-3xl font-bold mt-0.5 sm:mt-1 text-white">{stat.value}</p>
+                      <p className="text-[10px] sm:text-xs text-white/70 mt-0.5 sm:mt-1 truncate">{stat.subtitle}</p>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg">
-                      <Icon className="w-6 h-6 text-white" />
+                    <div className="bg-white/20 backdrop-blur-sm p-2 sm:p-3 rounded-lg w-fit">
+                      <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -167,44 +167,44 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-6 sm:mb-8">
         <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Eye className="w-5 h-5 text-purple-600" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg mb-2 sm:mb-0">
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalViews._sum.views || 0}</p>
-                <p className="text-sm text-muted-foreground">Vues totales</p>
+                <p className="text-lg sm:text-2xl font-bold">{totalViews._sum.views || 0}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Vues</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Handshake className="w-5 h-5 text-green-600" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-lg mb-2 sm:mb-0">
+                <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{partenairesCount}</p>
-                <p className="text-sm text-muted-foreground">Partenaires actifs</p>
+                <p className="text-lg sm:text-2xl font-bold">{partenairesCount}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Partenaires</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 text-blue-600" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg mb-2 sm:mb-0">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{inscriptionsCount}</p>
-                <p className="text-sm text-muted-foreground">Inscriptions</p>
+                <p className="text-lg sm:text-2xl font-bold">{inscriptionsCount}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Inscriptions</p>
               </div>
             </div>
           </CardContent>
@@ -212,39 +212,40 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
         {/* Popular Articles */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary-500" />
-                Articles populaires
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
+                <span className="hidden sm:inline">Articles populaires</span>
+                <span className="sm:hidden">Populaires</span>
               </CardTitle>
-              <CardDescription>Les plus consultés</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Les plus consultés</CardDescription>
             </div>
-            <Link href="/admin/articles" className="text-sm text-primary-500 hover:underline flex items-center gap-1">
-              Voir tout <ArrowUpRight className="w-4 h-4" />
+            <Link href="/admin/articles" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
+              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="space-y-2 sm:space-y-3">
               {popularArticles.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Aucun article</p>
               ) : (
                 popularArticles.map((article, index) => (
                   <div
                     key={article.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold text-muted-foreground w-6">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <span className="text-sm sm:text-lg font-bold text-muted-foreground w-5 sm:w-6 flex-shrink-0">
                         {index + 1}
                       </span>
-                      <span className="font-medium truncate max-w-[200px]">{article.titre}</span>
+                      <span className="font-medium text-sm sm:text-base truncate">{article.titre}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Eye className="w-4 h-4" />
+                    <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                       {article.views}
                     </div>
                   </div>
@@ -256,37 +257,38 @@ export default async function AdminDashboard() {
 
         {/* Upcoming Matches */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-500" />
-                Prochains matchs
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                <span className="hidden sm:inline">Prochains matchs</span>
+                <span className="sm:hidden">Matchs</span>
               </CardTitle>
-              <CardDescription>À venir</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">À venir</CardDescription>
             </div>
-            <Link href="/admin/matchs" className="text-sm text-primary-500 hover:underline flex items-center gap-1">
-              Voir tout <ArrowUpRight className="w-4 h-4" />
+            <Link href="/admin/matchs" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
+              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="space-y-2 sm:space-y-3">
               {upcomingMatches.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Aucun match à venir</p>
               ) : (
                 upcomingMatches.map((match) => (
                   <div
                     key={match.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg gap-2"
                   >
-                    <div>
-                      <p className="font-medium">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">
                         {match.equipe.nom} vs {match.adversaire}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(match.date), 'EEEE d MMMM à HH:mm', { locale: fr })}
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {format(new Date(match.date), 'EEE d MMM HH:mm', { locale: fr })}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
+                    <span className={`px-2 py-1 text-[10px] sm:text-xs rounded-full flex-shrink-0 ${
                       match.domicile
                         ? 'bg-green-100 text-green-700'
                         : 'bg-blue-100 text-blue-700'
@@ -302,35 +304,36 @@ export default async function AdminDashboard() {
 
         {/* Recent Articles */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-orange-500" />
-                Derniers articles
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+                <span className="hidden sm:inline">Derniers articles</span>
+                <span className="sm:hidden">Récents</span>
               </CardTitle>
-              <CardDescription>Récemment créés</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Récemment créés</CardDescription>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="space-y-2 sm:space-y-3">
               {recentArticles.map((article) => (
                 <Link
                   key={article.id}
                   href={`/admin/articles/${article.id}`}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors gap-2"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     {article.published ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-muted-foreground" />
+                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
                     )}
-                    <div>
-                      <p className="font-medium truncate max-w-[200px]">{article.titre}</p>
-                      <p className="text-xs text-muted-foreground">{article.categorie}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{article.titre}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">{article.categorie}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
                     {format(new Date(article.createdAt), 'dd/MM', { locale: fr })}
                   </span>
                 </Link>
@@ -341,33 +344,34 @@ export default async function AdminDashboard() {
 
         {/* Recent Inscriptions */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-green-500" />
-                Dernières inscriptions
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                <span className="hidden sm:inline">Dernières inscriptions</span>
+                <span className="sm:hidden">Inscriptions</span>
               </CardTitle>
-              <CardDescription>Nouvelles demandes</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Nouvelles demandes</CardDescription>
             </div>
-            <Link href="/admin/inscriptions" className="text-sm text-primary-500 hover:underline flex items-center gap-1">
-              Voir tout <ArrowUpRight className="w-4 h-4" />
+            <Link href="/admin/inscriptions" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
+              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="space-y-2 sm:space-y-3">
               {recentInscriptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Aucune inscription</p>
               ) : (
                 recentInscriptions.map((inscription) => (
                   <div
                     key={inscription.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg gap-2"
                   >
-                    <p className="font-medium">
+                    <p className="font-medium text-sm sm:text-base truncate">
                       {inscription.prenom} {inscription.nom}
                     </p>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(inscription.createdAt), 'dd/MM à HH:mm', { locale: fr })}
+                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
+                      {format(new Date(inscription.createdAt), 'dd/MM HH:mm', { locale: fr })}
                     </span>
                   </div>
                 ))

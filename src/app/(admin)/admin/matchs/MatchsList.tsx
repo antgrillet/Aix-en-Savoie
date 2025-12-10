@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Edit, Trash2, Calendar, Filter } from 'lucide-react'
+import { Edit, Trash2, Calendar, Filter, MoreVertical, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteMatch } from './actions'
@@ -23,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Match {
   id: number
@@ -90,21 +97,62 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+    })
+  }
+
+  const formatTime = (date: Date) => {
+    return new Date(date).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     })
   }
 
+  const formatFullDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  const MatchActions = ({ match }: { match: Match }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <MoreVertical className="w-4 h-4" />
+          <span className="sr-only">Actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/matchs/${match.id}`}>
+            <Edit className="w-4 h-4 mr-2" />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setDeleteId(match.id)}
+          className="text-destructive"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <>
-      {/* Filtre par équipe */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Filtre par équipe - responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Filter className="w-4 h-4" />
-          <span>Filtrer par équipe :</span>
+          <span>Filtrer :</span>
         </div>
         <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
-          <SelectTrigger className="w-[250px]">
+          <SelectTrigger className="w-full sm:w-[250px]">
             <SelectValue placeholder="Toutes les équipes" />
           </SelectTrigger>
           <SelectContent>
@@ -116,22 +164,81 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
             ))}
           </SelectContent>
         </Select>
-        {selectedEquipeId !== 'all' && (
-          <span className="text-sm text-muted-foreground">
-            {filteredMatchs.length} match{filteredMatchs.length > 1 ? 's' : ''}
-          </span>
+        <span className="text-sm text-muted-foreground">
+          {filteredMatchs.length} match{filteredMatchs.length > 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Vue Mobile - Cartes */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {filteredMatchs.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            {selectedEquipeId === 'all' ? 'Aucun match' : 'Aucun match pour cette équipe'}
+          </div>
+        ) : (
+          filteredMatchs.map((match) => (
+            <Card key={match.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <div className="font-medium text-sm">{match.equipe.nom}</div>
+                    <div className="text-xs text-muted-foreground">{match.equipe.categorie}</div>
+                  </div>
+                  <MatchActions match={match} />
+                </div>
+
+                <div className="flex items-center justify-center gap-3 py-3 bg-muted/50 rounded-lg mb-3">
+                  <span className="font-semibold text-sm">{match.equipe.nom}</span>
+                  {match.termine && match.scoreEquipe !== null && match.scoreAdversaire !== null ? (
+                    <span className="font-bold text-lg px-3">
+                      {match.scoreEquipe} - {match.scoreAdversaire}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground px-3">vs</span>
+                  )}
+                  <span className="font-semibold text-sm">{match.adversaire}</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(match.date)} à {formatTime(match.date)}
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full ${
+                    match.domicile
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {match.domicile ? 'Dom' : 'Ext'}
+                  </span>
+                  {match.competition && (
+                    <span className="bg-muted px-2 py-0.5 rounded">{match.competition}</span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    <span className="truncate max-w-[150px]">{match.lieu}</span>
+                  </div>
+                  <StatusBadge status={match.published ? 'published' : 'draft'} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
-      <div className="rounded-md border">
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Équipe</TableHead>
               <TableHead>Match</TableHead>
-              <TableHead>Score</TableHead>
-              <TableHead>Lieu</TableHead>
+              <TableHead className="hidden lg:table-cell">Score</TableHead>
+              <TableHead className="hidden lg:table-cell">Lieu</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -148,8 +255,13 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
                 <TableRow key={match.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">{formatDate(match.date)}</span>
+                      <Calendar className="w-4 h-4 text-muted-foreground hidden lg:block" />
+                      <div>
+                        <span className="font-medium">{formatDate(match.date)}</span>
+                        <span className="text-muted-foreground text-xs block lg:inline lg:ml-1">
+                          {formatTime(match.date)}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -159,16 +271,16 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
                       <span className="font-medium">{match.equipe.nom}</span>
                       <span className="text-muted-foreground">vs</span>
                       <span className="font-medium">{match.adversaire}</span>
                       {match.competition && (
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded">{match.competition}</span>
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded w-fit">{match.competition}</span>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {match.termine && match.scoreEquipe !== null && match.scoreAdversaire !== null ? (
                       <span className="font-bold">
                         {match.scoreEquipe} - {match.scoreAdversaire}
@@ -177,30 +289,17 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
                       <span className="text-muted-foreground">À venir</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className={`text-sm ${match.domicile ? 'text-green-600' : 'text-blue-600'}`}>
-                      {match.domicile ? '🏠 Domicile' : '✈️ Extérieur'}
+                      {match.domicile ? 'Dom' : 'Ext'}
                     </span>
-                    <div className="text-xs text-muted-foreground">{match.lieu}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[150px]">{match.lieu}</div>
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={match.published ? 'published' : 'draft'} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/matchs/${match.id}`}>
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteId(match.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <MatchActions match={match} />
                   </TableCell>
                 </TableRow>
               ))

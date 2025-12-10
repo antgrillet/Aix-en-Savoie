@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Edit, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react'
+import { Edit, Trash2, Eye, EyeOff, GripVertical, MoreVertical, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deletePartenaire, togglePublished, deleteMultiplePartenaires, updateOrdre } from './actions'
@@ -71,13 +72,13 @@ function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, 
 
   return (
     <TableRow ref={setNodeRef} style={style}>
-      <TableCell>
+      <TableCell className="hidden md:table-cell">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onToggleSelect}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden md:table-cell">
         <div {...attributes} {...listeners} className="cursor-move">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
@@ -93,21 +94,24 @@ function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, 
         </div>
       </TableCell>
       <TableCell className="font-medium">{partenaire.nom}</TableCell>
-      <TableCell>{partenaire.categorie}</TableCell>
+      <TableCell className="hidden lg:table-cell">{partenaire.categorie}</TableCell>
       <TableCell>
-        <StatusBadge
-          status={partenaire.published ? 'published' : 'draft'}
-        />
-        {partenaire.partenaire_majeur && (
-          <StatusBadge status="featured" className="ml-2" />
-        )}
+        <div className="flex flex-col gap-1">
+          <StatusBadge
+            status={partenaire.published ? 'published' : 'draft'}
+          />
+          {partenaire.partenaire_majeur && (
+            <StatusBadge status="featured" />
+          )}
+        </div>
       </TableCell>
-      <TableCell>{partenaire.ordre}</TableCell>
+      <TableCell className="hidden lg:table-cell">{partenaire.ordre}</TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              Actions
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreVertical className="w-4 h-4" />
+              <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -117,6 +121,14 @@ function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, 
                 Modifier
               </Link>
             </DropdownMenuItem>
+            {partenaire.site && (
+              <DropdownMenuItem asChild>
+                <a href={partenaire.site} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Voir le site
+                </a>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onTogglePublished}>
               {partenaire.published ? (
                 <>
@@ -141,6 +153,86 @@ function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, 
         </DropdownMenu>
       </TableCell>
     </TableRow>
+  )
+}
+
+// Mobile Card Component
+function PartenaireCard({ partenaire, onDelete, onTogglePublished }: {
+  partenaire: Partenaire
+  onDelete: () => void
+  onTogglePublished: () => void
+}) {
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex gap-3">
+          <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+            <Image
+              src={partenaire.logo}
+              alt={partenaire.nom}
+              fill
+              className="object-contain"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-medium text-sm">{partenaire.nom}</h3>
+                <p className="text-xs text-muted-foreground">{partenaire.categorie}</p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="w-4 h-4" />
+                    <span className="sr-only">Actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/admin/partenaires/${partenaire.id}`}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Modifier
+                    </Link>
+                  </DropdownMenuItem>
+                  {partenaire.site && (
+                    <DropdownMenuItem asChild>
+                      <a href={partenaire.site} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Voir le site
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={onTogglePublished}>
+                    {partenaire.published ? (
+                      <>
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        Dépublier
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Publier
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={onDelete}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
+              {partenaire.partenaire_majeur && <StatusBadge status="featured" />}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -255,78 +347,101 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
   return (
     <>
       {selectedIds.length > 0 && (
-        <div className="mb-4 flex items-center gap-4 p-4 bg-muted rounded-lg">
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
           <span className="text-sm font-medium">
             {selectedIds.length} partenaire{selectedIds.length > 1 ? 's' : ''} sélectionné{selectedIds.length > 1 ? 's' : ''}
           </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowBulkDelete(true)}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Supprimer la sélection
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedIds([])}
-          >
-            Annuler
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowBulkDelete(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds([])}
+            >
+              Annuler
+            </Button>
+          </div>
         </div>
       )}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedIds.length === partenaires.length && partenaires.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Logo</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Ordre</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {partenaires.length === 0 ? (
+      {/* Vue Mobile - Cartes */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {partenaires.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            Aucun partenaire
+          </div>
+        ) : (
+          partenaires.map((partenaire) => (
+            <PartenaireCard
+              key={partenaire.id}
+              partenaire={partenaire}
+              onDelete={() => setDeleteId(partenaire.id)}
+              onTogglePublished={() => handleTogglePublished(partenaire.id)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Vue Desktop - Table avec drag & drop */}
+      <div className="hidden md:block">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  Aucun partenaire
-                </TableCell>
-              </TableRow>
-            ) : (
-              <SortableContext
-                items={partenaires.map((p) => p.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {partenaires.map((partenaire) => (
-                  <SortableRow
-                    key={partenaire.id}
-                    partenaire={partenaire}
-                    onDelete={() => setDeleteId(partenaire.id)}
-                    onTogglePublished={() => handleTogglePublished(partenaire.id)}
-                    onToggleSelect={() => toggleSelectOne(partenaire.id)}
-                    isSelected={selectedIds.includes(partenaire.id)}
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedIds.length === partenaires.length && partenaires.length > 0}
+                    onCheckedChange={toggleSelectAll}
                   />
-                ))}
-              </SortableContext>
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
+                </TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="w-[70px]">Logo</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead className="hidden lg:table-cell">Catégorie</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="hidden lg:table-cell">Ordre</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {partenaires.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    Aucun partenaire
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <SortableContext
+                  items={partenaires.map((p) => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {partenaires.map((partenaire) => (
+                    <SortableRow
+                      key={partenaire.id}
+                      partenaire={partenaire}
+                      onDelete={() => setDeleteId(partenaire.id)}
+                      onTogglePublished={() => handleTogglePublished(partenaire.id)}
+                      onToggleSelect={() => toggleSelectOne(partenaire.id)}
+                      isSelected={selectedIds.includes(partenaire.id)}
+                    />
+                  ))}
+                </SortableContext>
+              )}
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
 
       <DeleteDialog
         open={deleteId !== null}

@@ -99,15 +99,15 @@ export default async function InscriptionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="p-3 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500">
-          <ClipboardList className="h-8 w-8 text-white" />
+        <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500">
+          <ClipboardList className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
+          <h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
             Inscriptions aux matchs
           </h1>
-          <p className="text-muted-foreground">
-            Gérez les inscriptions des bénévoles pour les matchs à venir
+          <p className="text-xs sm:text-base text-muted-foreground">
+            Gérez les inscriptions des bénévoles
           </p>
         </div>
       </div>
@@ -131,25 +131,25 @@ export default async function InscriptionsPage() {
             return (
               <div key={weekendKey} className="space-y-4">
                 {/* Header du weekend */}
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-6 w-6 text-white" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg shadow-lg">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
                     <div>
-                      <h2 className="text-2xl font-bold text-white">
+                      <h2 className="text-lg sm:text-2xl font-bold text-white">
                         {weekendLabel}
                       </h2>
-                      <p className="text-white/80 text-sm">
+                      <p className="text-white/80 text-xs sm:text-sm">
                         {format(data.friday, "d MMM", { locale: fr })} - {format(sunday, "d MMM yyyy", { locale: fr })}
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {totalManques > 0 && (
-                      <Badge variant="destructive" className="text-base bg-red-600">
+                      <Badge variant="destructive" className="text-xs sm:text-base bg-red-600">
                         {totalManques} manque{totalManques > 1 ? "s" : ""}
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="text-base bg-white/20 text-white border-white/30">
+                    <Badge variant="secondary" className="text-xs sm:text-base bg-white/20 text-white border-white/30">
                       {data.inscriptions.length} inscription{data.inscriptions.length > 1 ? "s" : ""}
                     </Badge>
                   </div>

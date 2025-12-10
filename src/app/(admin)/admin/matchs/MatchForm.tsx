@@ -141,7 +141,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date et heure *</Label>
               <Input
@@ -207,7 +207,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
           </div>
 
           {termine && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="scoreEquipe">Score équipe</Label>
                 <Input
@@ -256,11 +256,11 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
         </CardContent>
       </Card>
 
-      <div className="flex gap-4">
-        <LoadingButton type="submit" isLoading={isSubmitting}>
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <LoadingButton type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
           Enregistrer
         </LoadingButton>
-        <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting}>
+        <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting} className="w-full sm:w-auto">
           Annuler
         </Button>
       </div>

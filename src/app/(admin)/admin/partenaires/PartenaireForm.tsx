@@ -201,7 +201,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       <div className="bg-white rounded-lg border p-6 space-y-6">
         <h3 className="text-lg font-semibold">Informations générales</h3>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label htmlFor="nom">Nom *</Label>
             <Input
@@ -353,7 +353,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       <div className="bg-white rounded-lg border p-6 space-y-6">
         <h3 className="text-lg font-semibold">Informations de contact</h3>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label htmlFor="site">Site web</Label>
             <Input
@@ -390,7 +390,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
 
         <div className="space-y-4">
           <Label>Réseaux sociaux</Label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="facebook" className="text-sm">Facebook</Label>
               <Input
@@ -501,7 +501,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {galerie.map((image, index) => (
             <div key={index} className="space-y-2">
               <ImageUpload
@@ -578,7 +578,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label htmlFor="temoignageAuteur">Auteur</Label>
             <Input
@@ -694,7 +694,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="promoCode">Code promo (optionnel)</Label>
                 <Input
@@ -738,7 +738,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       <div className="bg-white rounded-lg border p-6 space-y-6">
         <h3 className="text-lg font-semibold">Paramètres</h3>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label htmlFor="ordre">Ordre d'affichage</Label>
             <Input
@@ -751,7 +751,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <Label htmlFor="partenaire_majeur">Partenaire majeur</Label>
               <Switch
                 id="partenaire_majeur"
@@ -760,7 +760,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <Label htmlFor="published">Publié</Label>
               <Switch
                 id="published"
@@ -773,10 +773,11 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       </div>
 
       {/* ACTIONS */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <LoadingButton
           type="submit"
           isLoading={isSubmitting}
+          className="w-full sm:w-auto"
         >
           {initialData ? 'Modifier' : 'Créer'}
         </LoadingButton>
@@ -785,6 +786,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
           variant="outline"
           onClick={() => router.back()}
           disabled={isSubmitting}
+          className="w-full sm:w-auto"
         >
           Annuler
         </Button>

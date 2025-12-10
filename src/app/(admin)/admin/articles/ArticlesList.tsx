@@ -5,13 +5,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink, Search, X } from 'lucide-react'
+import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink, Search, X, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteArticle, togglePublished, toggleVedette } from './actions'
 import { toast } from 'sonner'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -122,11 +123,68 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
     }
   }
 
+  const ArticleActions = ({ article }: { article: Article }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <MoreVertical className="w-4 h-4" />
+          <span className="sr-only">Actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/articles/${article.id}`}>
+            <Edit className="w-4 h-4 mr-2" />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/actus/${article.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Prévisualiser
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleTogglePublished(article.id)}
+        >
+          {article.published ? (
+            <>
+              <EyeOff className="w-4 h-4 mr-2" />
+              Dépublier
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4 mr-2" />
+              Publier
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleToggleVedette(article.id)}
+        >
+          <Star className={`w-4 h-4 mr-2 ${article.vedette ? 'fill-current' : ''}`} />
+          {article.vedette ? 'Retirer vedette' : 'Mettre en vedette'}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setDeleteId(article.id)}
+          className="text-destructive"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <>
-      {/* Filtres */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+      {/* Filtres - responsive */}
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher un article..."
@@ -136,66 +194,56 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
           />
         </div>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Catégorie" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les catégories</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="published">Publiés</SelectItem>
-            <SelectItem value="draft">Brouillons</SelectItem>
-            <SelectItem value="featured">En vedette</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[130px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="published">Publiés</SelectItem>
+              <SelectItem value="draft">Brouillons</SelectItem>
+              <SelectItem value="featured">En vedette</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="w-4 h-4 mr-2" />
-            Effacer
-          </Button>
-        )}
-
-        <div className="ml-auto text-sm text-muted-foreground self-center">
-          {filteredArticles.length} article{filteredArticles.length > 1 ? 's' : ''}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10">
+              <X className="w-4 h-4 mr-1" />
+              Effacer
+            </Button>
+          )}
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Image</TableHead>
-            <TableHead>Titre</TableHead>
-            <TableHead>Catégorie</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Vues</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredArticles.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredArticles.map((article) => (
-              <TableRow key={article.id}>
-                <TableCell>
-                  <div className="relative w-16 h-16 rounded overflow-hidden bg-muted">
+      <div className="text-sm text-muted-foreground mb-4">
+        {filteredArticles.length} article{filteredArticles.length > 1 ? 's' : ''}
+      </div>
+
+      {/* Vue Mobile - Cartes */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {filteredArticles.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
+          </div>
+        ) : (
+          filteredArticles.map((article) => (
+            <Card key={article.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex gap-3 p-4">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     <Image
                       src={article.image}
                       alt={article.titre}
@@ -203,83 +251,92 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
                       className="object-cover"
                     />
                   </div>
-                </TableCell>
-                <TableCell className="font-medium max-w-xs truncate">
-                  {article.titre}
-                </TableCell>
-                <TableCell>{article.categorie}</TableCell>
-                <TableCell>
-                  {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <StatusBadge
-                      status={article.published ? 'published' : 'draft'}
-                    />
-                    {article.vedette && <StatusBadge status="featured" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-medium text-sm line-clamp-2">{article.titre}</h3>
+                      <ArticleActions article={article} />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {article.categorie} • {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <StatusBadge status={article.published ? 'published' : 'draft'} />
+                      {article.vedette && <StatusBadge status="featured" />}
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {article.views}
+                      </span>
+                    </div>
                   </div>
-                </TableCell>
-                <TableCell>{article.views}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        Actions
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/articles/${article.id}`}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Modifier
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/actus/${article.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Prévisualiser
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleTogglePublished(article.id)}
-                      >
-                        {article.published ? (
-                          <>
-                            <EyeOff className="w-4 h-4 mr-2" />
-                            Dépublier
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Publier
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleToggleVedette(article.id)}
-                      >
-                        <Star className={`w-4 h-4 mr-2 ${article.vedette ? 'fill-current' : ''}`} />
-                        {article.vedette ? 'Retirer vedette' : 'Mettre en vedette'}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeleteId(article.id)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">Image</TableHead>
+              <TableHead>Titre</TableHead>
+              <TableHead className="hidden lg:table-cell">Catégorie</TableHead>
+              <TableHead className="hidden lg:table-cell">Date</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead className="hidden lg:table-cell">Vues</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredArticles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              filteredArticles.map((article) => (
+                <TableRow key={article.id}>
+                  <TableCell>
+                    <div className="relative w-14 h-14 rounded overflow-hidden bg-muted">
+                      <Image
+                        src={article.image}
+                        alt={article.titre}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium line-clamp-1 max-w-[200px] lg:max-w-[300px]">
+                      {article.titre}
+                    </div>
+                    <div className="text-xs text-muted-foreground lg:hidden mt-1">
+                      {article.categorie} • {format(new Date(article.date), 'dd/MM/yy', { locale: fr })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">{article.categorie}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <StatusBadge status={article.published ? 'published' : 'draft'} />
+                      {article.vedette && <StatusBadge status="featured" />}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">{article.views}</TableCell>
+                  <TableCell className="text-right">
+                    <ArticleActions article={article} />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <DeleteDialog
         open={deleteId !== null}

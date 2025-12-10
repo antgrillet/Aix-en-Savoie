@@ -114,7 +114,7 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="space-y-2">
           <Label htmlFor="titre">Titre *</Label>
           <Input
@@ -224,8 +224,8 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
           <Label htmlFor="vedette">Article en vedette</Label>
           <Switch
             id="vedette"
@@ -234,7 +234,7 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
           />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
           <Label htmlFor="published">Publié</Label>
           <Switch
             id="published"
@@ -244,8 +244,8 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <LoadingButton type="submit" isLoading={isSubmitting}>
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <LoadingButton type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
           {initialData ? 'Modifier' : 'Créer'}
         </LoadingButton>
         <Button
@@ -253,6 +253,7 @@ export function ArticleForm({ action, initialData }: ArticleFormProps) {
           variant="outline"
           onClick={() => router.back()}
           disabled={isSubmitting}
+          className="w-full sm:w-auto"
         >
           Annuler
         </Button>
