@@ -33,32 +33,46 @@ export async function syncTeamMatches(
 
     // Synchroniser chaque match (passés et futurs)
     for (const matchData of scrapedMatches) {
-      // Vérifier si le match existe déjà (même date et adversaire)
+      // Vérifier si le match existe déjà (même adversaire et date proche)
       const existingMatch = await prisma.match.findFirst({
         where: {
           equipeId,
           adversaire: matchData.adversaire,
-          date: matchData.date,
+          date: {
+            gte: new Date(matchData.date.getTime() - 24 * 60 * 60 * 1000),
+            lte: new Date(matchData.date.getTime() + 24 * 60 * 60 * 1000),
+          },
         },
       });
 
       if (existingMatch) {
-        // Mettre à jour si le score a changé ou si le match est marqué comme terminé
-        const needsUpdate =
-          matchData.termine &&
-          (existingMatch.scoreEquipe !== matchData.scoreEquipe ||
-            existingMatch.scoreAdversaire !== matchData.scoreAdversaire ||
-            existingMatch.termine !== matchData.termine);
+        const dateChanged = existingMatch.date.getTime() !== matchData.date.getTime();
+        const domicileChanged = existingMatch.domicile !== matchData.domicile;
+        const logoChanged = matchData.logoAdversaire !== existingMatch.logoAdversaire;
+        const scoreChanged =
+          existingMatch.scoreEquipe !== matchData.scoreEquipe ||
+          existingMatch.scoreAdversaire !== matchData.scoreAdversaire ||
+          existingMatch.termine !== matchData.termine;
+        const lieuChanged = existingMatch.lieu !== matchData.lieu && matchData.lieu !== 'À déterminer';
+        const competitionChanged = existingMatch.competition !== matchData.competition && matchData.competition;
 
-        if (needsUpdate) {
+        const updateData: Parameters<typeof prisma.match.update>[0]['data'] = {};
+        if (dateChanged) updateData.date = matchData.date;
+        if (domicileChanged) updateData.domicile = matchData.domicile;
+        if (scoreChanged) {
+          updateData.scoreEquipe = matchData.scoreEquipe;
+          updateData.scoreAdversaire = matchData.scoreAdversaire;
+          updateData.termine = matchData.termine;
+        }
+        if (logoChanged) updateData.logoAdversaire = matchData.logoAdversaire;
+        if (lieuChanged) updateData.lieu = matchData.lieu;
+        if (competitionChanged) updateData.competition = matchData.competition;
+
+        if (Object.keys(updateData).length > 0) {
           await prisma.match.update({
             where: { id: existingMatch.id },
             data: {
-              scoreEquipe: matchData.scoreEquipe,
-              scoreAdversaire: matchData.scoreAdversaire,
-              termine: matchData.termine,
-              logoAdversaire: matchData.logoAdversaire,
-              lieu: matchData.lieu,
+              ...updateData,
             },
           });
           matchesUpdated++;

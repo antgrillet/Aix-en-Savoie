@@ -2,8 +2,16 @@ import { prisma } from '@/lib/prisma'
 import { TeamsPageClient } from '@/components/teams/TeamsPageClient'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 1800
+
+export const metadata = buildMetadata({
+  title: 'Nos Équipes',
+  description: 'Découvrez toutes les équipes du HBC Aix-en-Savoie, leurs entraînements et leurs matchs à venir.',
+  path: '/equipes',
+})
 
 export default async function EquipesPage() {
   const equipes = await prisma.equipe.findMany({
@@ -36,6 +44,12 @@ export default async function EquipesPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Équipes', url: '/equipes' },
+        ]}
+      />
       {/* Background */}
       <PageBackground imageUrl={backgroundImage} />
 

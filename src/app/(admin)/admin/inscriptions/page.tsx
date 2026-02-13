@@ -3,7 +3,7 @@ import { getAllInscriptions, getInscriptionsStats } from "./actions";
 import { InscriptionsTable } from "./InscriptionsTable";
 import { ManquesResume } from "./ManquesResume";
 import { Badge } from "@/components/ui/badge";
-import { format, startOfWeek, endOfWeek, isThisWeek, addWeeks, isSameWeek } from "date-fns";
+import { format, isThisWeek, addWeeks, isSameWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata = {

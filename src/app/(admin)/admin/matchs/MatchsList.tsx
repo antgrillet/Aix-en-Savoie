@@ -85,7 +85,7 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
       setMatchs(matchs.filter((m) => m.id !== deleteId))
       toast.success('Match supprimé')
       setDeleteId(null)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(false)

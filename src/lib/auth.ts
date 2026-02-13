@@ -11,12 +11,6 @@ export const auth = betterAuth({
     provider: 'postgresql',
   }),
 
-  logger: {
-    level: 'debug',
-    disabled: false,
-    verboseLogging: true,
-  },
-
   trustedOrigins: [
     'http://localhost:3000',
     'http://localhost:3002',
@@ -39,15 +33,10 @@ export const auth = betterAuth({
     },
     password: {
       hash: async (password) => {
-        console.log('[AUTH] Hashing password')
         return await bcrypt.hash(password, 10)
       },
       verify: async ({ hash, password }) => {
-        console.log('[AUTH] Verifying password')
-        console.log('[AUTH] Hash:', hash?.substring(0, 20) + '...')
-        const result = await bcrypt.compare(password, hash)
-        console.log('[AUTH] Verification result:', result)
-        return result
+        return await bcrypt.compare(password, hash)
       },
     },
   },

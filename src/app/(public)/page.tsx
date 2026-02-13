@@ -6,16 +6,15 @@ import { FeaturedMatches } from '@/components/home/FeaturedMatches'
 import { UpcomingMatches } from '@/components/home/UpcomingMatches'
 import { FeaturedPartners } from '@/components/home/FeaturedPartners'
 import { OrganizationSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 300
 
-export const metadata = {
+export const metadata = buildMetadata({
   title: 'Accueil',
   description: 'HBC Aix-en-Savoie - Club de handball passionné. Découvrez nos équipes, nos actualités et rejoignez-nous.',
-  alternates: {
-    canonical: '/',
-  },
-}
+  path: '/',
+})
 
 export default async function HomePage() {
   // Récupérer les 6 derniers articles pour la section "À la Une"
@@ -67,19 +66,17 @@ export default async function HomePage() {
     },
   })
 
-  // Récupérer les prochains matchs des équipes featured (domicile ou extérieur)
-  const upcomingMatches = []
-  const lastResults = []
+  const featuredEquipeIds = featuredEquipes.map((e) => e.id)
 
-  for (const equipe of featuredEquipes) {
-    // Prochain match de cette équipe (peu importe domicile/extérieur)
-    const nextMatch = await prisma.match.findFirst({
+  // Récupérer les prochains matchs et les derniers résultats en une seule requête
+  const [upcomingMatchesAll, lastResultsAll] = await Promise.all([
+    prisma.match.findMany({
       where: {
-        equipeId: equipe.id,
+        equipeId: { in: featuredEquipeIds },
         published: true,
         termine: false,
         date: {
-          gte: new Date(),
+          gte: now,
         },
       },
       orderBy: {
@@ -96,6 +93,7 @@ export default async function HomePage() {
         scoreAdversaire: true,
         termine: true,
         logoAdversaire: true,
+        equipeId: true,
         equipe: {
           select: {
             nom: true,
@@ -103,16 +101,10 @@ export default async function HomePage() {
           },
         },
       },
-    })
-
-    if (nextMatch) {
-      upcomingMatches.push(nextMatch)
-    }
-
-    // Dernier résultat de cette équipe
-    const lastMatch = await prisma.match.findFirst({
+    }),
+    prisma.match.findMany({
       where: {
-        equipeId: equipe.id,
+        equipeId: { in: featuredEquipeIds },
         published: true,
         termine: true,
         scoreEquipe: { not: null },
@@ -132,6 +124,7 @@ export default async function HomePage() {
         scoreAdversaire: true,
         termine: true,
         logoAdversaire: true,
+        equipeId: true,
         equipe: {
           select: {
             nom: true,
@@ -139,21 +132,36 @@ export default async function HomePage() {
           },
         },
       },
-    })
+    }),
+  ])
 
-    if (lastMatch) {
-      lastResults.push(lastMatch)
+  const upcomingByEquipe = new Map<number, (typeof upcomingMatchesAll)[number]>()
+  for (const match of upcomingMatchesAll) {
+    if (!upcomingByEquipe.has(match.equipeId)) {
+      upcomingByEquipe.set(match.equipeId, match)
     }
   }
+
+  const lastResultByEquipe = new Map<number, (typeof lastResultsAll)[number]>()
+  for (const match of lastResultsAll) {
+    if (!lastResultByEquipe.has(match.equipeId)) {
+      lastResultByEquipe.set(match.equipeId, match)
+    }
+  }
+
+  const upcomingMatches = featuredEquipes
+    .map((equipe) => upcomingByEquipe.get(equipe.id))
+    .filter((match): match is NonNullable<typeof match> => Boolean(match))
+
+  const lastResults = featuredEquipes
+    .map((equipe) => lastResultByEquipe.get(equipe.id))
+    .filter((match): match is NonNullable<typeof match> => Boolean(match))
 
   // Limiter les matchs à venir à 2 maximum
   const limitedUpcomingMatches = upcomingMatches.slice(0, 2)
 
   // Récupérer l'image de fond du hero
   const heroBackgroundImage = await getHeroBackgroundImage()
-
-  // Extraire les IDs des équipes featured
-  const featuredEquipeIds = featuredEquipes.map((e) => e.id)
 
   // Récupérer toutes les équipes publiées avec leurs matchs du week-end à domicile
   const equipesWithWeekendMatches = await prisma.equipe.findMany({

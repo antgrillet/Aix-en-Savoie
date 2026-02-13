@@ -85,6 +85,7 @@ export function ContactForm() {
             type="text"
             required
             placeholder="Dupont"
+            autoComplete="family-name"
             className="mt-1"
           />
         </div>
@@ -97,6 +98,7 @@ export function ContactForm() {
             type="text"
             required
             placeholder="Jean"
+            autoComplete="given-name"
             className="mt-1"
           />
         </div>
@@ -111,6 +113,7 @@ export function ContactForm() {
             type="email"
             required
             placeholder="jean.dupont@example.com"
+            autoComplete="email"
             className="mt-1"
           />
         </div>
@@ -122,6 +125,7 @@ export function ContactForm() {
             name="telephone"
             type="tel"
             placeholder="06 12 34 56 78"
+            autoComplete="tel"
             className="mt-1"
           />
         </div>
@@ -135,6 +139,7 @@ export function ContactForm() {
           required
           rows={4}
           placeholder="Décrivez votre demande..."
+          autoComplete="off"
           className="mt-1"
         />
       </div>
@@ -214,6 +219,9 @@ export function ContactForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="bg-green-900/50 border border-green-500/50 text-green-300 px-4 py-3 rounded-lg flex items-center gap-2"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
           >
             <CheckCircle2 className="w-5 h-5" />
             <span className="font-medium">Votre message a été envoyé avec succès !</span>
@@ -229,6 +237,9 @@ export function ContactForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
           >
             <span className="font-medium">{errorMessage}</span>
           </motion.div>

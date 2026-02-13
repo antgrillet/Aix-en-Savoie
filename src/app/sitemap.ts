@@ -8,29 +8,51 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     where: { published: true },
     select: {
       slug: true,
-      date: true,
+      updatedAt: true,
     },
   })
 
   const equipes = await prisma.equipe.findMany({
+    where: { published: true },
     select: {
       slug: true,
+      updatedAt: true,
+    },
+  })
+
+  const partenaires = await prisma.partenaire.findMany({
+    where: {
+      published: true,
+      slug: { not: null },
+    },
+    select: {
+      slug: true,
+      updatedAt: true,
     },
   })
 
   const articleUrls = articles.map((article) => ({
     url: `${baseUrl}/actus/${article.slug}`,
-    lastModified: article.date,
+    lastModified: article.updatedAt,
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }))
 
   const equipeUrls = equipes.map((equipe) => ({
     url: `${baseUrl}/equipes/${equipe.slug}`,
-    lastModified: new Date(),
+    lastModified: equipe.updatedAt,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }))
+
+  const partenaireUrls = partenaires
+    .filter((partenaire) => Boolean(partenaire.slug))
+    .map((partenaire) => ({
+      url: `${baseUrl}/partenaires/${partenaire.slug}`,
+      lastModified: partenaire.updatedAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }))
 
   return [
     {
@@ -63,7 +85,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.5,
     },
+    {
+      url: `${baseUrl}/mentions-legales`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/politique-confidentialite`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
     ...articleUrls,
     ...equipeUrls,
+    ...partenaireUrls,
   ]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -47,7 +47,7 @@ export function CalendrierMatchList() {
   const [selectedEquipeId, setSelectedEquipeId] = useState<string>("all");
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchMatchs = async () => {
+  const fetchMatchs = useCallback(async () => {
     try {
       const url =
         selectedEquipeId === "all"
@@ -68,11 +68,11 @@ export function CalendrierMatchList() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [selectedEquipeId]);
 
   useEffect(() => {
     fetchMatchs();
-  }, [selectedEquipeId]);
+  }, [fetchMatchs]);
 
   const handleRefresh = () => {
     setRefreshing(true);

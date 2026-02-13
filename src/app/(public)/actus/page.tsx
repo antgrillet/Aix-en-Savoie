@@ -3,12 +3,43 @@ import { ArticlesGrid } from '@/components/news/ArticlesGrid'
 import { NewsFilters } from '@/components/news/NewsFilters'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 600
 
 interface SearchParams {
   categorie?: string
   page?: string
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const categorie = params.categorie
+  const page = parseInt(params.page || '1')
+
+  const hasFilter = Boolean(categorie && categorie !== 'TOUS')
+  const hasPagination = page > 1
+  const titleParts = ['Actualités']
+  if (hasFilter) titleParts.push(categorie as string)
+  if (hasPagination) titleParts.push(`Page ${page}`)
+
+  const queryParams = new URLSearchParams()
+  if (hasFilter) queryParams.set('categorie', categorie as string)
+  if (hasPagination) queryParams.set('page', page.toString())
+  const queryString = queryParams.toString()
+  const canonicalPath = `/actus${queryString ? `?${queryString}` : ''}`
+
+  return buildMetadata({
+    title: titleParts.join(' - '),
+    description: "Suivez toute l'actualité du HBC Aix-en-Savoie.",
+    path: canonicalPath,
+    noindex: hasFilter || hasPagination,
+  })
 }
 
 export default async function ActusPage({
@@ -61,6 +92,12 @@ export default async function ActusPage({
 
   return (
     <div className="pt-24 min-h-screen bg-zinc-900 relative overflow-hidden">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Actualités', url: '/actus' },
+        ]}
+      />
       {/* Background */}
       <PageBackground imageUrl={backgroundImage} />
 

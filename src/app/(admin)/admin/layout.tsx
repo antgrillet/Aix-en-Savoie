@@ -1,8 +1,16 @@
-import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth-utils'
 import { AdminNav } from '@/components/admin/AdminNav'
+import { buildMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata = buildMetadata({
+  title: 'Administration',
+  description: "Espace d'administration du HBC Aix-en-Savoie.",
+  path: '/admin',
+  noindex: true,
+  nofollow: true,
+})
 
 export default async function AdminLayout({
   children,

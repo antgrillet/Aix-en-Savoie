@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, MapPin, Trophy, TrendingUp } from 'lucide-react'
+import { Calendar, Trophy, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
@@ -59,6 +59,36 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
   const renderMatchCard = (match: Match, isUpcoming: boolean) => {
     const isWin = !isUpcoming && match.scoreEquipe !== null && match.scoreAdversaire !== null && match.scoreEquipe > match.scoreAdversaire
     const isLoss = !isUpcoming && match.scoreEquipe !== null && match.scoreAdversaire !== null && match.scoreEquipe < match.scoreAdversaire
+    const homeTeam = match.domicile
+      ? { name: match.equipe.nom, logo: '/img/home/logo.png', isHbc: true }
+      : { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
+    const awayTeam = match.domicile
+      ? { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
+      : { name: match.equipe.nom, logo: '/img/home/logo.png', isHbc: true }
+
+    const renderTeamLogo = (team: { name: string; logo: string | null; isHbc: boolean }) => {
+      if (team.logo) {
+        return (
+          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
+            <Image
+              src={team.logo}
+              alt={team.name}
+              fill
+              className="object-contain p-2"
+              unoptimized={!team.isHbc}
+            />
+          </div>
+        )
+      }
+
+      return (
+        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-2">
+          <span className="text-white font-bold text-xs text-center px-1">
+            {team.name.substring(0, 3).toUpperCase()}
+          </span>
+        </div>
+      )
+    }
 
     return (
       <motion.div variants={cardVariants} initial="rest" whileHover="hover" className="h-full">
@@ -87,36 +117,17 @@ export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatche
             <>
               <div className="flex items-center justify-center gap-4 mb-4">
                 <div className="text-center">
-                  <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-                    <Image
-                      src="/img/home/logo.png"
-                      alt="HBC Aix-en-Savoie"
-                      fill
-                      className="object-contain p-2"
-                    />
-                  </div>
-                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.equipe.nom}</p>
+                  {renderTeamLogo(homeTeam)}
+                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">
+                    {homeTeam.isHbc ? homeTeam.name : homeTeam.name.split(' ').slice(0, 2).join(' ')}
+                  </p>
                 </div>
                 <span className="text-white text-lg font-bold">VS</span>
                 <div className="text-center">
-                  {match.logoAdversaire ? (
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-                      <Image
-                        src={match.logoAdversaire}
-                        alt={match.adversaire}
-                        fill
-                        className="object-contain p-2"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-2">
-                      <span className="text-white font-bold text-xs text-center px-1">
-                        {match.adversaire.substring(0, 3).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.adversaire.split(' ').slice(0, 2).join(' ')}</p>
+                  {renderTeamLogo(awayTeam)}
+                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">
+                    {awayTeam.isHbc ? awayTeam.name : awayTeam.name.split(' ').slice(0, 2).join(' ')}
+                  </p>
                 </div>
               </div>
 

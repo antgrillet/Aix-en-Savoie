@@ -1,21 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CalendrierAuth } from "@/components/calendrier/CalendrierAuth";
 import { CalendrierGrid } from "@/components/calendrier/CalendrierGrid";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-export default function CalendrierPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+function getInitialAuth() {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem("calendrier_auth") === "true";
+}
 
-  useEffect(() => {
-    // Vérifier si l'utilisateur est déjà authentifié
-    const auth = sessionStorage.getItem("calendrier_auth");
-    setIsAuthenticated(auth === "true");
-    setIsLoading(false);
-  }, []);
+export default function CalendrierPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(getInitialAuth);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = () => {
     sessionStorage.removeItem("calendrier_auth");

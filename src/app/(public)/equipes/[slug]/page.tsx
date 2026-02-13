@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft, Calendar, MapPin, Clock, Trophy } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata, excerptFromHtml } from '@/lib/seo'
 
 export const revalidate = 1800
 
@@ -11,6 +13,35 @@ interface EquipePageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateMetadata({ params }: EquipePageProps) {
+  const { slug } = await params
+  const equipe = await prisma.equipe.findUnique({
+    where: { slug, published: true },
+    select: {
+      nom: true,
+      description: true,
+      photo: true,
+      slug: true,
+    },
+  })
+
+  if (!equipe) {
+    return buildMetadata({
+      title: 'Équipe introuvable',
+      description: "Cette équipe est introuvable ou non publiée.",
+      path: `/equipes/${slug}`,
+      noindex: true,
+    })
+  }
+
+  return buildMetadata({
+    title: equipe.nom,
+    description: excerptFromHtml(equipe.description),
+    path: `/equipes/${equipe.slug}`,
+    image: normalizeImagePath(equipe.photo, '/img/equipes/default.jpg'),
+  })
 }
 
 export default async function EquipePage({ params }: EquipePageProps) {
@@ -49,6 +80,13 @@ export default async function EquipePage({ params }: EquipePageProps) {
 
   return (
     <div className="pt-24 min-h-screen bg-zinc-900 relative">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Équipes', url: '/equipes' },
+          { name: equipe.nom, url: `/equipes/${equipe.slug}` },
+        ]}
+      />
       {/* Background Image avec overlay */}
       {equipe.banniere && (
         <div className="fixed inset-0 z-0">
@@ -57,7 +95,6 @@ export default async function EquipePage({ params }: EquipePageProps) {
             alt={`Background ${equipe.nom}`}
             fill
             className="object-cover"
-            priority
           />
           {/* Overlay gradient équilibré */}
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 via-zinc-900/55 to-zinc-900/80" />

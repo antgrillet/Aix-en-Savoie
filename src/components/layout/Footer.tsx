@@ -166,11 +166,11 @@ export function Footer() {
               &copy; {currentYear} HBC Aix-en-Savoie. Tous droits réservés.
             </p>
             <div className="flex items-center gap-6 text-sm text-neutral-400">
-              <Link href="/contact" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
+              <Link href="/mentions-legales" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Mentions légales
               </Link>
               <span>•</span>
-              <Link href="/contact" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
+              <Link href="/politique-confidentialite" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Politique de confidentialité
               </Link>
             </div>

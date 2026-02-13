@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, MapPin, Trophy } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface Match {
   id: number
@@ -194,7 +195,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-center mt-16"
         >
-          <a
+          <Link
             href="/equipes"
             className="inline-flex items-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/90 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
           >
@@ -212,7 +213,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
                 d="M17 8l4 4m0 0l-4 4m4-4H3"
               />
             </svg>
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>
@@ -231,6 +232,11 @@ function FeaturedMatchCard({
   formatDate: (date: Date) => string
   formatTime: (date: Date) => string
 }) {
+  const hbcSide = { name: 'HBC', logo: '/img/home/logo.png', isHbc: true }
+  const opponentSide = { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
+  const homeSide = match.domicile ? hbcSide : opponentSide
+  const awaySide = match.domicile ? opponentSide : hbcSide
+
   return (
     <motion.div
       initial="rest"
@@ -253,42 +259,53 @@ function FeaturedMatchCard({
       </div>
 
       <div className="flex items-center justify-center gap-6 my-6">
-        {/* Logo HBC */}
+        {/* Logo équipe recevante */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-            <Image
-              src="/img/home/logo.png"
-              alt="HBC Aix-en-Savoie"
-              fill
-              className="object-contain p-2"
-            />
-          </div>
-          <p className="text-xs text-zinc-600 font-semibold">HBC</p>
-        </div>
-
-        <span className="text-2xl font-bold text-zinc-400">VS</span>
-
-        {/* Logo Adversaire */}
-        <div className="text-center">
-          {match.logoAdversaire ? (
+          {homeSide.logo ? (
             <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
               <Image
-                src={match.logoAdversaire}
-                alt={match.adversaire}
+                src={homeSide.logo}
+                alt={homeSide.name}
                 fill
                 className="object-contain p-2"
-                unoptimized
+                unoptimized={!homeSide.isHbc}
               />
             </div>
           ) : (
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-2">
               <span className="text-orange-600 font-bold text-xs text-center px-2">
-                {match.adversaire.substring(0, 3).toUpperCase()}
+                {homeSide.name.substring(0, 3).toUpperCase()}
               </span>
             </div>
           )}
           <p className="text-xs text-zinc-600 font-semibold max-w-[80px] truncate">
-            {match.adversaire}
+            {homeSide.name}
+          </p>
+        </div>
+
+        <span className="text-2xl font-bold text-zinc-400">VS</span>
+
+        {/* Logo équipe visiteuse */}
+        <div className="text-center">
+          {awaySide.logo ? (
+            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
+              <Image
+                src={awaySide.logo}
+                alt={awaySide.name}
+                fill
+                className="object-contain p-2"
+                unoptimized={!awaySide.isHbc}
+              />
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-2">
+              <span className="text-orange-600 font-bold text-xs text-center px-2">
+                {awaySide.name.substring(0, 3).toUpperCase()}
+              </span>
+            </div>
+          )}
+          <p className="text-xs text-zinc-600 font-semibold max-w-[80px] truncate">
+            {awaySide.name}
           </p>
         </div>
       </div>
@@ -316,4 +333,3 @@ function FeaturedMatchCard({
     </motion.div>
   )
 }
-

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Montserrat } from 'next/font/google'
-import { Toaster } from '@/components/providers/Toaster'
 import '../styles.css'
+import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -18,39 +18,37 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: 'HBC Aix-en-Savoie - Handball Club',
+    default: `${SITE_NAME} - Handball Club`,
     template: '%s | HBC Aix-en-Savoie',
   },
-  description: 'Club de handball d\'Aix-en-Savoie - Actualités, équipes, formations et événements',
+  description: DEFAULT_DESCRIPTION,
   keywords: ['handball', 'aix-en-savoie', 'sport', 'club', 'formation', 'équipes', 'N2F', 'handball savoie'],
-  authors: [{ name: 'HBC Aix-en-Savoie' }],
-  creator: 'HBC Aix-en-Savoie',
-  publisher: 'HBC Aix-en-Savoie',
-  metadataBase: new URL('https://hbc-aix-en-savoie.fr'),
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'HBC Aix-en-Savoie - Handball Club',
-    description: 'Club de handball d\'Aix-en-Savoie - Actualités, équipes, formations et événements',
+    title: `${SITE_NAME} - Handball Club`,
+    description: DEFAULT_DESCRIPTION,
     type: 'website',
-    url: 'https://hbc-aix-en-savoie.fr',
-    siteName: 'HBC Aix-en-Savoie',
+    url: SITE_URL,
+    siteName: SITE_NAME,
     locale: 'fr_FR',
     images: [
       {
-        url: '/img/logo_white.png',
-        width: 1200,
-        height: 630,
-        alt: 'HBC Aix-en-Savoie - Logo du club',
+        url: DEFAULT_OG_IMAGE,
+        alt: `${SITE_NAME} - Logo du club`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HBC Aix-en-Savoie - Handball Club',
-    description: 'Club de handball d\'Aix-en-Savoie - Actualités, équipes, formations et événements',
-    images: ['/img/logo_white.png'],
+    title: `${SITE_NAME} - Handball Club`,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,
@@ -74,8 +72,6 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${montserrat.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
-        {/* Toaster temporarily disabled due to React 19 SSR compatibility */}
-        {/* <Toaster /> */}
       </body>
     </html>
   )

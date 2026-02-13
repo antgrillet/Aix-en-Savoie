@@ -101,7 +101,6 @@ export function Header() {
                       width={80}
                       height={80}
                       className="w-12 h-12 md:w-16 md:h-16 object-contain transition-all duration-500 group-hover:scale-105"
-                      priority
                     />
 
                     {/* Orange accent dot */}

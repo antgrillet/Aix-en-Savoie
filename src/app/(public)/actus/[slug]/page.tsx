@@ -8,6 +8,8 @@ import { ArticleHero } from '@/components/article/ArticleHero'
 import { ShareButtons } from '@/components/article/ShareButtons'
 import { ReadAlso } from '@/components/article/ReadAlso'
 import { getServerSession } from '@/lib/auth-utils'
+import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata, SITE_URL } from '@/lib/seo'
 
 export const revalidate = 1800
 
@@ -15,6 +17,37 @@ interface ArticlePageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateMetadata({ params }: ArticlePageProps) {
+  const { slug } = await params
+  const article = await prisma.article.findUnique({
+    where: { slug, published: true },
+    select: {
+      titre: true,
+      resume: true,
+      image: true,
+      slug: true,
+      date: true,
+    },
+  })
+
+  if (!article) {
+    return buildMetadata({
+      title: 'Article introuvable',
+      description: "Cet article n'existe pas ou n'est plus disponible.",
+      path: `/actus/${slug}`,
+      noindex: true,
+    })
+  }
+
+  return buildMetadata({
+    title: article.titre,
+    description: article.resume,
+    path: `/actus/${article.slug}`,
+    image: normalizeImagePath(article.image, '/img/articles/default.jpg'),
+    ogType: 'article',
+  })
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
@@ -57,11 +90,26 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   })
 
   const readingTime = calculateReadingTime(article.contenu)
-  const articleUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://hbc-aix.fr'}/actus/${article.slug}`
+  const articleUrl = `${process.env.NEXT_PUBLIC_BASE_URL || SITE_URL}/actus/${article.slug}`
 
   return (
     <>
       <ReadingProgress />
+      <ArticleSchema
+        title={article.titre}
+        description={article.resume}
+        image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+        datePublished={article.date}
+        dateModified={article.updatedAt}
+        slug={article.slug}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Actualités', url: '/actus' },
+          { name: article.titre, url: `/actus/${article.slug}` },
+        ]}
+      />
 
       {/* Bandeau de prévisualisation pour les brouillons */}
       {!article.published && isAdmin && (

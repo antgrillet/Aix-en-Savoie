@@ -24,6 +24,44 @@ const monthNames: Record<string, number> = {
   'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11
 }
 
+const FFHB_TIMEZONE = 'Europe/Paris'
+
+function getTimeZoneOffset(date: Date, timeZone: string): number {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const parts = formatter.formatToParts(date).filter(part => part.type !== 'literal')
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  const asUtc = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second)
+  )
+  return (asUtc - date.getTime()) / 60000
+}
+
+function parisDateToUtcDate(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number
+): Date {
+  const naiveUtc = new Date(Date.UTC(year, month, day, hour, minute))
+  const offsetMinutes = getTimeZoneOffset(naiveUtc, FFHB_TIMEZONE)
+  return new Date(naiveUtc.getTime() - offsetMinutes * 60000)
+}
+
 // Keywords to identify our team
 const teamKeywords = ['HBC AIX', 'AIX EN SAVOIE']
 
@@ -154,7 +192,13 @@ export async function scrapeFFHandballMatches(url: string, equipeNom: string): P
             const isDomicile = isOurTeam(team1)
             console.log(`   ✅ Trouvé (à venir): ${team1} vs ${team2} - Domicile: ${isDomicile}`)
 
-            const matchDate = new Date(parseInt(year), month, parseInt(day), parseInt(hour), parseInt(minute))
+            const matchDate = parisDateToUtcDate(
+              parseInt(year, 10),
+              month,
+              parseInt(day, 10),
+              parseInt(hour, 10),
+              parseInt(minute, 10)
+            )
             allMatches.push({
               adversaire: isDomicile ? team2 : team1,
               date: matchDate,
@@ -212,7 +256,13 @@ export async function scrapeFFHandballMatches(url: string, equipeNom: string): P
             const isDomicile = isOurTeam(team1)
             console.log(`   ✅ Trouvé (terminé): ${team1} ${score1}-${score2} ${team2}`)
 
-            const matchDate = new Date(parseInt(year), month, parseInt(day), parseInt(hour), parseInt(minute))
+            const matchDate = parisDateToUtcDate(
+              parseInt(year, 10),
+              month,
+              parseInt(day, 10),
+              parseInt(hour, 10),
+              parseInt(minute, 10)
+            )
             allMatches.push({
               adversaire: isDomicile ? team2 : team1,
               date: matchDate,

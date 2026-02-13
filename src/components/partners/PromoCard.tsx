@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Copy, Check, Tag, Clock, Store, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -24,20 +24,16 @@ export function PromoCard({
   brandColor = '#FF6B35',
 }: PromoCardProps) {
   const [copied, setCopied] = useState(false)
-  const [isExpired, setIsExpired] = useState(false)
-  const [daysLeft, setDaysLeft] = useState<number | null>(null)
 
-  // Check expiration status
-  useEffect(() => {
+  const { isExpired, daysLeft } = useMemo(() => {
     if (expiration) {
       const now = new Date()
       const exp = new Date(expiration)
       const diff = exp.getTime() - now.getTime()
       const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
-      setIsExpired(days < 0)
-      setDaysLeft(days >= 0 ? days : null)
+      return { isExpired: days < 0, daysLeft: days >= 0 ? days : null }
     }
+    return { isExpired: false, daysLeft: null }
   }, [expiration])
 
   const copyToClipboard = async () => {

@@ -4,7 +4,7 @@ import { scrapeFFHandballMatches, scrapeFFHandballClassement } from '@/lib/scrap
 import { requireAdmin } from '@/lib/auth-utils'
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -64,22 +64,33 @@ export async function POST(
       })
 
       if (existingMatch) {
-        // Mettre à jour si les scores ont changé
-        if (
+        const dateChanged = existingMatch.date.getTime() !== match.date.getTime()
+        const domicileChanged = existingMatch.domicile !== match.domicile
+        const logoChanged = match.logoAdversaire !== existingMatch.logoAdversaire
+        const scoreChanged =
           match.scoreEquipe !== existingMatch.scoreEquipe ||
           match.scoreAdversaire !== existingMatch.scoreAdversaire ||
-          match.termine !== existingMatch.termine ||
-          match.logoAdversaire !== existingMatch.logoAdversaire
-        ) {
+          match.termine !== existingMatch.termine
+        const lieuChanged = existingMatch.lieu !== match.lieu && match.lieu !== 'À déterminer'
+        const competitionChanged = existingMatch.competition !== match.competition && match.competition
+
+        const updateData: Parameters<typeof prisma.match.update>[0]['data'] = {}
+        if (dateChanged) updateData.date = match.date
+        if (domicileChanged) updateData.domicile = match.domicile
+        if (scoreChanged) {
+          updateData.scoreEquipe = match.scoreEquipe
+          updateData.scoreAdversaire = match.scoreAdversaire
+          updateData.termine = match.termine
+        }
+        if (logoChanged) updateData.logoAdversaire = match.logoAdversaire
+        if (lieuChanged) updateData.lieu = match.lieu
+        if (competitionChanged) updateData.competition = match.competition
+
+        if (Object.keys(updateData).length > 0) {
           await prisma.match.update({
             where: { id: existingMatch.id },
             data: {
-              scoreEquipe: match.scoreEquipe,
-              scoreAdversaire: match.scoreAdversaire,
-              termine: match.termine,
-              lieu: match.lieu,
-              competition: match.competition,
-              logoAdversaire: match.logoAdversaire,
+              ...updateData,
             },
           })
           updated++

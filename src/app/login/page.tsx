@@ -1,7 +1,16 @@
 import { LoginForm } from '@/components/forms/LoginForm'
 import Image from 'next/image'
+import { buildMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata = buildMetadata({
+  title: 'Connexion',
+  description: "Connexion à l'espace d'administration du HBC Aix-en-Savoie.",
+  path: '/login',
+  noindex: true,
+  nofollow: true,
+})
 
 export default function LoginPage() {
   return (

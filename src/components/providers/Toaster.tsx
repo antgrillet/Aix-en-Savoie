@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { Toaster as Sonner } from 'sonner'
 
-export function Toaster() {
-  const [isMounted, setIsMounted] = useState(false)
+const emptySubscribe = () => () => {}
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+export function Toaster() {
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
 
   if (!isMounted) {
     return null

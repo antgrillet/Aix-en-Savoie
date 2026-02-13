@@ -2,18 +2,18 @@ import { prisma } from '@/lib/prisma'
 import { PartnersPageClient } from '@/components/partners/PartnersPageClient'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
-import { Handshake, Users, Award, Heart } from 'lucide-react'
+import { Handshake, Heart } from 'lucide-react'
 import Link from 'next/link'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 1800
 
-export const metadata = {
+export const metadata = buildMetadata({
   title: 'Nos Partenaires',
   description: 'Découvrez tous nos partenaires qui soutiennent le HBC Aix-en-Savoie. Ensemble, nous bâtissons l\'avenir du handball local.',
-  alternates: {
-    canonical: '/partenaires',
-  },
-}
+  path: '/partenaires',
+})
 
 export default async function PartenairesPage() {
   const partenaires = await prisma.partenaire.findMany({
@@ -33,6 +33,12 @@ export default async function PartenairesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Partenaires', url: '/partenaires' },
+        ]}
+      />
       {/* Background */}
       <PageBackground imageUrl={backgroundImage} />
 

@@ -1,19 +1,53 @@
+import { absoluteUrl, SITE_URL } from '@/lib/seo'
+
 export function OrganizationSchema() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'SportsOrganization',
     name: 'HBC Aix-en-Savoie',
     description: 'Club de handball d\'Aix-en-Savoie',
-    url: 'https://hbc-aix-en-savoie.fr',
-    logo: 'https://hbc-aix-en-savoie.fr/img/logo_white.png',
-    image: 'https://hbc-aix-en-savoie.fr/img/logo_white.png',
+    url: SITE_URL,
+    logo: absoluteUrl('/img/logo_white.png'),
+    image: absoluteUrl('/img/logo_white.png'),
     sport: 'Handball',
     address: {
       '@type': 'PostalAddress',
+      streetAddress: '7 rue des Prés Riants',
+      postalCode: '73100',
       addressLocality: 'Aix-les-Bains',
       addressRegion: 'Savoie',
       addressCountry: 'FR',
     },
+    areaServed: {
+      '@type': 'AdministrativeArea',
+      name: 'Savoie',
+    },
+    telephone: '+33 4 79 88 45 50',
+    email: 'contact@hbcaixensavoie.fr',
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer service',
+        telephone: '+33 4 79 88 45 50',
+        email: 'contact@hbcaixensavoie.fr',
+        areaServed: 'FR',
+        availableLanguage: ['fr'],
+      },
+    ],
+    openingHoursSpecification: [
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        opens: '09:00',
+        closes: '18:00',
+      },
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: 'Saturday',
+        opens: '09:00',
+        closes: '12:00',
+      },
+    ],
     sameAs: [
       'https://www.facebook.com/hbcaixensavoie',
       'https://www.instagram.com/hbcaixensavoie',
@@ -33,12 +67,14 @@ export function ArticleSchema({
   description,
   image,
   datePublished,
+  dateModified,
   slug,
 }: {
   title: string
   description: string
   image: string
   datePublished: Date
+  dateModified?: Date
   slug: string
 }) {
   const schema = {
@@ -46,8 +82,9 @@ export function ArticleSchema({
     '@type': 'NewsArticle',
     headline: title,
     description: description,
-    image: `https://hbc-aix-en-savoie.fr${image}`,
+    image: absoluteUrl(image),
     datePublished: datePublished.toISOString(),
+    dateModified: dateModified ? dateModified.toISOString() : undefined,
     author: {
       '@type': 'Organization',
       name: 'HBC Aix-en-Savoie',
@@ -57,12 +94,12 @@ export function ArticleSchema({
       name: 'HBC Aix-en-Savoie',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://hbc-aix-en-savoie.fr/img/logo_white.png',
+        url: absoluteUrl('/img/logo_white.png'),
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://hbc-aix-en-savoie.fr/actus/${slug}`,
+      '@id': `${SITE_URL}/actus/${slug}`,
     },
   }
 
@@ -82,7 +119,7 @@ export function BreadcrumbSchema({ items }: { items: { name: string; url: string
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: `https://hbc-aix-en-savoie.fr${item.url}`,
+      item: absoluteUrl(item.url),
     })),
   }
 

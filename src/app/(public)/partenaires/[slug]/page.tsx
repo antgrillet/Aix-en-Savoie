@@ -13,6 +13,8 @@ import {
 import { normalizeImagePath } from '@/lib/utils'
 import { PartnerCard } from '@/components/partners/PartnerCard'
 import { PromoCard } from '@/components/partners/PromoCard'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 3600
 
@@ -27,17 +29,26 @@ export async function generateMetadata({ params }: PageProps) {
   })
 
   if (!partenaire) {
-    return {
+    return buildMetadata({
       title: 'Partenaire introuvable',
-    }
+      description: 'Ce partenaire est introuvable ou non publié.',
+      path: `/partenaires/${slug}`,
+      noindex: true,
+    })
   }
 
+  const image = normalizeImagePath(
+    partenaire.photoCouverture || partenaire.logo || undefined,
+    '/img/partenaires/default.png'
+  )
+
   return {
-    title: `${partenaire.nom} - Partenaire HBC Aix-en-Savoie`,
-    description: partenaire.description.substring(0, 160),
-    alternates: {
-      canonical: `/partenaires/${slug}`,
-    },
+    ...buildMetadata({
+      title: `${partenaire.nom} - Partenaire HBC Aix-en-Savoie`,
+      description: partenaire.description.substring(0, 160),
+      path: `/partenaires/${slug}`,
+      image,
+    }),
   }
 }
 
@@ -91,6 +102,13 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Partenaires', url: '/partenaires' },
+          { name: partenaire.nom, url: `/partenaires/${partenaire.slug}` },
+        ]}
+      />
       <PageBackground imageUrl={backgroundImage} />
 
       {/* Gradient overlay pour ajouter de la couleur */}
@@ -149,7 +167,6 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                         alt={partenaire.nom}
                         fill
                         className="object-contain p-4"
-                        priority
                       />
                     </div>
                   </div>

@@ -2,6 +2,14 @@ import { ContactForm } from '@/components/forms/ContactForm'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
 import { MapPin, Phone, Mail, Clock, Sparkles } from 'lucide-react'
+import { BreadcrumbSchema } from '@/components/seo/StructuredData'
+import { buildMetadata } from '@/lib/seo'
+
+export const metadata = buildMetadata({
+  title: 'Contact',
+  description: "Contactez le HBC Aix-en-Savoie pour toute question, inscription ou partenariat.",
+  path: '/contact',
+})
 
 export default async function ContactPage() {
   // Récupérer l'image de fond
@@ -9,6 +17,12 @@ export default async function ContactPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Contact', url: '/contact' },
+        ]}
+      />
       {/* Background */}
       <PageBackground imageUrl={backgroundImage} />
 

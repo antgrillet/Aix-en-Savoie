@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/'],
+        disallow: ['/admin/', '/api/', '/login', '/calendrier'],
       },
     ],
     sitemap: 'https://hbc-aix-en-savoie.fr/sitemap.xml',

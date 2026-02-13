@@ -23,7 +23,6 @@ import {
   Trophy,
   ClipboardList,
   Menu,
-  X,
 } from 'lucide-react'
 
 const navigation = [
@@ -37,18 +36,8 @@ const navigation = [
   { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
 ]
 
-export function AdminNav() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
-
-  const handleLogout = async () => {
-    await signOut()
-    router.push('/login')
-    router.refresh()
-  }
-
-  const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
+function NavLinks({ mobile = false, pathname, onNavigate }: { mobile?: boolean; pathname: string; onNavigate?: () => void }) {
+  return (
     <>
       {navigation.map((item) => {
         const Icon = item.icon
@@ -57,7 +46,7 @@ export function AdminNav() {
           <Link
             key={item.href}
             href={item.href}
-            onClick={() => mobile && setIsOpen(false)}
+            onClick={() => mobile && onNavigate?.()}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
               mobile
                 ? isActive
@@ -75,6 +64,18 @@ export function AdminNav() {
       })}
     </>
   )
+}
+
+export function AdminNav() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <nav className="bg-gradient-to-r from-primary-600 to-secondary-600 shadow-lg border-b border-white/20 sticky top-0 z-50">
@@ -101,7 +102,7 @@ export function AdminNav() {
                 </SheetHeader>
                 <div className="flex flex-col h-[calc(100%-80px)]">
                   <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                    <NavLinks mobile />
+                    <NavLinks mobile pathname={pathname} onNavigate={() => setIsOpen(false)} />
                   </nav>
                   <div className="p-4 border-t">
                     <Button
@@ -133,7 +134,7 @@ export function AdminNav() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1">
-            <NavLinks />
+            <NavLinks pathname={pathname} />
           </div>
 
           {/* Logout Button - Desktop */}
