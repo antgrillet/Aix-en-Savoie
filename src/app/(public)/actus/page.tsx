@@ -115,7 +115,7 @@ export default async function ActusPage({
       </section>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <NewsFilters
           categories={categories.map((c) => c.categorie)}
           currentCategory={categorie}
@@ -123,7 +123,7 @@ export default async function ActusPage({
       </div>
 
       {/* Articles Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 relative z-10">
         {articles.length > 0 ? (
           <>
             <ArticlesGrid articles={articles} />
