@@ -22,13 +22,11 @@ export function OrganizationSchema() {
       '@type': 'AdministrativeArea',
       name: 'Savoie',
     },
-    telephone: '+33 4 79 88 45 50',
     email: 'contact@hbcaixensavoie.fr',
     contactPoint: [
       {
         '@type': 'ContactPoint',
         contactType: 'customer service',
-        telephone: '+33 4 79 88 45 50',
         email: 'contact@hbcaixensavoie.fr',
         areaServed: 'FR',
         availableLanguage: ['fr'],

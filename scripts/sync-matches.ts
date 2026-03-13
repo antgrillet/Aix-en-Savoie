@@ -26,6 +26,7 @@ async function main() {
         console.log(`   Créés: ${result.matchesCreated}`);
         console.log(`   Mis à jour: ${result.matchesUpdated}`);
         console.log(`   Ignorés: ${result.matchesSkipped}`);
+        console.log(`   Classement: ${result.classementUpdated} équipes`);
       } else {
         console.log(`   Erreur: ${result.message}`);
       }

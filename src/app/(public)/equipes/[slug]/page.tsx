@@ -357,8 +357,8 @@ export default async function EquipePage({ params }: EquipePageProps) {
                     </thead>
                     <tbody>
                       {equipe.classement.map((team) => {
-                        const isOurTeam = team.club.toUpperCase().includes('AIX') ||
-                                         team.club.toUpperCase().includes('SAVOIE')
+                        const isOurTeam = team.club.toUpperCase().includes('HBC AIX') ||
+                                         team.club.toUpperCase().includes('AIX EN SAVOIE')
                         return (
                           <tr
                             key={team.id}

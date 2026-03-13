@@ -10,23 +10,23 @@ HBC Aix-en-Savoie - Official website for a French handball club. Built with Next
 
 ```bash
 # Development
-pnpm dev              # Start dev server (default port 3000)
-pnpm build            # Production build
-pnpm lint             # ESLint
-pnpm type-check       # TypeScript check (tsc --noEmit)
+bun dev              # Start dev server (default port 3000)
+bun run build        # Production build
+bun lint             # ESLint
+bun type-check       # TypeScript check (tsc --noEmit)
 
 # Database (Prisma)
-pnpm prisma:generate  # Generate Prisma client
-pnpm prisma:migrate   # Run migrations
-pnpm prisma:studio    # Open Prisma Studio
-pnpm prisma:seed      # Seed database
-pnpm prisma:reset     # Reset database
+bun prisma:generate  # Generate Prisma client
+bun prisma:migrate   # Run migrations
+bun prisma:studio    # Open Prisma Studio
+bun prisma:seed      # Seed database
+bun prisma:reset     # Reset database
 
 # Match sync from FFHANDBALL
-pnpm sync:matches     # Sync match data (scripts/sync-matches.ts)
+bun sync:matches     # Sync match data (scripts/sync-matches.ts)
 
 # Auth migration
-pnpm auth:migrate     # Run better-auth migrations
+bun auth:migrate     # Run better-auth migrations
 ```
 
 ## Architecture

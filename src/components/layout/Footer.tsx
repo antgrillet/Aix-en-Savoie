@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react'
+import { Facebook, Instagram, Mail, MapPin } from 'lucide-react'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -102,17 +102,6 @@ export function Footer() {
                   73100 Aix-les-Bains<br />
                   France
                 </div>
-              </li>
-              <li className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">
-                  <Phone className="w-5 h-5 text-orange-500" />
-                </div>
-                <a
-                  href="tel:+33479884550"
-                  className="text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  04 79 88 45 50
-                </a>
               </li>
               <li className="flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">

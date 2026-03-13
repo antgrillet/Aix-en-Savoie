@@ -30,7 +30,6 @@ export function ContactForm() {
       nom: formData.get('nom'),
       prenom: formData.get('prenom'),
       email: formData.get('email'),
-      telephone: formData.get('telephone'),
       message: formData.get('message'),
       experience,
       niveau: experience ? niveau : null,
@@ -118,17 +117,6 @@ export function ContactForm() {
           />
         </div>
 
-        <div>
-          <Label htmlFor="telephone">Téléphone</Label>
-          <Input
-            id="telephone"
-            name="telephone"
-            type="tel"
-            placeholder="06 12 34 56 78"
-            autoComplete="tel"
-            className="mt-1"
-          />
-        </div>
       </div>
 
       <div>

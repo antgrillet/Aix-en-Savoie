@@ -1,7 +1,7 @@
 import { ContactForm } from '@/components/forms/ContactForm'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
-import { MapPin, Phone, Mail, Clock, Sparkles } from 'lucide-react'
+import { MapPin, Mail, Clock, Sparkles } from 'lucide-react'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -65,23 +65,6 @@ export default async function ContactPage() {
                         73100 Aix-les-Bains<br />
                         France
                       </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6 hover:border-primary-500/50 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-6 h-6 text-primary-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white mb-2">Téléphone</h3>
-                      <a
-                        href="tel:+33479884550"
-                        className="text-neutral-400 hover:text-primary-500 transition-colors"
-                      >
-                        04 79 88 45 50
-                      </a>
                     </div>
                   </div>
                 </div>

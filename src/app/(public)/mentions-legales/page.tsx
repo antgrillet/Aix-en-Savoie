@@ -49,8 +49,6 @@ export default async function MentionsLegalesPage() {
               <h2 className="text-2xl font-display font-bold text-white mb-3">Contact</h2>
               <p>
                 Email : contact@hbcaixensavoie.fr
-                <br />
-                Téléphone : 04 79 88 45 50
               </p>
             </section>
 

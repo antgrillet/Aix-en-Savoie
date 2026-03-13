@@ -239,11 +239,23 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
             <div key={index} className="grid grid-cols-12 gap-4 items-end">
               <div className="col-span-3 space-y-2">
                 <Label>Jour *</Label>
-                <Input
+                <Select
                   value={entrainement.jour}
-                  onChange={(e) => updateEntrainement(index, 'jour', e.target.value)}
-                  placeholder="Lundi"
-                />
+                  onValueChange={(value) => updateEntrainement(index, 'jour', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un jour" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Lundi">Lundi</SelectItem>
+                    <SelectItem value="Mardi">Mardi</SelectItem>
+                    <SelectItem value="Mercredi">Mercredi</SelectItem>
+                    <SelectItem value="Jeudi">Jeudi</SelectItem>
+                    <SelectItem value="Vendredi">Vendredi</SelectItem>
+                    <SelectItem value="Samedi">Samedi</SelectItem>
+                    <SelectItem value="Dimanche">Dimanche</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="col-span-3 space-y-2">
                 <Label>Horaire *</Label>
@@ -255,11 +267,19 @@ export function EquipeForm({ action, initialData }: EquipeFormProps) {
               </div>
               <div className="col-span-5 space-y-2">
                 <Label>Lieu</Label>
-                <Input
-                  value={entrainement.lieu}
-                  onChange={(e) => updateEntrainement(index, 'lieu', e.target.value)}
-                  placeholder="Gymnase municipal"
-                />
+                <Select
+                  value={entrainement.lieu || ''}
+                  onValueChange={(value) => updateEntrainement(index, 'lieu', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un gymnase" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Gymnase des Prés-Riants">Gymnase des Prés-Riants</SelectItem>
+                    <SelectItem value="G4 Marlioz">G4 Marlioz</SelectItem>
+                    <SelectItem value="G2 Marlioz">G2 Marlioz</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="col-span-1">
                 <Button

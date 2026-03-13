@@ -306,6 +306,265 @@ export async function scrapeFFHandballMatches(url: string, equipeNom: string): P
   }
 }
 
+// Catégories qui jouent en format plateau (plusieurs matchs au même endroit)
+const PLATEAU_CATEGORIES = ['-11', '-9']
+
+export function isPlateauCategory(categorie: string): boolean {
+  return PLATEAU_CATEGORIES.some(cat => categorie.toUpperCase().startsWith(cat))
+}
+
+/**
+ * Scrape les matchs au format plateau (catégories -11 et -9)
+ *
+ * Différences avec le format classique :
+ * - La position des équipes (team1 vs team2) ne reflète PAS domicile/extérieur
+ * - Le lieu est sur la page détail de chaque match (section "Salle")
+ * - Domicile = la salle est à Aix-les-Bains (code postal 73100)
+ * - Les noms d'équipes contiennent des suffixes numériques ("HBC AIX EN SAVOIE 1")
+ *   qui se mélangent avec les scores dans le texte brut → parsing DOM
+ */
+export async function scrapeFFHandballPlateauMatches(url: string, equipeNom: string): Promise<ScrapedMatch[]> {
+  const browser = await chromium.launch({ headless: true })
+  const page = await browser.newPage()
+
+  try {
+    console.log('🔍 Navigation vers (plateau):', url)
+
+    const pouleUrlMatch = url.match(/(.*\/poule-\d+)\/?/)
+    const baseUrl = pouleUrlMatch ? pouleUrlMatch[1] : url.replace(/\/$/, '')
+    console.log('📍 URL de base:', baseUrl)
+
+    await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 30000 })
+    await page.waitForTimeout(2000)
+
+    // Fermer la popup de cookies si elle existe
+    try {
+      const cookieButton = page.locator('button:has-text("Accepter & Fermer")')
+      if (await cookieButton.isVisible({ timeout: 3000 })) {
+        await cookieButton.click()
+        await page.waitForTimeout(1000)
+        console.log('✅ Popup de cookies fermée')
+      }
+    } catch (err) {
+      console.log('ℹ️  Pas de popup de cookies')
+    }
+
+    // Récupérer le nom de la compétition depuis le heading de la page
+    let competitionName = equipeNom
+    try {
+      const headings = await page.locator('h1, h2').allTextContents()
+      for (const h of headings) {
+        const trimmed = h.trim()
+        if (trimmed && !trimmed.includes('Calendrier') && !trimmed.includes('Classement') && !trimmed.includes('Actualités')) {
+          competitionName = trimmed
+          break
+        }
+      }
+    } catch (err) {}
+
+    // Récupérer les boutons de journées (plateaux)
+    const journeeButtons = await page.locator('button').all()
+    const journees: string[] = []
+    for (const btn of journeeButtons) {
+      const text = await btn.textContent()
+      if (text && /^J\d+$/.test(text.trim())) {
+        journees.push(text.trim())
+      }
+    }
+
+    console.log(`📅 ${journees.length} plateaux trouvés:`, journees.join(', '))
+
+    // Phase 1 : Collecter les infos de base + hrefs depuis la page liste
+    interface PlateauMatchInfo {
+      href: string
+      day: string
+      monthName: string
+      year: string
+      hour: string
+      minute: string
+      team1: string
+      team2: string
+      isAvenir: boolean
+      scores: number[]
+      opponentLogo: string | null
+    }
+    const pendingMatches: PlateauMatchInfo[] = []
+
+    for (const journee of journees) {
+      console.log(`🔄 Scraping plateau ${journee}...`)
+
+      try {
+        await page.click(`button:has-text("${journee}")`)
+        await page.waitForTimeout(1500)
+
+        const matchLinks = await page.locator('a[href*="/rencontre-"]').all()
+        console.log(`   🔍 ${matchLinks.length} rencontres sur le plateau`)
+
+        for (const link of matchLinks) {
+          const childData = await link.evaluate((el: HTMLAnchorElement) => {
+            const childTexts: string[] = []
+            const imgs: { src: string; title: string }[] = []
+
+            for (const child of Array.from(el.children)) {
+              if (child.tagName === 'IMG') {
+                imgs.push({
+                  src: (child as HTMLImageElement).src,
+                  title: (child as HTMLImageElement).title || (child as HTMLImageElement).alt || ''
+                })
+              } else {
+                const text = (child.textContent || '').trim()
+                if (text) childTexts.push(text)
+              }
+            }
+
+            return { childTexts, imgs, href: el.href }
+          })
+
+          // Catégoriser chaque morceau de texte
+          const dateRegex = /(\d{1,2})\s+([^\d\s]+)\s+(\d{4})\s+à\s+(\d{1,2})H(\d{2})/
+          let dateText = ''
+          const teamNames: string[] = []
+          const scoreTexts: string[] = []
+          let isAvenir = false
+
+          for (const text of childData.childTexts) {
+            if (dateRegex.test(text)) {
+              dateText = text
+            } else if (text.includes('Voir détail') || text.includes('Rematch')) {
+              continue
+            } else if (text === '--') {
+              isAvenir = true
+            } else if (text.includes('--')) {
+              const parts = text.split('--')
+              if (parts.length === 2) {
+                isAvenir = true
+                teamNames.push(parts[0].trim(), parts[1].trim())
+              }
+            } else if (/^\d+$/.test(text) && parseInt(text) < 100) {
+              scoreTexts.push(text)
+            } else if (/^\d+\s*-\s*\d+$/.test(text)) {
+              scoreTexts.push(...text.split('-').map(s => s.trim()))
+            } else if (text.length > 1) {
+              teamNames.push(text)
+            }
+          }
+
+          if (!dateText || teamNames.length < 2) continue
+
+          const dateMatch = dateText.match(dateRegex)
+          if (!dateMatch) continue
+
+          const team1 = cleanTeamName(teamNames[0])
+          const team2 = cleanTeamName(teamNames[1])
+
+          if (!isOurTeam(team1) && !isOurTeam(team2)) continue
+
+          const opponentLogo = childData.imgs
+            .filter(img => !isOurTeam(img.title))
+            .map(img => img.src)[0] || null
+
+          pendingMatches.push({
+            href: childData.href,
+            day: dateMatch[1],
+            monthName: dateMatch[2],
+            year: dateMatch[3],
+            hour: dateMatch[4],
+            minute: dateMatch[5],
+            team1,
+            team2,
+            isAvenir,
+            scores: scoreTexts.map(s => parseInt(s)).filter(n => !isNaN(n)),
+            opponentLogo,
+          })
+
+          console.log(`   ✅ Trouvé: ${team1} vs ${team2}`)
+        }
+      } catch (err) {
+        console.error(`❌ Erreur lors du scraping du plateau ${journee}:`, err)
+      }
+    }
+
+    console.log(`\n📍 Récupération du lieu pour ${pendingMatches.length} matchs...`)
+
+    // Phase 2 : Visiter chaque page détail pour récupérer la salle
+    const allMatches: ScrapedMatch[] = []
+
+    for (const m of pendingMatches) {
+      let lieu = 'Plateau'
+      let domicile = false
+
+      try {
+        await page.goto(m.href, { waitUntil: 'networkidle', timeout: 20000 })
+        await page.waitForTimeout(1000)
+
+        // Extraire la salle depuis le texte de la page
+        // Format : "Salle\nNOM GYMNASE\nADRESSE\n73100 VILLE"
+        const salleInfo = await page.evaluate(() => {
+          const text = document.body.innerText
+          // Chercher la section "Salle" et extraire nom + code postal + ville
+          const salleMatch = text.match(/Salle\s*\n([^\n]+)\n([^\n]+)\n(\d{5})\s+([^\n]+)/)
+          if (salleMatch) {
+            return {
+              nom: salleMatch[1].trim(),
+              adresse: salleMatch[2].trim(),
+              codePostal: salleMatch[3],
+              ville: salleMatch[4].trim()
+            }
+          }
+          return null
+        })
+
+        if (salleInfo) {
+          lieu = salleInfo.nom
+          // Domicile si la salle est à Aix-les-Bains (73100)
+          domicile = salleInfo.codePostal === '73100'
+          console.log(`   📍 ${salleInfo.nom} - ${salleInfo.ville} (${domicile ? 'domicile' : 'extérieur'})`)
+        } else {
+          console.log(`   ⚠️  Salle non trouvée pour ${m.team1} vs ${m.team2}`)
+        }
+      } catch (err) {
+        console.log(`   ⚠️  Erreur page détail pour ${m.team1} vs ${m.team2}`)
+      }
+
+      const month = monthNames[m.monthName.toLowerCase()]
+      if (month === undefined) continue
+
+      const matchDate = parisDateToUtcDate(
+        parseInt(m.year, 10),
+        month,
+        parseInt(m.day, 10),
+        parseInt(m.hour, 10),
+        parseInt(m.minute, 10)
+      )
+
+      const isDomicile = domicile
+      const isOurTeam1 = isOurTeam(m.team1)
+      const termine = !m.isAvenir && m.scores.length >= 2
+
+      allMatches.push({
+        adversaire: isOurTeam1 ? m.team2 : m.team1,
+        date: matchDate,
+        lieu,
+        domicile: isDomicile,
+        competition: competitionName,
+        scoreEquipe: termine ? (isOurTeam1 ? m.scores[0] : m.scores[1]) : null,
+        scoreAdversaire: termine ? (isOurTeam1 ? m.scores[1] : m.scores[0]) : null,
+        termine,
+        logoAdversaire: m.opponentLogo,
+      })
+    }
+
+    console.log(`📦 ${allMatches.length} matchs plateau récupérés au total`)
+    return allMatches
+
+  } catch (error) {
+    console.error('❌ Erreur scraping FFHANDBALL (plateau):', error)
+    throw new Error(`Impossible de récupérer les matchs plateau: ${error}`)
+  } finally {
+    await browser.close()
+  }
+}
+
 export async function getFFHandballMatchesFromAPI(url: string, equipeNom: string): Promise<ScrapedMatch[]> {
   return scrapeFFHandballMatches(url, equipeNom)
 }

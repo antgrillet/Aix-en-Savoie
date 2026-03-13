@@ -35,8 +35,8 @@ export default async function PolitiqueConfidentialitePage() {
             <section>
               <h2 className="text-2xl font-display font-bold text-white mb-3">Données collectées</h2>
               <p>
-                Nous collectons les informations que vous fournissez via le formulaire de contact : nom, prénom, email,
-                téléphone (optionnel) et message.
+                Nous collectons les informations que vous fournissez via le formulaire de contact : nom, prénom, email
+                et message.
               </p>
             </section>
 

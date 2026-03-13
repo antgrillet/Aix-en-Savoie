@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { scrapeFFHandballMatches } from './scraping/ffhandball';
+import { scrapeFFHandballMatches, scrapeFFHandballPlateauMatches, scrapeFFHandballClassement, isPlateauCategory } from './scraping/ffhandball';
 
 interface SyncResult {
   equipeId: number;
@@ -9,6 +9,7 @@ interface SyncResult {
   matchesCreated: number;
   matchesUpdated: number;
   matchesSkipped: number;
+  classementUpdated: number;
 }
 
 /**
@@ -17,7 +18,8 @@ interface SyncResult {
 export async function syncTeamMatches(
   equipeId: number,
   equipeNom: string,
-  calendrierUrl: string
+  calendrierUrl: string,
+  categorie?: string
 ): Promise<SyncResult> {
   let matchesCreated = 0;
   let matchesUpdated = 0;
@@ -26,8 +28,11 @@ export async function syncTeamMatches(
   try {
     console.log(`🔄 Synchronisation de ${equipeNom}...`);
 
-    // Scraper les matchs depuis FFHB
-    const scrapedMatches = await scrapeFFHandballMatches(calendrierUrl, equipeNom);
+    // Utiliser le scraper plateau pour les catégories -11 et -9
+    const isPlateau = categorie ? isPlateauCategory(categorie) : false
+    const scrapedMatches = isPlateau
+      ? await scrapeFFHandballPlateauMatches(calendrierUrl, equipeNom)
+      : await scrapeFFHandballMatches(calendrierUrl, equipeNom);
 
     console.log(`  ℹ️  ${scrapedMatches.length} matchs trouvés`);
 
@@ -102,13 +107,37 @@ export async function syncTeamMatches(
       }
     }
 
+    // Synchroniser le classement
+    let classementUpdated = 0;
+    try {
+      console.log(`🏆 Synchronisation du classement pour ${equipeNom}...`);
+      const scrapedClassement = await scrapeFFHandballClassement(calendrierUrl);
+      console.log(`📊 ${scrapedClassement.length} équipes récupérées dans le classement`);
+
+      await prisma.classement.deleteMany({ where: { equipeId } });
+      for (const team of scrapedClassement) {
+        await prisma.classement.create({
+          data: {
+            equipeId,
+            position: team.position,
+            club: team.club,
+            points: team.points,
+          },
+        });
+      }
+      classementUpdated = scrapedClassement.length;
+      console.log(`✅ Classement mis à jour: ${classementUpdated} équipes`);
+    } catch (classementError) {
+      console.error(`⚠️  Erreur classement pour ${equipeNom}:`, classementError);
+    }
+
     // Logger la synchronisation
     await prisma.syncLog.create({
       data: {
         equipeId,
         type: 'matches',
         status: 'success',
-        message: `Synchronisation réussie: ${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} ignorés`,
+        message: `Synchronisation réussie: ${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} ignorés. Classement: ${classementUpdated} équipes`,
         matchesCreated,
         matchesUpdated,
         matchesSkipped,
@@ -119,10 +148,11 @@ export async function syncTeamMatches(
       equipeId,
       equipeNom,
       status: 'success',
-      message: `✅ ${matchesCreated} créés, ${matchesUpdated} mis à jour`,
+      message: `✅ ${matchesCreated} créés, ${matchesUpdated} mis à jour. Classement: ${classementUpdated}`,
       matchesCreated,
       matchesUpdated,
       matchesSkipped,
+      classementUpdated,
     };
   } catch (error) {
     console.error(`  ❌ Erreur pour ${equipeNom}:`, error);
@@ -148,12 +178,13 @@ export async function syncTeamMatches(
       matchesCreated: 0,
       matchesUpdated: 0,
       matchesSkipped: 0,
+      classementUpdated: 0,
     };
   }
 }
 
 /**
- * Synchronise les matchs de toutes les équipes
+ * Synchronise les matchs et classements de toutes les équipes
  */
 export async function syncAllMatches(): Promise<SyncResult[]> {
   const results: SyncResult[] = [];
@@ -167,6 +198,7 @@ export async function syncAllMatches(): Promise<SyncResult[]> {
     select: {
       id: true,
       nom: true,
+      categorie: true,
       matches: true,
     },
   });
@@ -176,7 +208,7 @@ export async function syncAllMatches(): Promise<SyncResult[]> {
   for (const equipe of equipes) {
     if (!equipe.matches) continue;
 
-    const result = await syncTeamMatches(equipe.id, equipe.nom, equipe.matches);
+    const result = await syncTeamMatches(equipe.id, equipe.nom, equipe.matches, equipe.categorie);
     results.push(result);
 
     // Attendre un peu entre chaque équipe pour ne pas surcharger le serveur

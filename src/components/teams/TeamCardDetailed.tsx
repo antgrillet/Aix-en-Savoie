@@ -116,8 +116,8 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
           {/* Position au classement */}
           {equipe.classement.length > 0 && (() => {
             const ourTeam = equipe.classement.find(team =>
-              team.club.toUpperCase().includes('AIX') ||
-              team.club.toUpperCase().includes('SAVOIE')
+              team.club.toUpperCase().includes('HBC AIX') ||
+              team.club.toUpperCase().includes('AIX EN SAVOIE')
             )
             const getOrdinal = (n: number) => {
               if (n === 1) return '1er'
