@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Calendar, MapPin, Clock, Trophy } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Clock, Trophy, User } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, excerptFromHtml } from '@/lib/seo'
@@ -148,6 +148,15 @@ export default async function EquipePage({ params }: EquipePageProps) {
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-8 text-white">
             {equipe.nom}
           </h1>
+
+          {/* Entraîneur */}
+          {equipe.entraineur && (
+            <div className="inline-flex items-center gap-3 mb-8 bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl px-5 py-3">
+              <User className="w-5 h-5 text-primary-500" />
+              <span className="text-neutral-300">Entraîneur</span>
+              <span className="font-semibold text-primary-500">{equipe.entraineur}</span>
+            </div>
+          )}
 
           {/* Description */}
           <div

@@ -7,6 +7,14 @@ import { articleSchema } from '@/lib/validations/article'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
 
+function revalidateActusPublic(...slugs: (string | null | undefined)[]) {
+  revalidatePath('/actus')
+  revalidatePath('/')
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(`/actus/${slug}`)
+  }
+}
+
 export async function getArticles() {
   await requireAdmin()
 
@@ -58,6 +66,7 @@ export async function createArticle(formData: FormData) {
   })
 
   revalidatePath('/admin/articles')
+  revalidateActusPublic(slug)
   redirect('/admin/articles')
 }
 
@@ -102,6 +111,7 @@ export async function updateArticle(id: number, formData: FormData) {
 
   revalidatePath('/admin/articles')
   revalidatePath(`/admin/articles/${id}`)
+  revalidateActusPublic(slug, existing?.slug)
   redirect('/admin/articles')
 }
 
@@ -116,6 +126,7 @@ export async function deleteArticle(id: number) {
   await prisma.article.delete({ where: { id } })
 
   revalidatePath('/admin/articles')
+  revalidateActusPublic(article?.slug)
 }
 
 export async function togglePublished(id: number) {
@@ -130,6 +141,7 @@ export async function togglePublished(id: number) {
   })
 
   revalidatePath('/admin/articles')
+  revalidateActusPublic(article.slug)
 }
 
 export async function toggleVedette(id: number) {
@@ -144,4 +156,5 @@ export async function toggleVedette(id: number) {
   })
 
   revalidatePath('/admin/articles')
+  revalidateActusPublic(article.slug)
 }

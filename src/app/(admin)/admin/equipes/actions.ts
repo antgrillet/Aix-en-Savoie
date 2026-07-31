@@ -7,6 +7,22 @@ import { equipeSchema } from '@/lib/validations/equipe'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
 
+function buildSlug(nom: string) {
+  return nom
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+}
+
+function revalidateEquipesPublic(...slugs: (string | null | undefined)[]) {
+  revalidatePath('/equipes')
+  revalidatePath('/')
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(`/equipes/${slug}`)
+  }
+}
+
 export async function getEquipes() {
   await requireAdmin()
 
@@ -51,6 +67,8 @@ export async function createEquipe(formData: FormData) {
 
   const validated = equipeSchema.parse(data)
 
+  const slug = buildSlug(validated.nom)
+
   await prisma.equipe.create({
     data: {
       nom: validated.nom,
@@ -64,7 +82,7 @@ export async function createEquipe(formData: FormData) {
       ordre: validated.ordre,
       published: validated.published,
       featured: validated.featured,
-      slug: validated.nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
+      slug,
       createdBy: user.id,
       entrainements: {
         create: validated.entrainements,
@@ -73,6 +91,7 @@ export async function createEquipe(formData: FormData) {
   })
 
   revalidatePath('/admin/equipes')
+  revalidateEquipesPublic(slug)
   redirect('/admin/equipes')
 }
 
@@ -110,6 +129,8 @@ export async function updateEquipe(id: number, formData: FormData) {
 
   await prisma.entrainement.deleteMany({ where: { equipeId: id } })
 
+  const slug = buildSlug(validated.nom)
+
   await prisma.equipe.update({
     where: { id },
     data: {
@@ -124,7 +145,7 @@ export async function updateEquipe(id: number, formData: FormData) {
       ordre: validated.ordre,
       published: validated.published,
       featured: validated.featured,
-      slug: validated.nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
+      slug,
       entrainements: {
         create: validated.entrainements,
       },
@@ -133,6 +154,7 @@ export async function updateEquipe(id: number, formData: FormData) {
 
   revalidatePath('/admin/equipes')
   revalidatePath(`/admin/equipes/${id}`)
+  revalidateEquipesPublic(slug, existing?.slug)
   redirect('/admin/equipes')
 }
 
@@ -150,6 +172,7 @@ export async function deleteEquipe(id: number) {
   await prisma.equipe.delete({ where: { id } })
 
   revalidatePath('/admin/equipes')
+  revalidateEquipesPublic(equipe?.slug)
 }
 
 export async function togglePublished(id: number) {
@@ -164,6 +187,7 @@ export async function togglePublished(id: number) {
   })
 
   revalidatePath('/admin/equipes')
+  revalidateEquipesPublic(equipe.slug)
 }
 
 export async function deleteMultipleEquipes(ids: number[]) {
@@ -188,6 +212,7 @@ export async function deleteMultipleEquipes(ids: number[]) {
   })
 
   revalidatePath('/admin/equipes')
+  revalidateEquipesPublic(...equipes.map((equipe) => equipe.slug))
 }
 
 export async function updateOrdre(updates: { id: number; ordre: number }[]) {
@@ -203,4 +228,5 @@ export async function updateOrdre(updates: { id: number; ordre: number }[]) {
   )
 
   revalidatePath('/admin/equipes')
+  revalidateEquipesPublic()
 }

@@ -4,6 +4,24 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 
+async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[]) {
+  revalidatePath('/')
+  revalidatePath('/calendrier')
+  revalidatePath('/equipes')
+
+  const ids = [...new Set(equipeIds.filter((id): id is number => typeof id === 'number'))]
+  if (ids.length === 0) return
+
+  const equipes = await prisma.equipe.findMany({
+    where: { id: { in: ids } },
+    select: { slug: true },
+  })
+
+  for (const equipe of equipes) {
+    revalidatePath(`/equipes/${equipe.slug}`)
+  }
+}
+
 export async function getMatchs() {
   const matchs = await prisma.match.findMany({
     include: {
@@ -94,7 +112,7 @@ export async function createMatch(formData: FormData) {
   })
 
   revalidatePath('/admin/matchs')
-  revalidatePath('/')
+  await revalidateMatchsPublic(equipeId)
   redirect('/admin/matchs')
 }
 
@@ -118,6 +136,11 @@ export async function updateMatch(id: number, formData: FormData) {
     if (scoreAdversaireStr) scoreAdversaire = parseInt(scoreAdversaireStr)
   }
 
+  const existing = await prisma.match.findUnique({
+    where: { id },
+    select: { equipeId: true },
+  })
+
   await prisma.match.update({
     where: { id },
     data: {
@@ -135,15 +158,20 @@ export async function updateMatch(id: number, formData: FormData) {
   })
 
   revalidatePath('/admin/matchs')
-  revalidatePath('/')
+  await revalidateMatchsPublic(equipeId, existing?.equipeId)
   redirect('/admin/matchs')
 }
 
 export async function deleteMatch(id: number) {
+  const existing = await prisma.match.findUnique({
+    where: { id },
+    select: { equipeId: true },
+  })
+
   await prisma.match.delete({
     where: { id },
   })
 
   revalidatePath('/admin/matchs')
-  revalidatePath('/')
+  await revalidateMatchsPublic(existing?.equipeId)
 }
