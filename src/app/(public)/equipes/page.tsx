@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
 import { TeamsPageClient } from '@/components/teams/TeamsPageClient'
 import { PageBackground } from '@/components/layout/PageBackground'
@@ -68,7 +69,9 @@ export default async function EquipesPage() {
 
       {/* Contenu principal */}
       <main className="py-12 md:py-16 lg:py-20 relative z-10">
-        <TeamsPageClient equipes={equipes} />
+        <Suspense fallback={null}>
+          <TeamsPageClient equipes={equipes} />
+        </Suspense>
       </main>
     </div>
   )

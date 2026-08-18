@@ -55,7 +55,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="bg-zinc-800/60 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-zinc-700/30 transform transition-all hover:-translate-y-2 hover:shadow-xl"
+      className="bg-zinc-800/60 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-zinc-700/30 transition-[transform,box-shadow] duration-300 hover:-translate-y-2 hover:shadow-xl"
     >
       {/* Image avec overlay */}
       <div className="h-64 bg-zinc-700 relative overflow-hidden group">

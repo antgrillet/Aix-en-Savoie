@@ -21,44 +21,46 @@ export function ArticleHero({
   readingTime,
 }: ArticleHeroProps) {
   return (
-    <div className="relative h-[300px] md:h-[450px] w-full overflow-hidden rounded-lg mb-12">
+    <div className="relative w-full h-[340px] md:h-[520px] overflow-hidden mb-12">
       <Image
         src={image}
         alt={title}
         fill
         priority
         className="object-cover"
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+        sizes="100vw"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-black/60 to-transparent" />
 
-      <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
-        <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-500 rounded-full text-sm font-semibold text-white mb-4">
-            {categorie}
-          </div>
-
-          <h1 className="font-display font-bold text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-            {title}
-          </h1>
-
-          <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm md:text-base text-neutral-300">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary-500" />
-              <time dateTime={date.toISOString()}>
-                {format(date, 'dd MMMM yyyy', { locale: fr })}
-              </time>
+      <div className="absolute inset-0 flex flex-col justify-end">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12">
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-500 rounded-full text-sm font-semibold text-white mb-4">
+              {categorie}
             </div>
 
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary-500" />
-              <span>{readingTime} min de lecture</span>
-            </div>
+            <h1 className="font-display font-bold text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
+              {title}
+            </h1>
 
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-primary-500" />
-              <span>{views} vues</span>
+            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm md:text-base text-neutral-300">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary-500" />
+                <time dateTime={date.toISOString()}>
+                  {format(date, 'dd MMMM yyyy', { locale: fr })}
+                </time>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary-500" />
+                <span>{readingTime} min de lecture</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-primary-500" />
+                <span>{views} vues</span>
+              </div>
             </div>
           </div>
         </div>

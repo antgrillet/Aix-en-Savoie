@@ -101,13 +101,9 @@ export default async function EquipePage({ params }: EquipePageProps) {
         </div>
       )}
 
-      {/* Animated Background Elements si pas de bannière */}
+      {/* Fond statique si pas de bannière */}
       {!equipe.banniere && (
-        <div className="fixed inset-0 z-0">
-          <div className="absolute top-20 right-20 w-96 h-96 bg-primary-500/10 rounded-full filter blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary-500/10 rounded-full filter blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full filter blur-3xl" />
-        </div>
+        <div className="fixed inset-0 z-0 bg-zinc-900 bg-[radial-gradient(circle_at_top_right,var(--color-primary-900)_0%,transparent_55%)]" />
       )}
 
       {/* Content wrapper */}

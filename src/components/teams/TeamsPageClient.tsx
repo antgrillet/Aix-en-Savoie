@@ -1,6 +1,9 @@
 'use client'
 
+import { useCallback, useMemo } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { TeamCardDetailed } from './TeamCardDetailed'
+import { TeamsFilters, buildCategoryOptions } from './TeamsFilters'
 
 interface Entrainement {
   id: number
@@ -44,24 +47,63 @@ interface TeamsPageClientProps {
 }
 
 export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const activeCategory = searchParams.get('categorie') ?? 'all'
+
+  const categories = useMemo(
+    () => buildCategoryOptions(equipes.map((equipe) => equipe.categorie)),
+    [equipes]
+  )
+
+  const filteredEquipes = useMemo(
+    () =>
+      activeCategory === 'all'
+        ? equipes
+        : equipes.filter((equipe) => equipe.categorie === activeCategory),
+    [equipes, activeCategory]
+  )
+
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (category === 'all') {
+        params.delete('categorie')
+      } else {
+        params.set('categorie', category)
+      }
+      const query = params.toString()
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
+
   return (
     <div>
       {/* Liste des équipes */}
       <section id="liste-equipes" className="py-16 bg-zinc-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-12 text-center relative inline-block w-full">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center relative inline-block w-full">
             Découvrez nos équipes
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-primary-500 to-transparent"></span>
           </h2>
 
+          <TeamsFilters
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategoryChange}
+          />
+
           {/* Conteneur des équipes */}
-          {equipes.length === 0 ? (
+          {filteredEquipes.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-white text-xl">Aucune équipe trouvée.</p>
+              <p className="text-white text-xl">Aucune équipe dans cette catégorie.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {equipes.map((equipe) => (
+              {filteredEquipes.map((equipe) => (
                 <TeamCardDetailed key={equipe.id} equipe={equipe} />
               ))}
             </div>
@@ -135,8 +177,8 @@ export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
               </div>
               <div className="md:w-1/3 flex justify-center">
                 <a
-                  href="/contact"
-                  className="inline-block px-8 py-4 bg-black text-white text-lg font-bold rounded-lg shadow-lg hover:bg-zinc-800 transition-all transform hover:-translate-y-1 hover:shadow-xl"
+                  href="/contact?sujet=inscription"
+                  className="inline-block px-8 py-4 bg-black text-white text-lg font-bold rounded-lg shadow-lg hover:bg-zinc-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
                 >
                   S'inscrire au club
                 </a>

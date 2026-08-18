@@ -39,7 +39,7 @@ export default function CalendrierPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                Calendrier des matchs
+                Espace bénévoles
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Inscrivez-vous pour aider lors des matchs à domicile

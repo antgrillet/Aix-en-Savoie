@@ -55,9 +55,11 @@ export function CalendrierAuth({ onSuccess }: CalendrierAuthProps) {
               <Lock className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Calendrier Interactif</CardTitle>
+          <CardTitle className="text-2xl">Espace bénévoles</CardTitle>
           <CardDescription>
-            Entrez le mot de passe pour accéder au calendrier des matchs et vous inscrire
+            Espace réservé aux bénévoles du club. Entrez le mot de passe pour vous inscrire aux
+            créneaux des matchs à domicile. Les prochains matchs et résultats sont accessibles
+            librement sur la page des équipes.
           </CardDescription>
         </CardHeader>
         <CardContent>

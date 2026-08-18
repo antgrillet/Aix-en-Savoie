@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Calendar, MapPin, Trophy } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -22,6 +22,7 @@ interface Match {
 interface Team {
   id: number
   nom: string
+  slug: string
   categorie: string
   genre: string
   photo: string | null
@@ -53,6 +54,7 @@ const cardHoverVariants = {
 }
 
 export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
+  const shouldReduceMotion = useReducedMotion()
   const [filter, setFilter] = useState<FilterType>('featured')
 
   // Séparer les équipes featured
@@ -95,13 +97,13 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
       <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5" />
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight drop-shadow-lg">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight drop-shadow-lg">
             Matchs du Week-end
           </h2>
           <div className="w-24 h-1 bg-white/40 mx-auto mt-4 rounded-full" />
@@ -109,10 +111,10 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
 
         {/* Filtres */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.1 }}
           className="flex flex-wrap justify-center items-center gap-4 mb-12"
         >
           <div
@@ -122,7 +124,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
           >
             <button
               onClick={() => setFilter('featured')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-all ${
+              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                 filter === 'featured'
                   ? 'bg-white text-orange-600 shadow-md'
                   : 'text-white hover:bg-white/20'
@@ -134,7 +136,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
             </button>
             <button
               onClick={() => setFilter('masculin')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-all ${
+              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                 filter === 'masculin'
                   ? 'bg-white text-orange-600 shadow-md'
                   : 'text-white hover:bg-white/20'
@@ -146,7 +148,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
             </button>
             <button
               onClick={() => setFilter('feminin')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-all ${
+              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                 filter === 'feminin'
                   ? 'bg-white text-orange-600 shadow-md'
                   : 'text-white hover:bg-white/20'
@@ -161,10 +163,10 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
 
         {/* Contenu selon le filtre */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
         >
           {displayedTeams.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -176,6 +178,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
                     match={team.matchs[0]}
                     formatDate={formatDate}
                     formatTime={formatTime}
+                    reduceMotion={Boolean(shouldReduceMotion)}
                   />
                 )
               ))}
@@ -189,15 +192,15 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
 
         {/* Lien vers toutes les équipes */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.2 }}
           className="text-center mt-16"
         >
           <Link
             href="/equipes"
-            className="inline-flex items-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/90 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+            className="inline-flex items-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/90 transition-colors duration-200 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-orange-600"
           >
             <span>Découvrir toutes nos équipes</span>
             <svg
@@ -225,12 +228,14 @@ function FeaturedMatchCard({
   team,
   match,
   formatDate,
-  formatTime
+  formatTime,
+  reduceMotion,
 }: {
   team: Team
   match: Match
   formatDate: (date: Date) => string
   formatTime: (date: Date) => string
+  reduceMotion: boolean
 }) {
   const hbcSide = { name: 'HBC', logo: '/img/home/logo.png', isHbc: true }
   const opponentSide = { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
@@ -239,9 +244,9 @@ function FeaturedMatchCard({
 
   return (
     <motion.div
-      initial="rest"
-      whileHover="hover"
-      variants={cardHoverVariants}
+      initial={reduceMotion ? undefined : 'rest'}
+      whileHover={reduceMotion ? undefined : 'hover'}
+      variants={reduceMotion ? undefined : cardHoverVariants}
       className="bg-white rounded-2xl p-6 shadow-xl"
     >
       <div className="flex items-center justify-between mb-4">
@@ -330,6 +335,13 @@ function FeaturedMatchCard({
           </div>
         )}
       </div>
+
+      <Link
+        href={`/equipes/${team.slug}`}
+        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-sm"
+      >
+        Voir l&apos;équipe et son calendrier
+      </Link>
     </motion.div>
   )
 }

@@ -136,7 +136,7 @@ export default async function ActusPage({
                     <a
                       key={pageNum}
                       href={`/actus?${categorie ? `categorie=${categorie}&` : ''}page=${pageNum}`}
-                      className={`px-4 py-2 rounded font-mont font-bold transition-colors ${
+                      className={`px-4 py-2 rounded font-display font-bold transition-colors ${
                         pageNum === page
                           ? 'bg-primary-500 text-white'
                           : 'bg-zinc-800 text-white hover:bg-zinc-700'
@@ -151,7 +151,7 @@ export default async function ActusPage({
           </>
         ) : (
           <div className="text-center py-20">
-            <p className="text-neutral-400 text-lg font-mont">
+            <p className="text-neutral-400 text-lg font-display">
               Aucun article trouvé dans cette catégorie.
             </p>
           </div>

@@ -5,6 +5,7 @@ import { FeaturedNews } from '@/components/home/FeaturedNews'
 import { FeaturedMatches } from '@/components/home/FeaturedMatches'
 import { UpcomingMatches } from '@/components/home/UpcomingMatches'
 import { FeaturedPartners } from '@/components/home/FeaturedPartners'
+import { JoinClubCTA } from '@/components/home/JoinClubCTA'
 import { OrganizationSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -171,6 +172,7 @@ export default async function HomePage() {
     select: {
       id: true,
       nom: true,
+      slug: true,
       categorie: true,
       genre: true,
       photo: true,
@@ -234,7 +236,7 @@ export default async function HomePage() {
       <OrganizationSchema />
 
       {/* Hero Welcome - Club Presentation */}
-      <HeroWelcome backgroundImage={heroBackgroundImage} partenaires={featuredPartenaires} articles={featuredArticles}>
+      <HeroWelcome backgroundImage={heroBackgroundImage}>
         <FeaturedMatches upcomingMatches={limitedUpcomingMatches} lastResults={lastResults} />
       </HeroWelcome>
 
@@ -250,6 +252,9 @@ export default async function HomePage() {
       {featuredPartenaires.length > 0 && (
         <FeaturedPartners partenaires={featuredPartenaires} />
       )}
+
+      {/* Rejoindre le club - dernier appel à l'action */}
+      <JoinClubCTA />
     </>
   )
 }

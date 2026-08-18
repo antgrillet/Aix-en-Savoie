@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import { useState, useRef } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -22,6 +22,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import {
+  looksLikePlainList,
+  normalizePastedHtml,
+  persistEmptyParagraphs,
+  plainTextToHtml,
+} from '@/lib/editor-paste'
 import { toast } from 'sonner'
 
 interface RichTextEditorProps {
@@ -42,6 +48,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<Editor | null>(null)
 
   const uploadImage = async (file: File): Promise<string> => {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
@@ -96,7 +103,9 @@ export function RichTextEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -129,14 +138,28 @@ export function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      onChange(persistEmptyParagraphs(editor.getHTML()))
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[500px] px-4 py-3 [&_img]:max-w-full [&_img]:h-auto',
+        class:
+          'tiptap article-content prose prose-sm max-w-none focus:outline-none min-h-[500px] px-4 py-3 [&_img]:max-w-full [&_img]:h-auto',
+      },
+      transformPastedHTML: (html) => normalizePastedHtml(html),
+      handlePaste: (_view, event) => {
+        const html = event.clipboardData?.getData('text/html')?.trim() ?? ''
+        const text = event.clipboardData?.getData('text/plain') ?? ''
+        const currentEditor = editorRef.current
+
+        if (html || !currentEditor || !looksLikePlainList(text)) return false
+
+        currentEditor.chain().focus().insertContent(plainTextToHtml(text)).run()
+        return true
       },
     },
   })
+
+  editorRef.current = editor
 
   if (!editor) {
     return null

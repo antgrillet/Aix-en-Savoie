@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Montserrat } from 'next/font/google'
+import { Inter, Archivo } from 'next/font/google'
 import '../styles.css'
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
@@ -9,7 +9,8 @@ const inter = Inter({
   display: 'swap',
 })
 
-const montserrat = Montserrat({
+// Police d'affichage du club : grotesque sportive, plus typée que le sans par défaut
+const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['400', '500', '600', '700', '800', '900'],
@@ -69,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${montserrat.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
       </body>

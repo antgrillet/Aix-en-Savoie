@@ -1,77 +1,43 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Users, Trophy, Calendar, Heart, ArrowRight, Sparkles, Newspaper } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { ArrowRight, Trophy } from 'lucide-react'
 
 interface HeroWelcomeProps {
   backgroundImage?: string | null
   children?: React.ReactNode
-  partenaires?: Array<{
-    id: number
-    nom: string
-    logo: string
-    site: string | null
-  }>
-  articles?: Array<{
-    id: number
-    titre: string
-    categorie: string
-    date: Date
-    image: string
-    slug: string
-  }>
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
+export function HeroWelcome({ backgroundImage, children }: HeroWelcomeProps) {
+  const shouldReduceMotion = useReducedMotion()
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.12,
+        delayChildren: shouldReduceMotion ? 0 : 0.15,
+      },
     },
-  },
-}
+  }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: 'easeOut' as const,
+  const itemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: shouldReduceMotion ? 0 : 0.5,
+        ease: 'easeOut' as const,
+      },
     },
-  },
-}
-
-const statsVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: 'easeOut' as const,
-    },
-  },
-}
-
-export function HeroWelcome({ backgroundImage, children, partenaires = [], articles = [] }: HeroWelcomeProps) {
-  const [activeTab, setActiveTab] = useState<'matchs' | 'articles'>('matchs')
-
-  const stats = [
-    { label: 'Licenciés', value: '320+', icon: Users },
-    { label: 'Équipes', value: '19', icon: Trophy },
-    { label: 'Années d\'histoire', value: '60+', icon: Calendar },
-    { label: 'Bénévoles', value: '50+', icon: Heart },
-  ]
+  }
 
   return (
-    <section className="relative w-full min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center overflow-hidden pt-16">
+    <section className="relative w-full bg-zinc-950 flex items-center overflow-hidden pt-16">
       {/* Background Image */}
       {backgroundImage && (
         <div className="absolute inset-0 z-0">
@@ -82,216 +48,80 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
             className="object-cover opacity-40"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-zinc-950" />
         </div>
       )}
 
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary-500/10 rounded-full filter blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/10 rounded-full filter blur-3xl" />
-      </div>
-
       {/* Content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left Column - Main Content */}
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20 lg:py-28">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Left Column - Identité du club */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="flex flex-col items-center lg:items-start text-center lg:text-left"
           >
-          {/* Badge */}
-          <motion.div variants={itemVariants} className="mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold">
-              <Sparkles className="w-4 h-4" />
-              Depuis 1964
-            </span>
-          </motion.div>
-
-          {/* Main Headline */}
-          <motion.h1
-            variants={itemVariants}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
-          >
-            Bienvenue au{' '}
-            <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-secondary-500 text-transparent bg-clip-text">
-              HBC Aix-en-Savoie
-            </span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p
-            variants={itemVariants}
-            className="text-lg md:text-xl text-neutral-300 mb-8 leading-relaxed"
-          >
-            Une solide institution sportive aixoise, passionnée par le handball
-            et dédiée à la formation de jeunes talents
-          </motion.p>
-
-          {/* Stats Grid - Plus compact */}
-          <motion.div
-            variants={containerVariants}
-            className="grid grid-cols-4 gap-3 w-full mb-8"
-          >
-            {stats.map((stat, index) => {
-              const Icon = stat.icon
-              return (
-                <motion.div
-                  key={index}
-                  variants={statsVariants}
-                  className="text-center"
-                >
-                  <Icon className="w-6 h-6 text-primary-500 mb-1 mx-auto" />
-                  <div className="text-xl font-bold text-white">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs text-neutral-300 font-medium leading-tight">
-                    {stat.label}
-                  </div>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-
-          {/* CTA Button */}
-          <motion.div
-            variants={itemVariants}
-            className="mb-8"
-          >
-            <Link
-              href="/equipes"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-all shadow-lg hover:shadow-xl hover:shadow-primary-500/50 transform hover:-translate-y-1 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
+            <motion.span
+              variants={itemVariants}
+              className="inline-flex items-center px-4 py-1.5 mb-6 bg-primary-500/15 border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold uppercase tracking-wide"
             >
-              Découvrir nos équipes
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </motion.div>
+              Club de handball depuis 1964
+            </motion.span>
 
-          {/* Partenaires Grid */}
-          {partenaires.length > 0 && (
+            <motion.h1
+              variants={itemVariants}
+              className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight"
+            >
+              Bienvenue au{' '}
+              <span className="text-primary-500">HBC Aix-en-Savoie</span>
+            </motion.h1>
+
+            <motion.p
+              variants={itemVariants}
+              className="text-lg md:text-xl text-neutral-300 mb-8 leading-relaxed max-w-xl"
+            >
+              Une solide institution sportive aixoise, passionnée par le handball
+              et dédiée à la formation de jeunes talents
+            </motion.p>
+
             <motion.div
               variants={itemVariants}
-              className="w-full"
+              className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto"
             >
-              <h3 className="text-sm font-semibold text-neutral-300 mb-4 text-center lg:text-left">
-                Nos partenaires principaux
-              </h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                {partenaires.slice(0, 6).map((partenaire) => (
-                  <Link
-                    key={partenaire.id}
-                    href={partenaire.site || '#'}
-                    target={partenaire.site ? '_blank' : undefined}
-                    className="aspect-video bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-2 hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300 group relative overflow-hidden"
-                  >
-                    <Image
-                      src={partenaire.logo}
-                      alt={partenaire.nom}
-                      fill
-                      className="object-contain p-1 filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                      unoptimized
-                    />
-                  </Link>
-                ))}
-              </div>
+              <Link
+                href="/contact?sujet=inscription"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-colors duration-200 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              >
+                Inscrire un joueur
+                <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/equipes"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 border border-white/20 text-white font-bold rounded-lg hover:bg-white/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              >
+                Découvrir nos équipes
+              </Link>
             </motion.div>
-          )}
-
           </motion.div>
 
-          {/* Right Column - Tabs Widget */}
+          {/* Right Column - Matchs (prochains + derniers résultats) */}
           <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
-            {/* Tabs Header */}
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setActiveTab('matchs')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                  activeTab === 'matchs'
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
-                }`}
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <h2 className="flex items-center gap-2 text-base font-display font-bold text-white uppercase tracking-wide">
+                <Trophy className="w-4 h-4 text-primary-500" />
+                Nos matchs
+              </h2>
+              <Link
+                href="/equipes"
+                className="text-sm font-semibold text-primary-400 hover:text-primary-300 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
               >
-                <Trophy className="w-4 h-4" />
-                <span className="text-sm">Matchs</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('articles')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                  activeTab === 'articles'
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Newspaper className="w-4 h-4" />
-                <span className="text-sm">Actualités</span>
-              </button>
+                Tout voir
+              </Link>
             </div>
-
-            {/* Tab Content */}
-            <div className="min-h-[400px]">
-              {activeTab === 'matchs' && (
-                <div>
-                  {children}
-                </div>
-              )}
-
-              {activeTab === 'articles' && articles.length > 0 && (
-                <div className="space-y-3">
-                  {articles.slice(0, 4).map((article) => (
-                    <Link
-                      key={article.id}
-                      href={`/actus/${article.slug}`}
-                      className="block group"
-                    >
-                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300">
-                        <div className="flex gap-3 p-3">
-                          <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                            <Image
-                              src={article.image}
-                              alt={article.titre}
-                              fill
-                              className="object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs text-primary-400 font-semibold mb-1">
-                              {article.categorie}
-                            </div>
-                            <h4 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-primary-400 transition-colors">
-                              {article.titre}
-                            </h4>
-                            <div className="text-xs text-neutral-400">
-                              {new Date(article.date).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            {children}
           </div>
         </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6, repeat: Infinity, repeatType: 'reverse' as const }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <div className="w-6 h-10 border-2 border-neutral-500 rounded-full flex items-start justify-center p-2">
-            <div className="w-1.5 h-2 bg-neutral-400 rounded-full" />
-          </div>
-        </motion.div>
       </div>
     </section>
   )

@@ -21,7 +21,7 @@ export default function Error({
           <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-4xl text-white">⚠️</span>
           </div>
-          <h1 className="text-3xl font-bold font-mont text-neutral-900 mb-2">
+          <h1 className="text-3xl font-bold font-display text-neutral-900 mb-2">
             Une erreur est survenue
           </h1>
           <p className="text-neutral-600 mb-6">
@@ -32,13 +32,13 @@ export default function Error({
         <div className="space-y-3">
           <button
             onClick={reset}
-            className="w-full px-6 py-3 bg-primary-500 text-white rounded-lg font-bold font-mont hover:bg-primary-600 transition-colors"
+            className="w-full px-6 py-3 bg-primary-500 text-white rounded-lg font-bold font-display hover:bg-primary-600 transition-colors"
           >
             Réessayer
           </button>
           <Link
             href="/"
-            className="block w-full px-6 py-3 border-2 border-secondary-600 text-secondary-600 rounded-lg font-bold font-mont hover:bg-secondary-50 transition-colors"
+            className="block w-full px-6 py-3 border-2 border-secondary-600 text-secondary-600 rounded-lg font-bold font-display hover:bg-secondary-50 transition-colors"
           >
             Retour à l'accueil
           </Link>

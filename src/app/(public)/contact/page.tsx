@@ -1,7 +1,8 @@
+import { Suspense } from 'react'
 import { ContactForm } from '@/components/forms/ContactForm'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
-import { MapPin, Mail, Clock, Sparkles } from 'lucide-react'
+import { MapPin, Mail, Clock } from 'lucide-react'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -31,15 +32,12 @@ export default async function ContactPage() {
         {/* Header */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
           <div className="max-w-6xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold mb-6">
-              <Sparkles className="w-4 h-4" />
-              Restons en contact
-            </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-6">
               Contactez-nous
             </h1>
             <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-              Une question ? N'hésitez pas à nous contacter, nous vous répondrons dans les plus brefs délais
+              Inscription d&apos;un enfant, envie de jouer, question ou partenariat : dites-nous
+              simplement ce qui vous amène, nous vous répondons rapidement.
             </p>
           </div>
         </div>
@@ -108,7 +106,9 @@ export default async function ContactPage() {
               <h2 className="text-3xl font-display font-bold text-white mb-8">
                 Envoyez-nous un message
               </h2>
-              <ContactForm />
+              <Suspense fallback={null}>
+                <ContactForm />
+              </Suspense>
             </div>
           </div>
         </div>

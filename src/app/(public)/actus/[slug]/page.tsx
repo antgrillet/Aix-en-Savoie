@@ -130,16 +130,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               currentPage={article.titre}
             />
           </div>
+        </div>
 
-          <ArticleHero
-            title={article.titre}
-            categorie={article.categorie}
-            date={article.date}
-            image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
-            views={article.views}
-            readingTime={readingTime}
-          />
+        <ArticleHero
+          title={article.titre}
+          categorie={article.categorie}
+          date={article.date}
+          image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+          views={article.views}
+          readingTime={readingTime}
+        />
 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ShareButtons title={article.titre} url={articleUrl} />
 
           <article className="max-w-4xl mx-auto pb-20">
@@ -151,7 +153,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               </div>
 
               <div
-                className="prose prose-lg prose-invert max-w-none opacity-0 animate-fadeIn [animation-delay:150ms] break-words
+                className="article-content article-content-invert prose prose-lg prose-invert max-w-none opacity-0 animate-fadeIn [animation-delay:150ms] break-words
                   [&>*]:text-neutral-300
                   prose-headings:font-display prose-headings:font-bold prose-headings:!text-white prose-headings:mt-10 prose-headings:mb-5
                   prose-h2:text-2xl prose-h2:mt-12 prose-h3:text-xl
@@ -162,6 +164,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   prose-span:!text-neutral-300
                   prose-img:rounded-lg prose-img:my-10 prose-img:border prose-img:border-zinc-700 prose-img:mx-auto prose-img:block
                   prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:!text-neutral-400 prose-blockquote:my-8
+                  prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6
                   prose-ul:!text-neutral-300 prose-ol:!text-neutral-300
                   prose-li:text-[17px] prose-li:leading-[1.8] prose-li:mb-2 prose-li:!text-neutral-300 prose-li:break-words
                   prose-code:!text-primary-400 prose-code:!bg-zinc-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[0.9em] prose-code:break-all

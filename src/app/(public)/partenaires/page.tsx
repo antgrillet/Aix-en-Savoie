@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
 import { PartnersPageClient } from '@/components/partners/PartnersPageClient'
 import { PageBackground } from '@/components/layout/PageBackground'
@@ -61,11 +62,8 @@ export default async function PartenairesPage() {
             </div>
 
             {/* Titre */}
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-              Nos{' '}
-              <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-secondary-500 text-transparent bg-clip-text">
-                Partenaires
-              </span>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-white leading-tight">
+              Nos <span className="text-primary-500">Partenaires</span>
             </h1>
 
             {/* Sous-titre */}
@@ -79,7 +77,9 @@ export default async function PartenairesPage() {
       {/* Liste des partenaires */}
       <section className="py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <PartnersPageClient partenaires={partenaires} categories={categories} />
+          <Suspense fallback={null}>
+            <PartnersPageClient partenaires={partenaires} categories={categories} />
+          </Suspense>
         </div>
       </section>
 
@@ -110,15 +110,15 @@ export default async function PartenairesPage() {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-600 rounded-lg font-bold hover:bg-neutral-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                  href="/contact?sujet=partenariat"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-600 rounded-lg font-bold hover:bg-neutral-100 transition-colors duration-200 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-600"
                 >
                   Contactez-nous
                   <Heart className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/equipes"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-lg font-bold hover:bg-white/20 transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-lg font-bold hover:bg-white/20 transition-colors duration-200"
                 >
                   Découvrir nos équipes
                 </Link>

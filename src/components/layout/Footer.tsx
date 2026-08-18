@@ -14,17 +14,14 @@ export function Footer() {
           {/* Logo & Description */}
           <div className="space-y-4">
             <Link href="/" className="inline-block group">
-              <div className="relative">
-                <div className="absolute -inset-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
-                <div className="relative flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-all duration-500 shadow-xl">
-                  <Image
-                    src="/img/home/logo.png"
-                    alt="HBC Aix-en-Savoie"
-                    width={80}
-                    height={80}
-                    className="w-16 h-16 object-contain"
-                  />
-                </div>
+              <div className="flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-colors duration-300 shadow-xl">
+                <Image
+                  src="/img/home/logo.png"
+                  alt="HBC Aix-en-Savoie"
+                  width={80}
+                  height={80}
+                  className="w-16 h-16 object-contain"
+                />
               </div>
             </Link>
             <div>
@@ -46,7 +43,7 @@ export function Footer() {
                   href="/"
                   className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
                   Accueil
                 </Link>
               </li>
@@ -55,7 +52,7 @@ export function Footer() {
                   href="/actus"
                   className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
                   Actualités
                 </Link>
               </li>
@@ -64,7 +61,7 @@ export function Footer() {
                   href="/equipes"
                   className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
                   Équipes
                 </Link>
               </li>
@@ -73,7 +70,7 @@ export function Footer() {
                   href="/partenaires"
                   className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
                   Partenaires
                 </Link>
               </li>
@@ -82,8 +79,17 @@ export function Footer() {
                   href="/contact"
                   className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
                 >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-all duration-300 mr-0 group-hover:mr-2" />
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/calendrier"
+                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
+                >
+                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
+                  Espace bénévoles
                 </Link>
               </li>
             </ul>
@@ -130,7 +136,7 @@ export function Footer() {
                 href="https://www.facebook.com/hbcaixensavoie"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
@@ -139,7 +145,7 @@ export function Footer() {
                 href="https://www.instagram.com/hbcaixensavoie/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />

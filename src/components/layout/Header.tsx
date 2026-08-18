@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X, ChevronRight } from 'lucide-react'
 import { mobileMenuContainer, mobileMenuItem } from '@/lib/animations'
 
@@ -21,7 +21,7 @@ const leftNavigation: NavigationItem[] = [
 const mainNavigation: NavigationItem[] = [
   { name: 'Nos actus', href: '/actus' },
   { name: 'Nos équipes', href: '/equipes' },
-  { name: 'Calendrier', href: '/calendrier' },
+  { name: 'Espace bénévoles', href: '/calendrier' },
   { name: 'Nos partenaires', href: '/partenaires' },
   { name: 'Contact', href: '/contact' },
 ]
@@ -33,6 +33,7 @@ const allNavigation: NavigationItem[] = [
 ]
 
 export function Header() {
+  const shouldReduceMotion = useReducedMotion()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -68,7 +69,7 @@ export function Header() {
   return (
     <>
       <header
-        className={`top-0 left-0 right-0 transition-all duration-500 ${
+        className={`top-0 left-0 right-0 transition-[transform,background-color,box-shadow,border-color] duration-300 ease-in-out ${
           isScrolled
             ? 'header-scrolled fixed'
             : 'absolute bg-black/30 backdrop-blur-md border-b border-white/10'
@@ -77,9 +78,8 @@ export function Header() {
         } ${
           isMobileMenuOpen ? 'z-[70]' : 'z-40'
         }`}
-        style={{ transition: 'transform 0.3s ease-in-out' }}
       >
-        <div className="px-4 xl:px-8 py-3 md:py-4 transition-all duration-300">
+        <div className="px-4 xl:px-8 py-3 md:py-4">
           <div className="flex items-center justify-between">
             {/* Left Side: Logo + Left Navigation */}
             <div className="flex items-center gap-8 md:gap-16">
@@ -89,23 +89,14 @@ export function Header() {
                 aria-label="Accueil"
                 className="group relative z-10"
               >
-                <div className="relative">
-                  {/* Glow effect background */}
-                  <div className="absolute -inset-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full opacity-0 group-hover:opacity-30 blur-xl transition-all duration-500" />
-
-                  {/* Logo container with glassmorphism */}
-                  <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110 shadow-xl">
-                    <Image
-                      src="/img/home/logo.png"
-                      alt="Logo HBC Aix-en-Savoie"
-                      width={80}
-                      height={80}
-                      className="w-12 h-12 md:w-16 md:h-16 object-contain transition-all duration-500 group-hover:scale-105"
-                    />
-
-                    {/* Orange accent dot */}
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-lg shadow-orange-500/50 animate-pulse" />
-                  </div>
+                <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-colors duration-300 shadow-xl">
+                  <Image
+                    src="/img/home/logo.png"
+                    alt="Logo HBC Aix-en-Savoie"
+                    width={80}
+                    height={80}
+                    className="w-12 h-12 md:w-16 md:h-16 object-contain"
+                  />
                 </div>
               </Link>
 
@@ -118,7 +109,7 @@ export function Header() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+                      className="nav-link font-display font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                     >
                       {item.name}
                     </a>
@@ -126,7 +117,7 @@ export function Header() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="nav-link font-mont font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+                      className="nav-link font-display font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                     >
                       {item.name}
                     </Link>
@@ -151,7 +142,7 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`xl:hidden transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+              className={`xl:hidden transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                 isMobileMenuOpen
                   ? 'fixed top-4 right-4 z-[60] p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20'
                   : 'relative z-50 p-3'
@@ -174,10 +165,10 @@ export function Header() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            variants={mobileMenuContainer}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            variants={shouldReduceMotion ? undefined : mobileMenuContainer}
+            initial={shouldReduceMotion ? { opacity: 0 } : 'hidden'}
+            animate={shouldReduceMotion ? { opacity: 1 } : 'visible'}
+            exit={shouldReduceMotion ? { opacity: 0 } : 'exit'}
             id="mobile-menu"
             className="fixed inset-0 bg-gradient-to-br from-black/95 via-zinc-900/95 to-black/95 backdrop-blur-xl z-[45] overflow-auto pt-24"
           >
@@ -186,7 +177,7 @@ export function Header() {
                 {allNavigation.map((item, index) => (
                   <motion.li
                     key={item.name}
-                    variants={mobileMenuItem}
+                    variants={shouldReduceMotion ? undefined : mobileMenuItem}
                     custom={index}
                     className="relative overflow-hidden"
                   >
@@ -195,7 +186,7 @@ export function Header() {
                         href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
+                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-[color,transform,background-color] duration-300 hover:translate-x-2 flex items-center justify-between font-display text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
                       >
                         <span>{item.name}</span>
                         <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />
@@ -204,7 +195,7 @@ export function Header() {
                       <Link
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-all transform hover:translate-x-2 duration-300 flex items-center justify-between font-mont text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
+                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-[color,transform,background-color] duration-300 hover:translate-x-2 flex items-center justify-between font-display text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
                       >
                         <span>{item.name}</span>
                         <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />

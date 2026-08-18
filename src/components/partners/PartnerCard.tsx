@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ExternalLink, Star, Tag, Copy, Check, Store, Clock } from 'lucide-react'
 import { cardHover } from '@/lib/animations'
 import { normalizeImagePath } from '@/lib/utils'
@@ -29,6 +29,7 @@ interface PartnerCardProps {
 }
 
 export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) {
+  const shouldReduceMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
 
   // Vérifier si l'offre est expirée
@@ -60,13 +61,13 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
 
   const content = (
     <motion.div
-      variants={cardHover}
-      initial="rest"
-      whileHover="hover"
-      whileTap="tap"
-      className={`h-full flex flex-col transition-all duration-300 relative overflow-hidden ${
+      variants={shouldReduceMotion ? undefined : cardHover}
+      initial={shouldReduceMotion ? undefined : 'rest'}
+      whileHover={shouldReduceMotion ? undefined : 'hover'}
+      whileTap={shouldReduceMotion ? undefined : 'tap'}
+      className={`h-full flex flex-col transition-[border-color,box-shadow] duration-300 relative overflow-hidden ${
         featured
-          ? 'bg-gradient-to-br from-primary-500/10 via-zinc-800/80 to-secondary-500/10 border-2 border-primary-500/50 rounded-2xl shadow-xl shadow-primary-500/20 hover:shadow-2xl hover:shadow-primary-500/30'
+          ? 'bg-zinc-800/80 border-2 border-primary-500/50 rounded-2xl shadow-xl shadow-primary-500/20 hover:shadow-primary-500/30'
           : 'bg-zinc-800/60 border border-zinc-700 rounded-xl shadow-lg hover:border-primary-500'
       }`}
     >
@@ -83,28 +84,21 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
       {/* Badge offre speciale */}
       {showPromo && (
         <div className={`absolute ${featured ? 'top-14' : 'top-3'} right-3 z-10`}>
-          <div className="flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full shadow-lg animate-pulse">
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full shadow-lg">
             <Tag className="w-3 h-3 text-white" />
             <span className="text-xs font-bold text-white">Offre</span>
           </div>
         </div>
       )}
 
-      {/* Effet de brillance animé pour les featured */}
-      {featured && (
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
-      )}
-
-      {/* Logo */}
-      <div className={`flex-1 flex items-center justify-center p-6 ${
-        featured ? 'bg-white/5' : 'bg-zinc-900/40'
-      } rounded-t-xl`}>
+      {/* Logo - fond blanc uniforme pour tous les logos */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-white rounded-t-xl">
         <div className={`relative w-full ${featured ? 'h-40' : 'h-32'}`}>
           <Image
             src={normalizeImagePath(partenaire.logo, '/img/partenaires/default.png')}
             alt={partenaire.nom}
             fill
-            className="object-contain filter drop-shadow-lg"
+            className="object-contain"
             sizes={featured ? '(max-width: 768px) 100vw, 33vw' : '(max-width: 768px) 100vw, 25vw'}
           />
         </div>
@@ -155,7 +149,7 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
             {partenaire.promoCode ? (
               <button
                 onClick={copyCode}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-600 rounded-md transition-all group"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-600 rounded-md transition-colors duration-200 group"
               >
                 <span className="font-mono font-bold text-white tracking-wider text-sm">
                   {partenaire.promoCode}

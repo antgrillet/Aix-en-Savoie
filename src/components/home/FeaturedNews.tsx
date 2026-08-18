@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Calendar, ArrowRight } from 'lucide-react'
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
 import { normalizeImagePath } from '@/lib/utils'
@@ -22,26 +22,26 @@ interface FeaturedNewsProps {
 }
 
 export function FeaturedNews({ articles }: FeaturedNewsProps) {
+  const shouldReduceMotion = useReducedMotion()
+
   if (!articles || articles.length === 0) {
     return null
   }
 
   return (
-    <section className="py-16 bg-zinc-900 bg-opacity-90 overflow-hidden relative">
-      {/* Éléments graphiques décoratifs */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-pattern" />
-      <div className="absolute top-20 right-20 w-40 h-40 bg-primary-500 rounded-full filter blur-3xl opacity-10" />
-      <div className="absolute bottom-20 left-20 w-60 h-60 bg-zinc-500 rounded-full filter blur-3xl opacity-10" />
+    <section className="py-16 bg-zinc-900 overflow-hidden relative">
+      {/* Motif graphique discret */}
+      <div className="absolute inset-0 opacity-10 bg-pattern pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
-          variants={fadeInUp}
+          variants={shouldReduceMotion ? undefined : fadeInUp}
           className="mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 relative inline-block">
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-6 relative inline-block">
             Nos Actualités
             <span className="absolute -bottom-2 left-0 w-20 h-1 bg-gradient-to-r from-primary-500 to-transparent" />
           </h2>
@@ -51,14 +51,18 @@ export function FeaturedNews({ articles }: FeaturedNewsProps) {
         </motion.div>
 
         <motion.div
-          variants={staggerContainer}
+          variants={shouldReduceMotion ? undefined : staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {articles.map((article) => (
-            <motion.div key={article.id} variants={staggerItem} className="h-full">
+            <motion.div
+              key={article.id}
+              variants={shouldReduceMotion ? undefined : staggerItem}
+              className="h-full"
+            >
               <Link href={`/actus/${article.slug}`} className="group block h-full">
                 <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300 flex flex-col">
                   {/* Image */}
@@ -98,7 +102,7 @@ export function FeaturedNews({ articles }: FeaturedNewsProps) {
                       {article.resume}
                     </p>
 
-                    <div className="flex items-center text-primary-500 font-semibold text-sm group-hover:gap-2 transition-all mt-auto">
+                    <div className="flex items-center text-primary-500 font-semibold text-sm mt-auto">
                       Lire la suite
                       <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -110,15 +114,15 @@ export function FeaturedNews({ articles }: FeaturedNewsProps) {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: shouldReduceMotion ? 0 : 0.5 }}
           className="text-center mt-12"
         >
           <Link
             href="/actus"
-            className="inline-flex items-center px-8 py-4 bg-primary-500 hover:bg-black text-white font-bold transition-colors shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
           >
             Toutes les actualités
             <ArrowRight className="w-5 h-5 ml-2" />

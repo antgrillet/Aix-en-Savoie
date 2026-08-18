@@ -28,38 +28,54 @@ export default async function MentionsLegalesPage() {
             Mentions légales
           </h1>
           <p className="text-neutral-300 mb-10">
-            Les informations ci-dessous sont fournies conformément aux obligations légales. Merci de compléter les champs entre crochets si nécessaire.
+            Les informations ci-dessous sont fournies conformément aux obligations légales
+            applicables aux sites internet édités par une association.
           </p>
 
           <div className="space-y-10 text-neutral-300">
             <section>
               <h2 className="text-2xl font-display font-bold text-white mb-3">Éditeur du site</h2>
               <p>
-                [Nom de l’association / structure] — HBC Aix-en-Savoie
+                Handball Club Aix-en-Savoie (HBC Aix-en-Savoie)
                 <br />
-                [Adresse complète]
+                Association sportive régie par la loi du 1er juillet 1901
                 <br />
-                [SIRET / RNA] : [à compléter]
+                7 rue des Prés Riants, 73100 Aix-les-Bains, France
                 <br />
-                Directeur de la publication : [Nom, Prénom]
+                Directeur de la publication : le président de l’association
+                <br />
+                Numéro RNA / SIRET : communiqué sur simple demande par email
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-display font-bold text-white mb-3">Contact</h2>
               <p>
-                Email : contact@hbcaixensavoie.fr
+                Email :{' '}
+                <a
+                  href="mailto:contact@hbcaixensavoie.fr"
+                  className="text-primary-400 hover:text-primary-300 transition-colors"
+                >
+                  contact@hbcaixensavoie.fr
+                </a>
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-display font-bold text-white mb-3">Hébergement</h2>
               <p>
-                [Nom de l’hébergeur]
+                Vercel Inc.
                 <br />
-                [Adresse de l’hébergeur]
+                440 N Barranca Ave #4133, Covina, CA 91723, États-Unis
                 <br />
-                [Téléphone de l’hébergeur]
+                <a
+                  href="https://vercel.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-400 hover:text-primary-300 transition-colors"
+                >
+                  vercel.com
+                </a>
               </p>
             </section>
 
