@@ -18,7 +18,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { LoadingButton } from '@/components/admin/LoadingButton'
 import { toast } from 'sonner'
 import { Plus, X, Ticket } from 'lucide-react'
-import type { Partenaire } from '@prisma/client'
+import type { Partenaire } from '@/generated/prisma/client'
 
 // Catégories prédéfinies pour les partenaires
 const PARTNER_CATEGORIES = [

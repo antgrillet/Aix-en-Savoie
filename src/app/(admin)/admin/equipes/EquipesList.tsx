@@ -49,7 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Equipe, Entrainement } from '@prisma/client'
+import type { Equipe, Entrainement } from '@/generated/prisma/client'
 
 interface EquipesListProps {
   initialEquipes: (Equipe & { entrainements: Entrainement[] })[]

@@ -12,6 +12,7 @@ node_modules
 .env.example
 .env.local
 .next
+src/generated/prisma
 
 dist
 dist-ssr

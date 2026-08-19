@@ -23,7 +23,7 @@ Le système ne synchronise que les matchs de **cette semaine et de la semaine pr
 ### Via la ligne de commande
 
 ```bash
-pnpm sync:matches
+bun run sync:matches
 ```
 
 ### Via l'interface admin
@@ -89,7 +89,7 @@ scripts/
 
 1. Vérifier que le champ `matches` de l'équipe contient une URL valide
 2. Vérifier les logs dans la table `SyncLog`
-3. Tester manuellement avec `pnpm sync:matches`
+3. Tester manuellement avec `bun run sync:matches`
 
 ### Le scraper échoue
 

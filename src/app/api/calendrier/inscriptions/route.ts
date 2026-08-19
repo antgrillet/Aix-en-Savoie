@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { RoleInscription } from "@prisma/client";
+import { RoleInscription } from "@/generated/prisma/client";
 
 // Quotas maximum par rôle
 const QUOTAS: Record<RoleInscription, number | null> = {

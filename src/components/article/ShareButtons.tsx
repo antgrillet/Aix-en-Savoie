@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Facebook, Linkedin, Twitter, Link2, Check } from 'lucide-react'
+import { Link2, Check } from 'lucide-react'
+import { Icon } from '@iconify/react/offline'
+import facebookIcon from '@iconify-icons/simple-icons/facebook'
+import linkedinIcon from '@iconify-icons/simple-icons/linkedin'
+import twitterIcon from '@iconify-icons/simple-icons/twitter'
 import { toast } from 'sonner'
 
 interface ShareButtonsProps {
@@ -45,7 +49,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           className={buttonClass}
           aria-label="Partager sur Twitter"
         >
-          <Twitter className="w-5 h-5" />
+          <Icon icon={twitterIcon} className="w-5 h-5" />
         </a>
 
         <a
@@ -55,7 +59,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           className={buttonClass}
           aria-label="Partager sur Facebook"
         >
-          <Facebook className="w-5 h-5" />
+          <Icon icon={facebookIcon} className="w-5 h-5" />
         </a>
 
         <a
@@ -65,7 +69,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           className={buttonClass}
           aria-label="Partager sur LinkedIn"
         >
-          <Linkedin className="w-5 h-5" />
+          <Icon icon={linkedinIcon} className="w-5 h-5" />
         </a>
 
         <button
@@ -88,7 +92,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
             className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
             aria-label="Partager sur Twitter"
           >
-            <Twitter className="w-4 h-4" />
+            <Icon icon={twitterIcon} className="w-4 h-4" />
           </a>
 
           <a
@@ -98,7 +102,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
             className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
             aria-label="Partager sur Facebook"
           >
-            <Facebook className="w-4 h-4" />
+            <Icon icon={facebookIcon} className="w-4 h-4" />
           </a>
 
           <a
@@ -108,7 +112,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
             className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
             aria-label="Partager sur LinkedIn"
           >
-            <Linkedin className="w-4 h-4" />
+            <Icon icon={linkedinIcon} className="w-4 h-4" />
           </a>
 
           <button

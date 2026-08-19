@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import bcrypt from 'bcrypt'
-
-const prisma = new PrismaClient()
 
 async function main() {
   const password = 'admin123'
@@ -41,7 +39,7 @@ async function main() {
     console.log('❌ Password verification FAILED!')
     console.log('   The password "admin123" does NOT match the stored hash.')
     console.log('\n🔧 Run this to reset the password:')
-    console.log('   npm run update-admin-password')
+    console.log('   bun run update-admin-password')
   }
 }
 

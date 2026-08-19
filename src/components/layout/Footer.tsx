@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Instagram, Mail, MapPin } from 'lucide-react'
+import { Mail, MapPin } from 'lucide-react'
+import { Icon } from '@iconify/react/offline'
+import facebookIcon from '@iconify-icons/simple-icons/facebook'
+import instagramIcon from '@iconify-icons/simple-icons/instagram'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -139,7 +142,7 @@ export function Footer() {
                 className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
+                <Icon icon={facebookIcon} className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
               </a>
               <a
                 href="https://www.instagram.com/hbcaixensavoie/"
@@ -148,7 +151,7 @@ export function Footer() {
                 className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
+                <Icon icon={instagramIcon} className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
               </a>
             </div>
           </div>

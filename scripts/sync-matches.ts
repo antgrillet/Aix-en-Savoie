@@ -2,7 +2,7 @@
  * Script pour tester la synchronisation des matchs manuellement
  *
  * Usage:
- *   pnpm tsx scripts/sync-matches.ts
+ *   bun run sync:matches
  */
 
 import { syncAllMatches } from '../src/lib/sync-matches';

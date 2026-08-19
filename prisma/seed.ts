@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import bcrypt from 'bcrypt'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-
-const prisma = new PrismaClient()
 
 // Helper: Generate slug from string
 function slugify(text: string): string {

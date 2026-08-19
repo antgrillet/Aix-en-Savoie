@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import { auth } from '../src/lib/auth'
-
-const prisma = new PrismaClient()
 
 async function main() {
   console.log('🔐 Creating admin with Better Auth...\n')

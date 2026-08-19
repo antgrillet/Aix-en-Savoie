@@ -1,6 +1,5 @@
-import { betterAuth } from 'better-auth'
+import { betterAuth } from 'better-auth/minimal'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
-import { admin } from 'better-auth/plugins'
 import { prisma } from './prisma'
 import bcrypt from 'bcrypt'
 
@@ -23,6 +22,17 @@ export const auth = betterAuth({
     'http://localhost:3001',
     'http://127.0.0.1:3001',
   ],
+
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: false,
+        defaultValue: 'user',
+        input: false,
+      },
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -50,14 +60,11 @@ export const auth = betterAuth({
     },
   },
 
-  plugins: [
-    admin({
-      impersonationSessionDuration: 60 * 10, // 10 minutes
-    }),
-  ],
-
   advanced: {
     generateId: () => crypto.randomUUID(),
+    database: {
+      joins: true,
+    },
   },
 })
 

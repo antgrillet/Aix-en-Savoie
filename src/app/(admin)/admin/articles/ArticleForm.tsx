@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import type { Article } from '@prisma/client'
+import type { Article } from '@/generated/prisma/client'
 
 const CATEGORIES = [
   'ÉVÉNEMENTS',

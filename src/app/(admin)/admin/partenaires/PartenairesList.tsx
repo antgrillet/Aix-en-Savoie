@@ -42,7 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Partenaire } from '@prisma/client'
+import type { Partenaire } from '@/generated/prisma/client'
 
 interface PartenairesListProps {
   initialPartenaires: Partenaire[]

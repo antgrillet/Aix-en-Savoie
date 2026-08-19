@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import { scryptSync, randomBytes } from 'crypto'
-
-const prisma = new PrismaClient()
 
 async function main() {
   console.log('🔐 Updating admin password...\n')

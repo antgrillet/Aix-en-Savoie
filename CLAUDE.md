@@ -25,8 +25,8 @@ bun prisma:reset     # Reset database
 # Match sync from FFHANDBALL
 bun sync:matches     # Sync match data (scripts/sync-matches.ts)
 
-# Auth migration
-bun auth:migrate     # Run better-auth migrations
+# Auth schema
+bun auth:generate    # Generate the Better Auth Prisma schema
 ```
 
 ## Architecture
@@ -41,7 +41,7 @@ bun auth:migrate     # Run better-auth migrations
 - `src/components/ui/` - shadcn/ui components (New York style)
 - `src/components/` - Feature components organized by domain (admin, home, teams, calendrier, etc.)
 - `src/lib/validations/` - Zod schemas for forms (article, equipe, partenaire, setting)
-- `scripts/` - Admin/maintenance scripts (run with tsx)
+- `scripts/` - Admin/maintenance scripts (run directly with Bun)
 
 ### Authentication
 Uses `better-auth` with Prisma adapter. Protected routes checked in `middleware.ts` via session cookie. Admin login at `/login`, dashboard at `/admin`.

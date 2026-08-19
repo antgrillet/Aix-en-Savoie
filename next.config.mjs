@@ -1,13 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Prisma must stay external + traced into serverless functions.
-  serverExternalPackages: ['@prisma/client', 'prisma'],
-  outputFileTracingIncludes: {
-    '/*': [
-      './node_modules/.prisma/**/*',
-      './node_modules/@prisma/client/**/*',
-    ],
-  },
   images: {
     remotePatterns: [
       {

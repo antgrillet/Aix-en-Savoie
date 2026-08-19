@@ -13,7 +13,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { LoadingButton } from '@/components/admin/LoadingButton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import type { Equipe, Entrainement } from '@prisma/client'
+import type { Equipe, Entrainement } from '@/generated/prisma/client'
 
 interface EquipeFormProps {
   action: (formData: FormData) => Promise<void>

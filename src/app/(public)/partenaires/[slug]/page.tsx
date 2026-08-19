@@ -6,10 +6,16 @@ import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
 import {
   ExternalLink, Globe, Mail, Phone, Calendar, Heart,
-  ArrowLeft, Facebook, Instagram, Twitter, Linkedin, Youtube,
+  ArrowLeft,
   Target, Users, Trophy, Zap, Shield, Star, Quote,
   Handshake, Lightbulb, CheckCircle
 } from 'lucide-react'
+import { Icon } from '@iconify/react/offline'
+import facebookIcon from '@iconify-icons/simple-icons/facebook'
+import instagramIcon from '@iconify-icons/simple-icons/instagram'
+import linkedinIcon from '@iconify-icons/simple-icons/linkedin'
+import twitterIcon from '@iconify-icons/simple-icons/twitter'
+import youtubeIcon from '@iconify-icons/simple-icons/youtube'
 import { normalizeImagePath } from '@/lib/utils'
 import { PartnerCard } from '@/components/partners/PartnerCard'
 import { PromoCard } from '@/components/partners/PromoCard'
@@ -350,7 +356,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                           className="flex items-center justify-center w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-lg transition-all hover:scale-110"
                           aria-label="Facebook"
                         >
-                          <Facebook className="w-5 h-5 text-white" />
+                          <Icon icon={facebookIcon} className="w-5 h-5 text-white" />
                         </a>
                       )}
                       {reseaux.instagram && (
@@ -361,7 +367,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                           className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all hover:scale-110"
                           aria-label="Instagram"
                         >
-                          <Instagram className="w-5 h-5 text-white" />
+                          <Icon icon={instagramIcon} className="w-5 h-5 text-white" />
                         </a>
                       )}
                       {reseaux.twitter && (
@@ -372,7 +378,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                           className="flex items-center justify-center w-12 h-12 bg-sky-500 hover:bg-sky-600 rounded-lg transition-all hover:scale-110"
                           aria-label="Twitter"
                         >
-                          <Twitter className="w-5 h-5 text-white" />
+                          <Icon icon={twitterIcon} className="w-5 h-5 text-white" />
                         </a>
                       )}
                       {reseaux.linkedin && (
@@ -383,7 +389,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                           className="flex items-center justify-center w-12 h-12 bg-blue-700 hover:bg-blue-800 rounded-lg transition-all hover:scale-110"
                           aria-label="LinkedIn"
                         >
-                          <Linkedin className="w-5 h-5 text-white" />
+                          <Icon icon={linkedinIcon} className="w-5 h-5 text-white" />
                         </a>
                       )}
                       {reseaux.youtube && (
@@ -394,7 +400,7 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
                           className="flex items-center justify-center w-12 h-12 bg-red-600 hover:bg-red-700 rounded-lg transition-all hover:scale-110"
                           aria-label="YouTube"
                         >
-                          <Youtube className="w-5 h-5 text-white" />
+                          <Icon icon={youtubeIcon} className="w-5 h-5 text-white" />
                         </a>
                       )}
                     </div>

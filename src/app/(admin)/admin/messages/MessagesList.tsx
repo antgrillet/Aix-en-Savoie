@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ContactMessage } from '@prisma/client'
+import type { ContactMessage } from '@/generated/prisma/client'
 
 interface MessagesListProps {
   initialMessages: ContactMessage[]

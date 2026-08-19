@@ -34,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Article } from '@prisma/client'
+import type { Article } from '@/generated/prisma/client'
 
 interface ArticlesListProps {
   initialArticles: Article[]

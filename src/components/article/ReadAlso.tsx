@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ArrowRight } from 'lucide-react'
-import type { Article } from '@prisma/client'
+import type { Article } from '@/generated/prisma/client'
 import { normalizeImagePath } from '@/lib/utils'
 
 interface ReadAlsoProps {
