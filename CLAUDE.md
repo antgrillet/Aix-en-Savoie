@@ -41,7 +41,7 @@ bun auth:generate    # Generate the Better Auth Prisma schema
 - `src/components/ui/` - shadcn/ui components (New York style)
 - `src/components/` - Feature components organized by domain (admin, home, teams, calendrier, etc.)
 - `src/lib/validations/` - Zod schemas for forms (article, equipe, partenaire, setting)
-- `scripts/` - Admin/maintenance scripts (run directly with Bun)
+- `scripts/` - Admin/maintenance scripts (managed by Bun; Playwright sync runs on Node via `tsx`)
 
 ### Authentication
 Uses `better-auth` with Prisma adapter. Protected routes checked in `middleware.ts` via session cookie. Admin login at `/login`, dashboard at `/admin`.

@@ -17,7 +17,7 @@
     "prisma:studio": "prisma studio",
     "prisma:reset": "prisma migrate reset --force",
     "auth:generate": "bunx auth@latest generate --config src/lib/auth.ts",
-    "sync:matches": "bun run scripts/sync-matches.ts"
+    "sync:matches": "tsx scripts/sync-matches.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -29,7 +29,8 @@
     "eslint-config-next": "16.3.1",
     "postcss": "^8.5.26",
     "prisma": "^7.9.1",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
