@@ -15,7 +15,7 @@ interface NavigationItem {
 
 const leftNavigation: NavigationItem[] = [
   { name: 'Inscription', href: '/contact' },
-  { name: 'Boutique', href: 'https://sports-services-conseils.fr/clubs/hbc-aix-en-savoie/', external: true },
+  { name: 'Boutique', href: 'https://www.helloasso.com/associations/hbc-aix-en-savoie/boutiques/boutique-septembre', external: true },
 ]
 
 const mainNavigation: NavigationItem[] = [
