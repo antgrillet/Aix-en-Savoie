@@ -9,6 +9,7 @@ process.env.BETTER_AUTH_URL = 'http://localhost:3000'
 
 const { auth: appAuth } = await import('../src/lib/auth')
 const { betterAuth } = await import('better-auth/minimal')
+const { memoryAdapter } = await import('better-auth/adapters/memory')
 // Better Auth otherwise skips its origin checks automatically in test mode.
 const auth = betterAuth({
   ...appAuth.options,
@@ -70,4 +71,46 @@ test('redirects anonymous admin requests to login', async () => {
 
   assert.equal(response.status, 307)
   assert.equal(response.headers.get('location'), 'https://www.hbcaixensavoie.fr/login?from=%2Fadmin%2Farticles')
+})
+
+test('signs in a credential account without an issuer column and validates its HTTPS session', async () => {
+  const userId = 'existing-admin'
+  const email = 'admin@example.invalid'
+  const password = 'fixture-password-only'
+  const now = new Date()
+  const fixtureAuth = betterAuth({
+    ...auth.options,
+    baseURL: 'https://www.hbcaixensavoie.fr',
+    database: memoryAdapter({
+      user: [{ id: userId, email, name: 'Test admin', role: 'admin', emailVerified: true, createdAt: now, updatedAt: now }],
+      account: [{ id: 'existing-account', userId, accountId: userId, providerId: 'credential', password: await auth.options.emailAndPassword!.password!.hash!(password), createdAt: now, updatedAt: now }],
+      session: [],
+    }),
+  })
+  const origin = 'https://www.hbcaixensavoie.fr'
+  const response = await fixtureAuth.handler(new Request(`${origin}/api/auth/sign-in/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ email, password }),
+  }))
+
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).user.role, 'admin')
+  const cookies = response.headers.getSetCookie()
+  const sessionCookie = cookies.find(cookie => cookie.startsWith('__Secure-better-auth.session_token='))
+  assert.ok(sessionCookie?.includes('Secure'))
+  assert.ok(sessionCookie?.includes('HttpOnly'))
+  const cookie = cookies.map(value => value.split(';')[0]).join('; ')
+  const sessionResponse = await fixtureAuth.handler(new Request(`${origin}/api/auth/get-session`, {
+    headers: { Cookie: cookie },
+  }))
+  assert.equal((await sessionResponse.json()).user.id, userId)
+
+  const invalidResponse = await fixtureAuth.handler(new Request(`${origin}/api/auth/sign-in/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ email, password: 'wrong-fixture-password' }),
+  }))
+  assert.equal(invalidResponse.status, 401)
+  assert.equal((await invalidResponse.json()).code, 'INVALID_EMAIL_OR_PASSWORD')
 })

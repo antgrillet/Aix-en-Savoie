@@ -1,9 +1,16 @@
 import { prisma } from '../src/lib/prisma'
 
 async function main() {
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { email: 'admin@hbc-aix.fr' },
+    select: { id: true },
+  })
   await prisma.account.updateMany({
-    where: { accountId: 'admin@hbc-aix.fr' },
-    data: { providerId: 'credential' },
+    where: {
+      userId: admin.id,
+      OR: [{ providerId: 'credential' }, { accountId: 'admin@hbc-aix.fr' }],
+    },
+    data: { providerId: 'credential', accountId: admin.id },
   })
 
   console.log('✅ Provider ID restored to "credential"')

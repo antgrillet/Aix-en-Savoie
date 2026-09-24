@@ -41,17 +41,19 @@ async function main() {
   // Use bcrypt to hash the password (matches Better Auth configuration)
   const hashedPassword = await bcrypt.hash('admin123', 10)
 
+  const adminId = crypto.randomUUID()
   const admin = await prisma.user.upsert({
     where: { email: 'admin@hbc-aix.fr' },
     update: {},
     create: {
+      id: adminId,
       email: 'admin@hbc-aix.fr',
       name: 'Admin HBC',
       emailVerified: true,
       role: 'admin',
       accounts: {
         create: {
-          accountId: 'admin@hbc-aix.fr',
+          accountId: adminId,
           providerId: 'credential',
           password: hashedPassword,
         },

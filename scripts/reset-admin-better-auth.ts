@@ -21,15 +21,17 @@ async function main() {
   console.log('Hash starts with $2b$:', hashedPassword.startsWith('$2b$'))
   console.log()
 
+  const adminId = crypto.randomUUID()
   const admin = await prisma.user.create({
     data: {
+      id: adminId,
       email: 'admin@hbc-aix.fr',
       name: 'Admin HBC',
       emailVerified: true,
       role: 'admin',
       accounts: {
         create: {
-          accountId: 'admin@hbc-aix.fr',
+          accountId: adminId,
           providerId: 'credential',
           password: hashedPassword,
         },

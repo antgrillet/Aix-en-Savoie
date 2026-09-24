@@ -16,15 +16,17 @@ async function main() {
     // Create admin user with proper bcrypt password hash
     const hashedPassword = await bcrypt.hash('admin123', 10)
 
+    const adminId = crypto.randomUUID()
     const newAdmin = await prisma.user.create({
       data: {
+        id: adminId,
         email: 'admin@hbc-aix.fr',
         name: 'Admin HBC',
         emailVerified: true,
         role: 'admin',
         accounts: {
           create: {
-            accountId: 'admin@hbc-aix.fr',
+            accountId: adminId,
             providerId: 'credential',
             password: hashedPassword,
           },
@@ -49,7 +51,7 @@ async function main() {
         data: {
           password: hashedPassword,
           providerId: 'credential',
-          accountId: adminUser.email,
+          accountId: adminUser.id,
         },
       })
       console.log('✅ Password updated successfully')
@@ -57,7 +59,7 @@ async function main() {
       await prisma.account.create({
         data: {
           userId: adminUser.id,
-          accountId: adminUser.email,
+          accountId: adminUser.id,
           providerId: 'credential',
           password: hashedPassword,
         },
