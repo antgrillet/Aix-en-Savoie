@@ -4,7 +4,11 @@ import { prisma } from './prisma'
 import bcrypt from 'bcrypt'
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3002',
+  baseURL: process.env.BETTER_AUTH_URL || (
+    process.env.NODE_ENV === 'production'
+      ? 'https://www.hbcaixensavoie.fr'
+      : 'http://localhost:3002'
+  ),
 
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
@@ -15,8 +19,9 @@ export const auth = betterAuth({
     'http://localhost:3002',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3002',
+    'https://hbcaixensavoie.fr',
+    'https://www.hbcaixensavoie.fr',
     'https://hbc-aix-en-savoie.fr',
-    'https://www.hbc-aix-en-savoie.fr',
     'https://www.hbc-aix-en-savoie.fr',
     'https://*.vercel.app',
     'http://localhost:3001',

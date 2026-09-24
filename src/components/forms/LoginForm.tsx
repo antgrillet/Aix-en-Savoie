@@ -29,7 +29,9 @@ export function LoginForm() {
       })
 
       if (result.error) {
-        setError('Email ou mot de passe incorrect')
+        setError(result.error.code === 'INVALID_EMAIL_OR_PASSWORD'
+          ? 'Email ou mot de passe incorrect'
+          : 'Connexion temporairement indisponible. Veuillez réessayer dans quelques instants.')
       } else {
         router.push('/admin')
         router.refresh()
