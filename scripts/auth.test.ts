@@ -10,6 +10,8 @@ process.env.BETTER_AUTH_URL = 'http://localhost:3000'
 const { auth: appAuth } = await import('../src/lib/auth')
 const { betterAuth } = await import('better-auth/minimal')
 const { memoryAdapter } = await import('better-auth/adapters/memory')
+const { getAuthTables } = await import('@better-auth/core/db')
+const { prisma } = await import('../src/lib/prisma')
 // Better Auth otherwise skips its origin checks automatically in test mode.
 const auth = betterAuth({
   ...appAuth.options,
@@ -20,6 +22,22 @@ const signInBody = JSON.stringify({
   email: 'test@example.invalid',
   password: 'unused-test-password',
   callbackURL: 'https://untrusted.example',
+})
+
+test('the generated Prisma client contains every column required by Better Auth', () => {
+  // Inspect the same generated metadata that the Prisma adapter checks at startup.
+  const models = (prisma as unknown as {
+    _runtimeDataModel: { models: Record<string, { fields: { name: string }[] }> }
+  })._runtimeDataModel.models
+  const missing: string[] = []
+  for (const table of Object.values(getAuthTables(appAuth.options))) {
+    const model = Object.entries(models).find(([name]) => name.toLowerCase() === table.modelName.toLowerCase())?.[1]
+    for (const [name, field] of Object.entries(table.fields)) {
+      const column = field.fieldName || name
+      if (!model?.fields.some(candidate => candidate.name === column)) missing.push(`${table.modelName}.${column}`)
+    }
+  }
+  assert.deepEqual(missing, [])
 })
 
 for (const origin of ['https://hbcaixensavoie.fr', 'https://www.hbcaixensavoie.fr']) {
