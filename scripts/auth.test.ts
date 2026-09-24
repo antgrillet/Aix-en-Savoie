@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { spyOn } from 'bun:test'
 import { NextRequest } from 'next/server'
 
 // Origin and callback checks must never need a database connection.
@@ -19,7 +20,7 @@ const auth = betterAuth({
   rateLimit: { enabled: false },
   advanced: { ...appAuth.options.advanced, disableOriginCheck: false, disableCSRFCheck: false },
 })
-const { proxy } = await import('../proxy')
+const { proxy } = await import('../src/proxy')
 const signInBody = JSON.stringify({
   email: 'test@example.invalid',
   password: 'unused-test-password',
@@ -67,14 +68,33 @@ test('rejects sign-in requests from an unrelated origin', async () => {
   assert.equal((await response.json()).code, 'INVALID_ORIGIN')
 })
 
-for (const cookieName of ['better-auth.session_token', '__Secure-better-auth.session_token']) {
-  test(`allows the admin layout to validate ${cookieName}`, async () => {
-    const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin', {
-      headers: { Cookie: `${cookieName}=test-session` },
-    }))
+const now = new Date()
+const adminSession = {
+  user: { id: 'test-admin', name: 'Test admin', email: 'admin@example.invalid', emailVerified: true, createdAt: now, updatedAt: now, role: 'admin' },
+  session: { id: 'test-session', userId: 'test-admin', token: 'fixture-session-token', createdAt: now, updatedAt: now, expiresAt: new Date(Date.now() + 60_000) },
+}
 
-    assert.equal(response.headers.get('location'), null)
-    assert.equal(response.headers.get('x-middleware-next'), '1')
+for (const cookieName of ['better-auth.session_token', '__Secure-better-auth.session_token']) {
+  test(`allows a verified admin session with ${cookieName}`, async () => {
+    const getSession = spyOn(appAuth.api, 'getSession').mockResolvedValue(adminSession)
+    try {
+      const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin', {
+        headers: { Cookie: `${cookieName}=test-session` },
+      }))
+
+      assert.equal(getSession.mock.calls.length, 1)
+      assert.equal(response.headers.get('location'), null)
+      assert.equal(response.headers.get('x-middleware-next'), '1')
+    } finally {
+      getSession.mockRestore()
+    }
+  })
+
+  test(`rejects an invalid ${cookieName} before rendering admin pages`, async () => {
+    const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin', {
+      headers: { Cookie: `${cookieName}=expired-session` },
+    }))
+    assert.equal(response.status, 307)
   })
 
   test(`keeps login accessible with an expired ${cookieName}`, async () => {
@@ -85,6 +105,33 @@ for (const cookieName of ['better-auth.session_token', '__Secure-better-auth.ses
     assert.equal(response.headers.get('location'), null)
   })
 }
+
+test('rejects authenticated users without the admin role', async () => {
+  const getSession = spyOn(appAuth.api, 'getSession').mockResolvedValue({
+    ...adminSession,
+    user: { ...adminSession.user, role: 'user' },
+  })
+  try {
+    const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin', {
+      headers: { Cookie: '__Secure-better-auth.session_token=test-session' },
+    }))
+    assert.equal(response.status, 307)
+  } finally {
+    getSession.mockRestore()
+  }
+})
+
+test('denies admin access when session verification fails', async () => {
+  const getSession = spyOn(appAuth.api, 'getSession').mockRejectedValue(new Error('Unavailable session store'))
+  try {
+    const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin', {
+      headers: { Cookie: '__Secure-better-auth.session_token=test-session' },
+    }))
+    assert.equal(response.status, 307)
+  } finally {
+    getSession.mockRestore()
+  }
+})
 
 test('redirects anonymous admin requests to login', async () => {
   const response = await proxy(new NextRequest('https://www.hbcaixensavoie.fr/admin/articles'))
