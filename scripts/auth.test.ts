@@ -15,6 +15,8 @@ const { prisma } = await import('../src/lib/prisma')
 // Better Auth otherwise skips its origin checks automatically in test mode.
 const auth = betterAuth({
   ...appAuth.options,
+  // These in-process requests share no client IP, including during production builds.
+  rateLimit: { enabled: false },
   advanced: { ...appAuth.options.advanced, disableOriginCheck: false, disableCSRFCheck: false },
 })
 const { proxy } = await import('../proxy')
