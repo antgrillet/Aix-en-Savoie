@@ -1,12 +1,15 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ArrowLeft, EyeOff } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { normalizeImagePath } from '@/lib/utils'
+import { cn, normalizeImagePath } from '@/lib/utils'
 import { calculateReadingTime } from '@/lib/reading-time'
 import { ReadingProgress } from '@/components/article/ReadingProgress'
 import { Breadcrumb } from '@/components/article/Breadcrumb'
 import { ArticleHero } from '@/components/article/ArticleHero'
 import { ShareButtons } from '@/components/article/ShareButtons'
 import { ReadAlso } from '@/components/article/ReadAlso'
+import { container, siteButton } from '@/components/site/styles'
 import { getServerSession } from '@/lib/auth-utils'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, SITE_URL } from '@/lib/seo'
@@ -91,6 +94,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const readingTime = calculateReadingTime(article.contenu)
   const articleUrl = `${process.env.NEXT_PUBLIC_BASE_URL || SITE_URL}/actus/${article.slug}`
+  const image = normalizeImagePath(article.image, '/img/articles/default.jpg')
 
   return (
     <>
@@ -98,7 +102,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <ArticleSchema
         title={article.titre}
         description={article.resume}
-        image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+        image={image}
         datePublished={article.date}
         dateModified={article.updatedAt}
         slug={article.slug}
@@ -111,90 +115,120 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         ]}
       />
 
-      {/* Bandeau de prévisualisation pour les brouillons */}
-      {!article.published && isAdmin && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-black py-2 px-4 text-center font-semibold">
-          📝 Mode prévisualisation - Cet article n'est pas encore publié
-        </div>
-      )}
-
-      <div className={`min-h-screen bg-zinc-900 ${!article.published && isAdmin ? 'pt-32' : 'pt-24'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <Breadcrumb
-              items={[
-                { label: 'Accueil', href: '/' },
-                { label: 'Actualités', href: '/actus' },
-                { label: article.categorie, href: `/actus?categorie=${article.categorie}` },
-              ]}
-              currentPage={article.titre}
-            />
-          </div>
-        </div>
-
+      <article>
         <ArticleHero
           title={article.titre}
           categorie={article.categorie}
           date={article.date}
-          image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+          image={image}
           views={article.views}
           readingTime={readingTime}
+          resume={article.resume}
+          header={
+            <>
+              {/* Bandeau de prévisualisation pour les brouillons */}
+              {!article.published && isAdmin && (
+                <p
+                  role="status"
+                  className="mb-6 flex items-start gap-3 rounded-md border border-primary-500/40 bg-primary-500/10 px-4 py-3 text-sm font-medium text-primary-200"
+                >
+                  <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0 text-primary-400" />
+                  Mode prévisualisation : cet article n&apos;est pas encore publié.
+                </p>
+              )}
+              <Breadcrumb
+                className="mb-8"
+                items={[
+                  { label: 'Accueil', href: '/' },
+                  { label: 'Actualités', href: '/actus' },
+                  { label: categoryLabel(article.categorie), href: `/actus?categorie=${article.categorie}` },
+                ]}
+                currentPage={article.titre}
+              />
+            </>
+          }
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ShareButtons title={article.titre} url={articleUrl} />
+        <div className={cn(container, 'py-12 md:py-16')}>
+          <div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[minmax(0,40rem)_minmax(0,1fr)] lg:gap-16">
+            <div className="min-w-0">
+              <div className={articleBodyClass} dangerouslySetInnerHTML={{ __html: article.contenu }} />
 
-          <article className="max-w-4xl mx-auto pb-20">
-            <div className="max-w-[680px] mx-auto">
-              <div className="mb-10 opacity-0 animate-fadeIn">
-                <p className="text-xl md:text-2xl text-neutral-300 leading-[1.65] font-serif italic border-l-4 border-primary-500 pl-6 py-4 break-words">
-                  {article.resume}
-                </p>
-              </div>
-
-              <div
-                className="article-content article-content-invert prose prose-lg prose-invert max-w-none opacity-0 animate-fadeIn [animation-delay:150ms] break-words
-                  [&>*]:text-neutral-300
-                  prose-headings:font-display prose-headings:font-bold prose-headings:!text-white prose-headings:mt-10 prose-headings:mb-5
-                  prose-h2:text-2xl prose-h2:mt-12 prose-h3:text-xl
-                  prose-p:text-[17px] prose-p:leading-[1.8] prose-p:!text-neutral-300 prose-p:mb-6 prose-p:break-words
-                  prose-a:!text-primary-500 prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-a:break-all
-                  prose-strong:!text-white prose-strong:font-semibold
-                  prose-em:!text-neutral-300
-                  prose-span:!text-neutral-300
-                  prose-img:rounded-lg prose-img:my-10 prose-img:border prose-img:border-zinc-700 prose-img:mx-auto prose-img:block
-                  prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:!text-neutral-400 prose-blockquote:my-8
-                  prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6
-                  prose-ul:!text-neutral-300 prose-ol:!text-neutral-300
-                  prose-li:text-[17px] prose-li:leading-[1.8] prose-li:mb-2 prose-li:!text-neutral-300 prose-li:break-words
-                  prose-code:!text-primary-400 prose-code:!bg-zinc-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[0.9em] prose-code:break-all
-                  prose-pre:!bg-zinc-800 prose-pre:border prose-pre:border-zinc-700 prose-pre:break-words prose-pre:whitespace-pre-wrap
-                  [&_*]:!text-neutral-300 [&_h1]:!text-white [&_h2]:!text-white [&_h3]:!text-white [&_h4]:!text-white [&_h5]:!text-white [&_h6]:!text-white [&_strong]:!text-white [&_a]:!text-primary-500 [&_img]:mx-auto [&_img]:block"
-                dangerouslySetInnerHTML={{ __html: article.contenu }}
-              />
-
-              {article.tags && article.tags.length > 0 && (
-                <div className="mt-12 pt-8 border-t border-zinc-700 opacity-0 animate-fadeIn [animation-delay:300ms]">
-                  <div className="flex flex-wrap gap-2">
+              <footer className="mt-14 space-y-8 border-t border-white/10 pt-8">
+                {article.tags && article.tags.length > 0 && (
+                  <ul aria-label="Mots-clés" className="flex flex-wrap gap-2">
                     {article.tags.map((tag) => (
-                      <span
+                      <li
                         key={tag}
-                        className="px-4 py-2 bg-zinc-800/60 text-neutral-400 text-sm rounded border border-zinc-700 hover:border-primary-500 hover:text-primary-500 transition-colors cursor-default"
+                        className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-sm text-neutral-400"
                       >
                         #{tag}
-                      </span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
+                )}
+
+                <div className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center sm:justify-between">
+                  <Link href="/actus" className={cn(siteButton({ variant: 'link' }), 'group min-h-10 self-start sm:self-auto')}>
+                    <ArrowLeft className="transition-transform group-hover:-translate-x-1" />
+                    Toutes les actualités
+                  </Link>
+                  <ShareButtons title={article.titre} url={articleUrl} className="lg:hidden" />
                 </div>
-              )}
+              </footer>
             </div>
 
-            <div className="opacity-0 animate-fadeIn [animation-delay:450ms]">
-              <ReadAlso articles={similarArticles} />
-            </div>
-          </article>
+            {/* Partage, collant pendant la lecture (grand écran) */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-28 border-l border-white/10 pl-8">
+                <ShareButtons title={article.titre} url={articleUrl} layout="stacked" />
+              </div>
+            </aside>
+          </div>
         </div>
-      </div>
+      </article>
+
+      <ReadAlso articles={similarArticles} categorie={article.categorie} />
     </>
   )
 }
+
+/** « ÉQUIPES » → « Équipes » pour le fil d'ariane */
+function categoryLabel(categorie: string) {
+  return categorie.charAt(0).toUpperCase() + categorie.slice(1).toLowerCase()
+}
+
+/**
+ * Contenu riche de l'éditeur (TipTap) mis en forme pour la lecture sur fond sombre.
+ * Les règles de base (listes, marges) viennent de `.article-content` dans styles.css,
+ * non « layered » : il faut `!` pour les surcharger.
+ */
+const articleBodyClass = [
+  'article-content article-content-invert break-words text-[1.0625rem] leading-[1.8] text-neutral-300 md:text-lg',
+  // Neutralise les couleurs en ligne d'anciens contenus collés (illisibles sur fond sombre)
+  '[&_*]:![color:inherit]',
+  '[&>:first-child]:!mt-0',
+  // Paragraphes aérés ; les paragraphes vides servent de saut de ligne
+  '[&>p]:!my-[1.15em] [&>p:empty]:!my-0 [&>p:has(>br:only-child)]:!my-0',
+  // Intertitres
+  '[&_h1]:mb-[0.6em] [&_h1]:mt-[1.5em] [&_h1]:font-headline [&_h1]:text-3xl [&_h1]:!text-white md:[&_h1]:text-4xl',
+  '[&_h2]:font-headline [&_h2]:text-3xl [&_h2]:!text-white md:[&_h2]:text-4xl',
+  '[&_h3]:font-display [&_h3]:text-xl [&_h3]:font-bold [&_h3]:!text-white md:[&_h3]:text-2xl',
+  '[&_h4]:mb-3 [&_h4]:mt-8 [&_h4]:font-display [&_h4]:text-lg [&_h4]:font-bold [&_h4]:!text-white',
+  // Emphase
+  '[&_b]:!text-white [&_strong]:font-semibold [&_strong]:!text-white',
+  // Liens orange
+  '[&_a]:font-medium [&_a]:!text-primary-400 [&_a]:underline [&_a]:decoration-primary-400/40 [&_a]:underline-offset-4 [&_a]:transition-colors [&_a:hover]:!text-primary-300 [&_a:hover]:decoration-primary-300',
+  // Citations
+  '[&_blockquote]:!my-10 [&_blockquote]:!pl-6 [&_blockquote]:font-display [&_blockquote]:text-xl [&_blockquote]:font-semibold [&_blockquote]:leading-snug [&_blockquote]:!text-white md:[&_blockquote]:text-2xl',
+  '[&_blockquote>p:first-child]:!mt-0 [&_blockquote>p:last-child]:!mb-0',
+  // Images (insérées dans un paragraphe ou dans une figure)
+  '[&_img]:mx-auto [&_img]:block [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl [&_img]:border [&_img]:border-white/10',
+  '[&>img]:my-10 [&_figure]:my-10 [&_p>img]:my-8',
+  '[&_figcaption]:mt-3 [&_figcaption]:text-center [&_figcaption]:text-sm [&_figcaption]:!text-neutral-500',
+  // Séparateur et code
+  '[&_hr]:my-12 [&_hr]:border-white/10',
+  '[&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.9em] [&_code]:!text-primary-300',
+  '[&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-white/10 [&_pre]:bg-neutral-900 [&_pre]:p-5 [&_pre]:text-sm',
+  '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
+].join(' ')

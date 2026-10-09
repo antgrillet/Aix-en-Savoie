@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+/** Fine barre orange en haut de l'écran indiquant l'avancement de la lecture */
 export function ReadingProgress() {
   const [progress, setProgress] = useState(0)
 
@@ -9,19 +10,24 @@ export function ReadingProgress() {
     const updateProgress = () => {
       const scrollTop = window.scrollY
       const docHeight = document.documentElement.scrollHeight - window.innerHeight
-      const progress = (scrollTop / docHeight) * 100
-      setProgress(progress)
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
+      setProgress(Math.min(100, Math.max(0, progress)))
     }
 
-    window.addEventListener('scroll', updateProgress)
-    return () => window.removeEventListener('scroll', updateProgress)
+    updateProgress()
+    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('resize', updateProgress)
+    return () => {
+      window.removeEventListener('scroll', updateProgress)
+      window.removeEventListener('resize', updateProgress)
+    }
   }, [])
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-1 bg-zinc-800 z-50">
+    <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px]">
       <div
-        className="h-full bg-primary-500 transition-all duration-150 ease-out"
-        style={{ width: `${progress}%` }}
+        className="h-full origin-left bg-primary-500 transition-transform duration-150 ease-out"
+        style={{ transform: `scaleX(${progress / 100})` }}
       />
     </div>
   )

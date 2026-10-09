@@ -2,6 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect } from 'react'
+import { RotateCcw } from 'lucide-react'
+import { Eyebrow } from '@/components/site/Eyebrow'
+import { container, siteButton } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
 
 export default function Error({
   error,
@@ -15,35 +19,30 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center border border-neutral-200">
-        <div className="mb-6">
-          <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl text-white">⚠️</span>
-          </div>
-          <h1 className="text-3xl font-bold font-display text-neutral-900 mb-2">
-            Erreur
-          </h1>
-          <p className="text-neutral-600 mb-6">
-            Impossible de charger cette page. Veuillez réessayer.
-          </p>
-        </div>
+    <section className="relative isolate overflow-hidden bg-neutral-950">
+      <div aria-hidden className="absolute inset-0 -z-10 bg-stripes" />
 
-        <div className="space-y-3">
-          <button
-            onClick={reset}
-            className="w-full px-6 py-3 bg-primary-500 text-white rounded-lg font-bold font-display hover:bg-primary-600 transition-colors"
-          >
+      <div className={cn(container, 'flex min-h-[75svh] flex-col justify-center pb-20 pt-32 md:pt-40')}>
+        <Eyebrow className="mb-5">Erreur</Eyebrow>
+        <h1 className="max-w-3xl font-headline text-5xl text-white sm:text-6xl lg:text-7xl">Temps mort !</h1>
+        <p className="mt-5 max-w-xl text-base text-neutral-300 md:text-lg">
+          Impossible de charger cette page. Veuillez réessayer dans quelques instants.
+        </p>
+
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <button type="button" onClick={reset} className={siteButton({ size: 'lg' })}>
+            <RotateCcw />
             Réessayer
           </button>
-          <Link
-            href="/"
-            className="block w-full px-6 py-3 border-2 border-secondary-600 text-secondary-600 rounded-lg font-bold font-display hover:bg-secondary-50 transition-colors"
-          >
-            Retour à l'accueil
+          <Link href="/" className={siteButton({ variant: 'outline', size: 'lg' })}>
+            Retour à l&apos;accueil
           </Link>
         </div>
+
+        {error.digest && (
+          <p className="mt-10 font-mono text-xs text-neutral-600">Référence : {error.digest}</p>
+        )}
       </div>
-    </div>
+    </section>
   )
 }

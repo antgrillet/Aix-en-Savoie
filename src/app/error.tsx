@@ -1,7 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect } from 'react'
+import { RotateCcw } from 'lucide-react'
+import { siteButton } from '@/components/site/styles'
 
 export default function Error({
   error,
@@ -14,36 +17,38 @@ export default function Error({
     console.error('Application error:', error)
   }, [error])
 
+  // Rendue hors du layout public : on pose nous-mêmes le thème sombre du site
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary-500 to-secondary-700 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
-        <div className="mb-6">
-          <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl text-white">⚠️</span>
-          </div>
-          <h1 className="text-3xl font-bold font-display text-neutral-900 mb-2">
-            Une erreur est survenue
-          </h1>
-          <p className="text-neutral-600 mb-6">
-            Désolé, quelque chose s'est mal passé. Notre équipe a été notifiée.
-          </p>
-        </div>
+    <div className="theme-site dark relative isolate flex min-h-svh flex-col items-center justify-center overflow-hidden bg-neutral-950 px-4 py-16 text-center text-neutral-100">
+      <div aria-hidden className="absolute inset-0 -z-10 bg-stripes" />
 
-        <div className="space-y-3">
-          <button
-            onClick={reset}
-            className="w-full px-6 py-3 bg-primary-500 text-white rounded-lg font-bold font-display hover:bg-primary-600 transition-colors"
-          >
-            Réessayer
-          </button>
-          <Link
-            href="/"
-            className="block w-full px-6 py-3 border-2 border-secondary-600 text-secondary-600 rounded-lg font-bold font-display hover:bg-secondary-50 transition-colors"
-          >
-            Retour à l'accueil
-          </Link>
-        </div>
+      <Link
+        href="/"
+        aria-label="HBC Aix-en-Savoie — accueil"
+        className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+      >
+        <Image src="/img/home/logo.png" alt="" width={96} height={96} priority className="size-20 object-contain sm:size-24" />
+      </Link>
+
+      <p aria-hidden className="mt-8 font-headline text-7xl text-primary-500 sm:text-9xl">
+        Temps mort
+      </p>
+      <h1 className="mt-4 font-headline text-4xl text-white sm:text-5xl">Une erreur est survenue</h1>
+      <p className="mt-4 max-w-md text-balance text-base text-neutral-400 md:text-lg">
+        Désolé, quelque chose s&apos;est mal passé. Notre équipe a été notifiée.
+      </p>
+
+      <div className="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+        <button type="button" onClick={reset} className={siteButton({ size: 'lg' })}>
+          <RotateCcw />
+          Réessayer
+        </button>
+        <Link href="/" className={siteButton({ variant: 'outline', size: 'lg' })}>
+          Retour à l&apos;accueil
+        </Link>
       </div>
+
+      {error.digest && <p className="mt-10 font-mono text-xs text-neutral-600">Référence : {error.digest}</p>}
     </div>
   )
 }
