@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Archivo } from 'next/font/google'
 import '../styles.css'
+import { Toaster } from '@/components/providers/Toaster'
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
 const inter = Inter({
@@ -74,6 +75,7 @@ export default function RootLayout({
     <html lang="fr" data-scroll-behavior="smooth" className={`${inter.variable} ${archivo.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
+        <Toaster />
       </body>
     </html>
   )

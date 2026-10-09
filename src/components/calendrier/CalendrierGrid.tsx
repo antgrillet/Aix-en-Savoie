@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  ArrowRight,
+  CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
+  Clipboard,
   Home,
+  MapPin,
   Plane,
+  RefreshCw,
+  Shield,
+  Users,
 } from "lucide-react";
 import { format, addWeeks, subWeeks, startOfWeek, addDays, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { siteButton } from "@/components/site/styles";
+import { cn } from "@/lib/utils";
 import { InscriptionForm } from "./InscriptionForm";
 import { InscriptionsDisplay } from "./InscriptionsDisplay";
 
@@ -53,6 +59,111 @@ interface Match {
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7h à 22h
 const DAYS = [6, 0]; // Samedi et Dimanche
+
+// Compteurs affichés sur les cartes de match (rôles avec un nombre de places)
+const ROLE_COUNTERS = [
+  { key: "tableDeMarque", label: "Table de marque", icon: Clipboard, max: 2 },
+  { key: "arbitre", label: "Arbitres", icon: Shield, max: 2 },
+  { key: "responsableSalle", label: "Resp. salle", icon: Users, max: 1 },
+] as const;
+
+const iconButtonClass =
+  "inline-flex size-10 items-center justify-center rounded-md text-neutral-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500";
+
+function VolunteerStatus({ needed }: { needed: boolean }) {
+  return needed ? (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-primary-500/15 px-1.5 py-1 font-eyebrow text-[0.6rem] leading-none text-primary-300">
+      <span aria-hidden className="size-1.5 rounded-full bg-primary-400" />
+      Recherche bénévoles
+    </span>
+  ) : (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-emerald-500/15 px-1.5 py-1 font-eyebrow text-[0.6rem] leading-none text-emerald-300">
+      <Check aria-hidden className="size-3" />
+      Complet
+    </span>
+  );
+}
+
+function RoleCounters({ stats }: { stats: Match["stats"] }) {
+  return (
+    <span className="flex flex-wrap gap-1.5">
+      {ROLE_COUNTERS.map((role) => {
+        const count = stats[role.key];
+        const full = count >= role.max;
+        const Icon = role.icon;
+
+        return (
+          <span
+            key={role.key}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium tabular-nums",
+              full
+                ? "bg-emerald-500/15 text-emerald-300"
+                : "bg-white/[0.04] text-neutral-300 ring-1 ring-inset ring-white/10"
+            )}
+          >
+            <Icon aria-hidden className="size-3.5 opacity-70" />
+            {role.label}
+            <span className={cn("font-semibold", full ? "text-emerald-200" : "text-white")}>
+              {count}/{role.max}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function MatchCard({
+  match,
+  needed,
+  onSelect,
+}: {
+  match: Match;
+  needed: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "group flex w-full flex-col gap-3 rounded-lg border border-l-2 border-white/10 bg-neutral-900 p-4 text-left transition-colors hover:border-primary-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+        needed ? "border-l-primary-500" : "border-l-emerald-400/70"
+      )}
+    >
+      <span className="flex w-full items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="flex items-center gap-2">
+            <span className="font-headline text-xl text-primary-400">
+              {format(new Date(match.date), "HH'h'mm")}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-sm bg-white/10 px-1.5 py-0.5 font-eyebrow text-[0.6rem] text-neutral-300">
+              {match.domicile ? (
+                <Home aria-hidden className="size-3" />
+              ) : (
+                <Plane aria-hidden className="size-3" />
+              )}
+              {match.domicile ? "Domicile" : "Extérieur"}
+            </span>
+          </span>
+          <span className="mt-1 block truncate font-display font-bold text-white">
+            {match.equipe.nom}
+          </span>
+          <span className="block truncate text-sm text-neutral-400">vs {match.adversaire}</span>
+        </span>
+        <VolunteerStatus needed={needed} />
+      </span>
+
+      <RoleCounters stats={match.stats} />
+
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary-400 transition-colors group-hover:text-primary-300">
+        Voir les inscrits et s&apos;inscrire
+        <ArrowRight aria-hidden className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </button>
+  );
+}
 
 export function CalendrierGrid() {
   const [matchs, setMatchs] = useState<Match[]>([]);
@@ -119,361 +230,215 @@ export function CalendrierGrid() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center py-24">
+        <RefreshCw className="size-8 animate-spin text-primary-500" aria-label="Chargement des matchs" />
       </div>
     );
   }
 
+  const renderMatchCard = (match: Match) => (
+    <MatchCard
+      key={match.id}
+      match={match}
+      needed={needsVolunteers(match)}
+      onSelect={() => setSelectedMatch(match)}
+    />
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Header avec navigation */}
-      <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
+    <div className="space-y-8">
+      {/* En-tête avec navigation */}
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold">Calendrier des matchs</h2>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Semaine du {format(saturday, "d MMMM yyyy", { locale: fr })}
+          <h2 className="font-headline text-4xl text-white sm:text-5xl">Calendrier des matchs</h2>
+          <p className="mt-3 text-neutral-400">
+            Week-end du{" "}
+            <span className="font-medium text-white">
+              {format(saturday, "d MMMM yyyy", { locale: fr })}
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Button
+          <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-neutral-900 p-1">
+            <button
+              type="button"
               onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
-              variant="outline"
-              size="icon"
+              className={iconButtonClass}
+              aria-label="Week-end précédent"
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => setCurrentWeek(new Date())}
-              variant="outline"
-              className="text-xs md:text-sm"
+              className="h-10 rounded-md px-3 text-sm font-semibold text-neutral-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
-              Aujourd'hui
-            </Button>
-            <Button
+              Aujourd&apos;hui
+            </button>
+            <button
+              type="button"
               onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
-              variant="outline"
-              size="icon"
+              className={iconButtonClass}
+              aria-label="Week-end suivant"
             >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <ChevronRight className="size-4" />
+            </button>
           </div>
-          <Button onClick={handleRefresh} variant="outline" disabled={refreshing} className="text-xs md:text-sm">
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Actualiser"
+            className={cn(siteButton({ variant: "outline", size: "sm" }), "h-12 px-4")}
+          >
+            <RefreshCw className={refreshing ? "animate-spin" : ""} />
             <span className="hidden sm:inline">Actualiser</span>
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Vue mobile - Liste par jour */}
-      <div className="md:hidden space-y-4">
-        {weekendMatchs.length === 0 ? (
-          <Card className="p-6 text-center text-muted-foreground">
-            Aucun match ce week-end
-          </Card>
-        ) : (
-          <>
-            {/* Samedi */}
-            {weekendMatchs.filter(m => isSameDay(new Date(m.date), saturday)).length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold px-2">
-                  {format(saturday, "EEEE d MMMM", { locale: fr })}
-                </h3>
-                {weekendMatchs
-                  .filter(m => isSameDay(new Date(m.date), saturday))
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .map((match) => (
-                    <Card
-                      key={match.id}
-                      className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
-                        needsVolunteers(match)
-                          ? "border-orange-300 bg-orange-50/50"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedMatch(match)}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-lg font-bold">{format(new Date(match.date), "HH:mm")}</div>
-                            <div className="font-semibold mt-1">
-                              {match.equipe.nom}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              vs {match.adversaire}
-                            </div>
-                          </div>
-                          {match.domicile ? (
-                            <Badge variant="default" className="gap-1 shrink-0">
-                              <Home className="h-3 w-3" />
-                              Domicile
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="gap-1 shrink-0">
-                              <Plane className="h-3 w-3" />
-                              Extérieur
-                            </Badge>
-                          )}
-                        </div>
-                        {needsVolunteers(match) && (
-                          <Badge variant="destructive" className="text-xs">
-                            Recherche bénévoles
-                          </Badge>
-                        )}
-                        <div className="flex gap-2 text-xs flex-wrap">
-                          <Badge variant="outline" className="text-xs">
-                            Table de marque {match.stats.tableDeMarque}/2
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            Arbitre {match.stats.arbitre}/2
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            Responsable salle {match.stats.responsableSalle}/1
-                          </Badge>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-              </div>
-            )}
-
-            {/* Dimanche */}
-            {weekendMatchs.filter(m => isSameDay(new Date(m.date), sunday)).length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold px-2">
-                  {format(sunday, "EEEE d MMMM", { locale: fr })}
-                </h3>
-                {weekendMatchs
-                  .filter(m => isSameDay(new Date(m.date), sunday))
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .map((match) => (
-                    <Card
-                      key={match.id}
-                      className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
-                        needsVolunteers(match)
-                          ? "border-orange-300 bg-orange-50/50"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedMatch(match)}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-lg font-bold">{format(new Date(match.date), "HH:mm")}</div>
-                            <div className="font-semibold mt-1">
-                              {match.equipe.nom}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              vs {match.adversaire}
-                            </div>
-                          </div>
-                          {match.domicile ? (
-                            <Badge variant="default" className="gap-1 shrink-0">
-                              <Home className="h-3 w-3" />
-                              Domicile
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="gap-1 shrink-0">
-                              <Plane className="h-3 w-3" />
-                              Extérieur
-                            </Badge>
-                          )}
-                        </div>
-                        {needsVolunteers(match) && (
-                          <Badge variant="destructive" className="text-xs">
-                            Recherche bénévoles
-                          </Badge>
-                        )}
-                        <div className="flex gap-2 text-xs flex-wrap">
-                          <Badge variant="outline" className="text-xs">
-                            Table de marque {match.stats.tableDeMarque}/2
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            Arbitre {match.stats.arbitre}/2
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            Responsable salle {match.stats.responsableSalle}/1
-                          </Badge>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-              </div>
-            )}
-          </>
-        )}
+      {/* Légende des statuts */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-neutral-400">
+        <span className="inline-flex items-center gap-2">
+          <span aria-hidden className="size-2 rounded-full bg-primary-500" />
+          Recherche bénévoles
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span aria-hidden className="size-2 rounded-full bg-emerald-400" />
+          Complet
+        </span>
+        <span className="text-neutral-500">Sélectionnez un match pour voir les inscrits et vous inscrire.</span>
       </div>
 
-      {/* Vue desktop - Grille du calendrier */}
-      <div className="hidden md:block border rounded-lg bg-white overflow-auto">
-        <div className="grid grid-cols-[80px_1fr_1fr] min-w-[800px]">
-          {/* Header des jours */}
-          <div className="border-b border-r p-4 bg-muted/30 font-semibold sticky left-0 z-10">
-            Heure
-          </div>
-          <div className="border-b p-4 bg-muted/30 font-semibold text-center">
-            <div className="text-lg">{format(saturday, "EEEE", { locale: fr })}</div>
-            <div className="text-sm text-muted-foreground">
-              {format(saturday, "d MMMM", { locale: fr })}
-            </div>
-          </div>
-          <div className="border-b border-l p-4 bg-muted/30 font-semibold text-center">
-            <div className="text-lg">{format(sunday, "EEEE", { locale: fr })}</div>
-            <div className="text-sm text-muted-foreground">
-              {format(sunday, "d MMMM", { locale: fr })}
-            </div>
-          </div>
-
-          {/* Grille horaire */}
-          {HOURS.map((hour) => (
-            <React.Fragment key={`hour-${hour}`}>
-              {/* Colonne des heures */}
-              <div
-                className="border-r border-b p-2 text-sm text-muted-foreground font-medium sticky left-0 bg-muted/10 z-10"
-              >
-                {hour}:00
-              </div>
-
-              {/* Samedi */}
-              <div
-                className="border-b p-2 min-h-[80px] hover:bg-muted/20 transition-colors"
-              >
-                {getMatchesForSlot(saturday, hour).map((match) => (
-                  <Card
-                    key={match.id}
-                    className={`p-3 cursor-pointer hover:shadow-md transition-shadow mb-2 ${
-                      needsVolunteers(match)
-                        ? "border-orange-300 bg-orange-50/50"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedMatch(match)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">
-                            {match.equipe.nom}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            vs {match.adversaire}
-                          </div>
-                        </div>
-                        {match.domicile ? (
-                          <Badge variant="default" className="gap-1 shrink-0">
-                            <Home className="h-3 w-3" />
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="gap-1 shrink-0">
-                            <Plane className="h-3 w-3" />
-                          </Badge>
-                        )}
-                      </div>
-                      {needsVolunteers(match) && (
-                        <Badge variant="destructive" className="text-xs">
-                          Recherche bénévoles
-                        </Badge>
-                      )}
-                      <div className="flex gap-1 text-xs flex-wrap">
-                        <Badge variant="outline" className="text-xs" title="Table de marque">
-                          Table {match.stats.tableDeMarque}/2
-                        </Badge>
-                        <Badge variant="outline" className="text-xs" title="Arbitre">
-                          Arb. {match.stats.arbitre}/2
-                        </Badge>
-                        <Badge variant="outline" className="text-xs" title="Responsable salle">
-                          Resp. {match.stats.responsableSalle}/1
-                        </Badge>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Dimanche */}
-              <div
-                className="border-b border-l p-2 min-h-[80px] hover:bg-muted/20 transition-colors"
-              >
-                {getMatchesForSlot(sunday, hour).map((match) => (
-                  <Card
-                    key={match.id}
-                    className={`p-3 cursor-pointer hover:shadow-md transition-shadow mb-2 ${
-                      needsVolunteers(match)
-                        ? "border-orange-300 bg-orange-50/50"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedMatch(match)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">
-                            {match.equipe.nom}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            vs {match.adversaire}
-                          </div>
-                        </div>
-                        {match.domicile ? (
-                          <Badge variant="default" className="gap-1 shrink-0">
-                            <Home className="h-3 w-3" />
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="gap-1 shrink-0">
-                            <Plane className="h-3 w-3" />
-                          </Badge>
-                        )}
-                      </div>
-                      {needsVolunteers(match) && (
-                        <Badge variant="destructive" className="text-xs">
-                          Recherche bénévoles
-                        </Badge>
-                      )}
-                      <div className="flex gap-1 text-xs flex-wrap">
-                        <Badge variant="outline" className="text-xs" title="Table de marque">
-                          Table {match.stats.tableDeMarque}/2
-                        </Badge>
-                        <Badge variant="outline" className="text-xs" title="Arbitre">
-                          Arb. {match.stats.arbitre}/2
-                        </Badge>
-                        <Badge variant="outline" className="text-xs" title="Responsable salle">
-                          Resp. {match.stats.responsableSalle}/1
-                        </Badge>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </React.Fragment>
-          ))}
+      {weekendMatchs.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/15 px-6 py-14 text-center">
+          <CalendarDays aria-hidden className="mx-auto size-8 text-neutral-600" />
+          <p className="mt-4 font-display font-bold text-white">Aucun match ce week-end</p>
+          <p className="mt-1 text-sm text-neutral-400">
+            Utilisez les flèches pour consulter les week-ends suivants.
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Vue mobile - Liste par jour */}
+          <div className="space-y-8 md:hidden">
+            {[saturday, sunday].map((day) => {
+              const dayMatchs = weekendMatchs
+                .filter((m) => isSameDay(new Date(m.date), day))
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      {/* Dialog pour les détails et inscription */}
+              if (dayMatchs.length === 0) return null;
+
+              return (
+                <div key={day.toISOString()} className="space-y-3">
+                  <h3 className="flex items-baseline justify-between gap-3 border-b border-white/10 pb-2">
+                    <span className="font-headline text-2xl text-white">
+                      {format(day, "EEEE d MMMM", { locale: fr })}
+                    </span>
+                    <span className="font-eyebrow text-[0.65rem] text-neutral-500">
+                      {dayMatchs.length} match{dayMatchs.length > 1 ? "s" : ""}
+                    </span>
+                  </h3>
+                  <div className="space-y-3">{dayMatchs.map(renderMatchCard)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Vue desktop - Grille du calendrier */}
+          <div className="hidden overflow-x-auto rounded-xl border border-white/10 bg-neutral-950 md:block">
+            <div className="grid min-w-[720px] grid-cols-[72px_1fr_1fr]">
+              {/* En-tête des jours */}
+              <div className="sticky left-0 z-10 flex items-end border-b border-r border-white/10 bg-neutral-900 px-3 py-4 font-eyebrow text-[0.65rem] text-neutral-500">
+                Heure
+              </div>
+              {[saturday, sunday].map((day, index) => (
+                <div
+                  key={day.toISOString()}
+                  className={cn(
+                    "border-b border-white/10 bg-neutral-900 px-4 py-4 text-center",
+                    index > 0 && "border-l"
+                  )}
+                >
+                  <p className="font-headline text-2xl text-white">
+                    {format(day, "EEEE", { locale: fr })}
+                  </p>
+                  <p className="text-sm text-neutral-400">{format(day, "d MMMM", { locale: fr })}</p>
+                </div>
+              ))}
+
+              {/* Grille horaire : les créneaux vides restent compacts */}
+              {HOURS.map((hour) => {
+                const saturdayMatchs = getMatchesForSlot(saturday, hour);
+                const sundayMatchs = getMatchesForSlot(sunday, hour);
+                const isEmpty = saturdayMatchs.length === 0 && sundayMatchs.length === 0;
+
+                return (
+                  <React.Fragment key={`hour-${hour}`}>
+                    {/* Colonne des heures */}
+                    <div
+                      className={cn(
+                        "sticky left-0 z-10 border-b border-r border-white/10 bg-neutral-900 px-3 py-2 text-xs font-semibold tabular-nums",
+                        isEmpty ? "text-neutral-600" : "text-primary-400"
+                      )}
+                    >
+                      {hour}h00
+                    </div>
+
+                    {/* Samedi */}
+                    <div className={cn("space-y-2 border-b border-white/[0.06] p-2", isEmpty ? "min-h-11" : "min-h-20")}>
+                      {saturdayMatchs.map(renderMatchCard)}
+                    </div>
+
+                    {/* Dimanche */}
+                    <div
+                      className={cn(
+                        "space-y-2 border-b border-l border-white/[0.06] p-2",
+                        isEmpty ? "min-h-11" : "min-h-20"
+                      )}
+                    >
+                      {sundayMatchs.map(renderMatchCard)}
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Dialogue : détails et inscription */}
       <Dialog open={selectedMatch !== null} onOpenChange={() => setSelectedMatch(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-xl border-white/10 bg-neutral-950 p-5 sm:rounded-xl sm:p-8">
           {selectedMatch && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">
-                  {selectedMatch.equipe.nom} vs {selectedMatch.adversaire}
+              <DialogHeader className="space-y-3 pr-8 text-left">
+                <div>
+                  <VolunteerStatus needed={needsVolunteers(selectedMatch)} />
+                </div>
+                <DialogTitle className="font-headline text-3xl font-extrabold tracking-[-0.005em] text-white sm:text-4xl">
+                  {selectedMatch.equipe.nom} <span className="text-neutral-500">vs</span>{" "}
+                  {selectedMatch.adversaire}
                 </DialogTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>
-                    {format(new Date(selectedMatch.date), "EEEE d MMMM yyyy 'à' HH:mm", {
-                      locale: fr,
-                    })}
+                <div className="flex flex-col gap-1.5 text-sm text-neutral-400 sm:flex-row sm:flex-wrap sm:gap-x-5">
+                  <span className="flex items-center gap-2">
+                    <CalendarDays aria-hidden className="size-4 shrink-0 text-primary-500" />
+                    <span className="inline-block first-letter:uppercase">
+                      {format(new Date(selectedMatch.date), "EEEE d MMMM yyyy 'à' HH'h'mm", {
+                        locale: fr,
+                      })}
+                    </span>
                   </span>
-                  <span>•</span>
-                  <span>{selectedMatch.lieu}</span>
+                  <span className="flex items-center gap-2">
+                    <MapPin aria-hidden className="size-4 shrink-0 text-primary-500" />
+                    {selectedMatch.lieu}
+                  </span>
                 </div>
               </DialogHeader>
 
-              <div className="grid md:grid-cols-2 gap-6 mt-4">
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Bénévoles inscrits</h4>
+              <div className="mt-2 grid gap-6 md:grid-cols-2">
+                <div className="space-y-3">
+                  <h4 className="font-eyebrow text-xs text-neutral-500">Bénévoles inscrits</h4>
                   <InscriptionsDisplay
                     inscriptions={selectedMatch.inscriptionsParRole.TABLE_DE_MARQUE}
                     role="TABLE_DE_MARQUE"

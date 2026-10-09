@@ -10,7 +10,8 @@ import { Calendar, MapPin, Home, Plane, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { siteButton } from "@/components/site/styles";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Match {
@@ -106,17 +107,17 @@ export function CalendrierMatchList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        <RefreshCw className="h-8 w-8 animate-spin text-primary-500" />
       </div>
     );
   }
 
   if (matchs.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Aucun match à venir</h3>
-        <p className="text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-white/15 px-6 py-14 text-center">
+        <Calendar className="mx-auto mb-4 size-8 text-neutral-600" />
+        <h3 className="mb-1 font-display text-lg font-bold text-white">Aucun match à venir</h3>
+        <p className="text-sm text-neutral-400">
           Il n'y a pas de matchs programmés pour le moment.
         </p>
       </div>
@@ -125,19 +126,22 @@ export function CalendrierMatchList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Calendrier des matchs</h2>
-          <p className="text-muted-foreground">
+          <h2 className="font-headline text-4xl text-white sm:text-5xl">Calendrier des matchs</h2>
+          <p className="mt-2 text-neutral-400">
             {matchs.length} match{matchs.length > 1 ? "s" : ""} à venir
           </p>
         </div>
-        <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-          />
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className={siteButton({ variant: "outline", size: "sm" })}
+        >
+          <RefreshCw className={refreshing ? "animate-spin" : ""} />
           Actualiser
-        </Button>
+        </button>
       </div>
 
       <Tabs
@@ -145,7 +149,7 @@ export function CalendrierMatchList() {
         onValueChange={setSelectedEquipeId}
         className="w-full"
       >
-        <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 overflow-x-auto border border-white/10 bg-neutral-900 p-1">
           <TabsTrigger value="all">Toutes les équipes</TabsTrigger>
           {equipes.map(({ equipe }) => (
             <TabsTrigger key={equipe.id} value={equipe.id.toString()}>
@@ -159,7 +163,7 @@ export function CalendrierMatchList() {
             <div key={equipe.id} className="space-y-4">
               {selectedEquipeId === "all" && (
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-semibold">{equipe.nom}</h3>
+                  <h3 className="font-headline text-2xl text-white">{equipe.nom}</h3>
                   <Badge variant="outline">{equipe.categorie}</Badge>
                 </div>
               )}
@@ -167,15 +171,16 @@ export function CalendrierMatchList() {
               {equipeMatchs.map((match) => (
                 <Card
                   key={match.id}
-                  className={
-                    needsVolunteers(match) ? "border-orange-300 shadow-sm" : ""
-                  }
+                  className={cn(
+                    "border-white/10 bg-neutral-900 shadow-none",
+                    needsVolunteers(match) && "border-l-2 border-l-primary-500"
+                  )}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <CardTitle className="text-lg">
+                          <CardTitle className="font-display text-lg font-bold text-white">
                             {equipe.nom} vs {match.adversaire}
                           </CardTitle>
                           {match.domicile ? (
@@ -190,13 +195,13 @@ export function CalendrierMatchList() {
                             </Badge>
                           )}
                           {needsVolunteers(match) && (
-                            <Badge variant="destructive">
+                            <Badge className="border-transparent bg-primary-500/15 text-primary-300 shadow-none hover:bg-primary-500/15">
                               Bénévoles recherchés
                             </Badge>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
                             {format(new Date(match.date), "EEEE d MMMM yyyy 'à' HH:mm", {
@@ -217,11 +222,11 @@ export function CalendrierMatchList() {
                   </CardHeader>
 
                   <CardContent className="space-y-6">
-                    <Separator />
+                    <Separator className="bg-white/10" />
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <h4 className="font-semibold text-sm">
+                        <h4 className="font-eyebrow text-xs text-neutral-500">
                           Bénévoles inscrits
                         </h4>
                         <InscriptionsDisplay

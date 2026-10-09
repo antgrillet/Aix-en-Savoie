@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,9 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { siteButton } from "@/components/site/styles";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Clipboard, Shield, Users, Coffee } from "lucide-react";
+import { Clipboard, Shield, Users, Coffee, Loader2 } from "lucide-react";
+
+// Champs sombres, cohérents avec les formulaires du site
+const fieldClass =
+  "h-11 border-white/10 bg-neutral-950/60 text-base text-white shadow-none placeholder:text-neutral-500 focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm";
 
 interface InscriptionFormProps {
   matchId: number;
@@ -108,87 +112,100 @@ export function InscriptionForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">S'inscrire pour ce match</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prenom">Prénom *</Label>
-              <Input
-                id="prenom"
-                type="text"
-                placeholder="Prénom"
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nom">Nom *</Label>
-              <Input
-                id="nom"
-                type="text"
-                placeholder="Nom"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
-
+    <div className="rounded-xl border border-white/10 bg-neutral-900 p-5 sm:p-6">
+      <h3 className="font-display text-lg font-bold text-white">S&apos;inscrire pour ce match</h3>
+      <p className="mt-1 text-sm text-neutral-400">Choisissez un rôle encore disponible.</p>
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="role">Rôle *</Label>
-            <Select value={role} onValueChange={setRole} disabled={loading}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Choisir un rôle" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((r) => {
-                  const Icon = r.icon;
-                  const isFull = isRoleFull(r.value, r.max);
-                  const statsMapping: Record<string, keyof typeof stats> = {
-                    TABLE_DE_MARQUE: "tableDeMarque",
-                    ARBITRE: "arbitre",
-                    RESPONSABLE_SALLE: "responsableSalle",
-                    BUVETTE: "buvette",
-                  };
-                  const count = stats[statsMapping[r.value]];
-
-                  return (
-                    <SelectItem
-                      key={r.value}
-                      value={r.value}
-                      disabled={isFull}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        <span>{r.label}</span>
-                        {r.max !== null && (
-                          <span className="text-xs text-muted-foreground">
-                            ({count}/{r.max})
-                          </span>
-                        )}
-                        {isFull && (
-                          <span className="text-xs text-red-500">(Complet)</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="prenom" className="text-sm font-medium text-neutral-200">Prénom *</Label>
+            <Input
+              id="prenom"
+              type="text"
+              placeholder="Prénom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              required
+              disabled={loading}
+              className={fieldClass}
+            />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="nom" className="text-sm font-medium text-neutral-200">Nom *</Label>
+            <Input
+              id="nom"
+              type="text"
+              placeholder="Nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              required
+              disabled={loading}
+              className={fieldClass}
+            />
+          </div>
+        </div>
 
-          <Button type="submit" className="w-full" disabled={loading || !role}>
-            {loading ? "Inscription..." : "S'inscrire"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="space-y-2">
+          <Label htmlFor="role" className="text-sm font-medium text-neutral-200">Rôle *</Label>
+          <Select value={role} onValueChange={setRole} disabled={loading}>
+            <SelectTrigger
+              id="role"
+              className={cn(fieldClass, "focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 data-[placeholder]:text-neutral-500")}
+            >
+              <SelectValue placeholder="Choisir un rôle" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => {
+                const Icon = r.icon;
+                const isFull = isRoleFull(r.value, r.max);
+                const statsMapping: Record<string, keyof typeof stats> = {
+                  TABLE_DE_MARQUE: "tableDeMarque",
+                  ARBITRE: "arbitre",
+                  RESPONSABLE_SALLE: "responsableSalle",
+                  BUVETTE: "buvette",
+                };
+                const count = stats[statsMapping[r.value]];
+
+                return (
+                  <SelectItem
+                    key={r.value}
+                    value={r.value}
+                    disabled={isFull}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary-400" />
+                      <span>{r.label}</span>
+                      {r.max !== null && (
+                        <span className="text-xs tabular-nums text-neutral-400">
+                          ({count}/{r.max})
+                        </span>
+                      )}
+                      {isFull && (
+                        <span className="text-xs text-emerald-300">(Complet)</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <button
+          type="submit"
+          className={cn(siteButton({ size: "md" }), "w-full focus-visible:ring-offset-neutral-900")}
+          disabled={loading || !role}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin" />
+              Inscription...
+            </>
+          ) : (
+            "S'inscrire"
+          )}
+        </button>
+      </form>
+    </div>
   );
 }

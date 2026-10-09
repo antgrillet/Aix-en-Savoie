@@ -2,13 +2,24 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Send, CheckCircle2 } from 'lucide-react'
+import { siteButton } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
+import {
+  Send,
+  CheckCircle2,
+  CircleAlert,
+  Handshake,
+  Loader2,
+  MessageCircleQuestion,
+  Shirt,
+  UserPlus,
+  type LucideIcon,
+} from 'lucide-react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
 type Sujet = 'inscription' | 'jouer' | 'question' | 'partenariat'
@@ -37,6 +48,20 @@ const SUJETS: Array<{ value: Sujet; label: string; description: string }> = [
     description: 'Vous représentez une entreprise et souhaitez soutenir le club.',
   },
 ]
+
+// Pictogrammes des cartes de choix du motif
+const SUJET_ICONS: Record<Sujet, LucideIcon> = {
+  inscription: UserPlus,
+  jouer: Shirt,
+  question: MessageCircleQuestion,
+  partenariat: Handshake,
+}
+
+// Champs sombres communs du formulaire
+const fieldClass =
+  'mt-2 h-11 border-white/10 bg-neutral-950/60 text-base text-white shadow-none placeholder:text-neutral-500 focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
+
+const labelClass = 'text-sm font-medium text-neutral-200'
 
 const CATEGORIES_JEUNES = [
   'Baby Hand (3-5 ans)',
@@ -157,33 +182,47 @@ export function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Choix du motif de contact */}
       <div>
-        <Label className="mb-3 block">Votre demande concerne</Label>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Motif de contact">
-          {SUJETS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                setSujet(option.value)
-                resetExtraFields()
-              }}
-              aria-pressed={sujet === option.value}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                sujet === option.value
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-zinc-900/60 text-neutral-300 border border-zinc-700 hover:bg-zinc-800'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        <Label className={cn(labelClass, 'mb-3 block')}>Votre demande concerne</Label>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3" role="group" aria-label="Motif de contact">
+          {SUJETS.map((option) => {
+            const SujetIcon = SUJET_ICONS[option.value]
+            const active = sujet === option.value
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  setSujet(option.value)
+                  resetExtraFields()
+                }}
+                aria-pressed={active}
+                className={cn(
+                  'flex min-h-14 items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold leading-snug transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 sm:p-4',
+                  active
+                    ? 'border-primary-500 bg-primary-500/10 text-white'
+                    : 'border-white/10 bg-white/[0.03] text-neutral-300 hover:border-white/25 hover:text-white'
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+                    active ? 'bg-primary-500 text-neutral-950' : 'bg-white/5 text-primary-400'
+                  )}
+                >
+                  <SujetIcon className="size-4.5" />
+                </span>
+                {option.label}
+              </button>
+            )
+          })}
         </div>
-        <p className="text-sm text-neutral-400 mt-3">{activeSujet.description}</p>
+        <p className="mt-3 border-l-2 border-primary-500/60 pl-3 text-sm text-neutral-400">{activeSujet.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
-          <Label htmlFor="nom">Nom *</Label>
+          <Label htmlFor="nom" className={labelClass}>Nom *</Label>
           <Input
             id="nom"
             name="nom"
@@ -191,12 +230,12 @@ export function ContactForm() {
             required
             placeholder="Dupont"
             autoComplete="family-name"
-            className="mt-1"
+            className={fieldClass}
           />
         </div>
 
         <div>
-          <Label htmlFor="prenom">Prénom *</Label>
+          <Label htmlFor="prenom" className={labelClass}>Prénom *</Label>
           <Input
             id="prenom"
             name="prenom"
@@ -204,13 +243,13 @@ export function ContactForm() {
             required
             placeholder="Jean"
             autoComplete="given-name"
-            className="mt-1"
+            className={fieldClass}
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="email">Email *</Label>
+        <Label htmlFor="email" className={labelClass}>Email *</Label>
         <Input
           id="email"
           name="email"
@@ -218,27 +257,29 @@ export function ContactForm() {
           required
           placeholder="jean.dupont@example.com"
           autoComplete="email"
-          className="mt-1"
+          className={fieldClass}
         />
       </div>
 
       {/* Informations sur le futur licencié (parents) */}
       {sujet === 'inscription' && (
-        <div className="space-y-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-700">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <fieldset className="space-y-5 rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
+          <legend className="sr-only">Le futur licencié</legend>
+          <p aria-hidden className="font-eyebrow text-xs text-primary-400">Le futur licencié</p>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
-              <Label htmlFor="licencie">Prénom du futur licencié</Label>
+              <Label htmlFor="licencie" className={labelClass}>Prénom du futur licencié</Label>
               <Input
                 id="licencie"
                 name="licencie"
                 type="text"
                 placeholder="Léa"
                 autoComplete="off"
-                className="mt-1"
+                className={fieldClass}
               />
             </div>
             <div>
-              <Label htmlFor="age">Âge</Label>
+              <Label htmlFor="age" className={labelClass}>Âge</Label>
               <Input
                 id="age"
                 name="age"
@@ -247,15 +288,15 @@ export function ContactForm() {
                 max={99}
                 placeholder="9"
                 autoComplete="off"
-                className="mt-1"
+                className={fieldClass}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="categorie">Catégorie envisagée</Label>
+            <Label htmlFor="categorie" className={labelClass}>Catégorie envisagée</Label>
             <Select value={categorieSouhaitee} onValueChange={setCategorieSouhaitee}>
-              <SelectTrigger id="categorie" className="mt-1">
+              <SelectTrigger id="categorie" className={cn(fieldClass, 'focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 data-[placeholder]:text-neutral-500')}>
                 <SelectValue placeholder="Sélectionnez une catégorie" />
               </SelectTrigger>
               <SelectContent>
@@ -267,16 +308,18 @@ export function ContactForm() {
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* Informations joueur (adulte ou jeune souhaitant jouer) */}
       {sujet === 'jouer' && (
-        <div className="space-y-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-700">
+        <fieldset className="space-y-5 rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
+          <legend className="sr-only">Votre profil de joueur</legend>
+          <p aria-hidden className="font-eyebrow text-xs text-primary-400">Votre profil de joueur</p>
           <div>
-            <Label htmlFor="niveau">Niveau de pratique</Label>
+            <Label htmlFor="niveau" className={labelClass}>Niveau de pratique</Label>
             <Select value={niveau} onValueChange={setNiveau}>
-              <SelectTrigger id="niveau" className="mt-1">
+              <SelectTrigger id="niveau" className={cn(fieldClass, 'focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 data-[placeholder]:text-neutral-500')}>
                 <SelectValue placeholder="Sélectionnez votre niveau" />
               </SelectTrigger>
               <SelectContent>
@@ -289,19 +332,27 @@ export function ContactForm() {
           </div>
 
           <div>
-            <Label className="mb-2 block">Postes préférés (plusieurs choix possibles)</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <Label className={cn(labelClass, 'mb-3 block')}>Postes préférés (plusieurs choix possibles)</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {['Gardien', 'Ailier gauche', 'Arrière gauche', 'Demi-centre', 'Pivot', 'Arrière droit', 'Ailier droit'].map((position) => (
-                <div key={position} className="flex items-center space-x-3">
+                <div
+                  key={position}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border pl-3 transition-colors',
+                    positions.includes(position)
+                      ? 'border-primary-500/60 bg-primary-500/10'
+                      : 'border-white/10 bg-neutral-950/40 hover:border-white/25'
+                  )}
+                >
                   <Checkbox
                     id={position}
                     checked={positions.includes(position)}
                     onCheckedChange={(checked) => handlePositionChange(position, checked as boolean)}
-                    className="h-5 w-5"
+                    className="size-5 border-white/30 data-[state=checked]:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500"
                   />
                   <label
                     htmlFor={position}
-                    className="text-sm leading-none cursor-pointer"
+                    className="flex-1 cursor-pointer py-2.5 pr-3 text-sm leading-snug text-neutral-200"
                   >
                     {position}
                   </label>
@@ -309,79 +360,79 @@ export function ContactForm() {
               ))}
             </div>
           </div>
-        </div>
+        </fieldset>
       )}
 
       <div>
-        <Label htmlFor="message">Message *</Label>
+        <Label htmlFor="message" className={labelClass}>Message *</Label>
         <Textarea
           id="message"
           name="message"
           required
-          rows={4}
+          rows={5}
           placeholder={
             sujet === 'inscription'
               ? 'Disponibilités, questions sur les créneaux ou le tarif...'
               : 'Décrivez votre demande...'
           }
           autoComplete="off"
-          className="mt-1"
+          className={cn(fieldClass, 'h-auto min-h-36 py-3')}
         />
       </div>
 
-      {/* Success Message */}
+      {/* Message de succès */}
       <AnimatePresence>
         {isSuccess && (
           <motion.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
-            className="bg-green-900/50 border border-green-500/50 text-green-300 px-4 py-3 rounded-lg flex items-center gap-2"
+            className="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
             role="status"
             aria-live="polite"
             aria-atomic="true"
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="size-5 shrink-0" />
             <span className="font-medium">Votre message a été envoyé avec succès !</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Error Message */}
+      {/* Message d'erreur */}
       <AnimatePresence>
         {isError && (
           <motion.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
-            className="bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg"
+            className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
           >
+            <CircleAlert className="size-5 shrink-0" />
             <span className="font-medium">{errorMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <Button
+      <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full"
-        size="lg"
+        className={cn(siteButton({ size: 'lg' }), 'w-full focus-visible:ring-offset-neutral-900')}
       >
         {isSubmitting ? (
-          <span className="flex items-center gap-2">
-            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <>
+            <Loader2 className="animate-spin" />
             Envoi en cours...
-          </span>
+          </>
         ) : (
           <>
             Envoyer le message
-            <Send className="w-4 h-4 ml-2" />
+            <Send />
           </>
         )}
-      </Button>
+      </button>
     </form>
   )
 }

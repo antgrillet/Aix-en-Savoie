@@ -5,7 +5,14 @@ import { Toaster as Sonner } from 'sonner'
 
 const emptySubscribe = () => () => {}
 
+/**
+ * Notifications globales (enregistrements admin, espace bénévoles…).
+ * Les couleurs suivent les tokens du thème : sombres sur le site public,
+ * claires dans l'admin. Elles passent par `style` car la feuille de sonner,
+ * hors couche Tailwind, l'emporte sur les classes utilitaires.
+ */
 export function Toaster() {
+  // Monté uniquement côté client pour éviter les écarts d'hydratation
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -18,16 +25,13 @@ export function Toaster() {
 
   return (
     <Sonner
-      position="top-right"
+      position="bottom-right"
       toastOptions={{
-        classNames: {
-          toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-          description: 'group-[.toast]:text-muted-foreground',
-          actionButton:
-            'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-          cancelButton:
-            'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+        style: {
+          background: 'var(--popover)',
+          color: 'var(--popover-foreground)',
+          border: '1px solid var(--border)',
+          fontFamily: 'var(--font-sans)',
         },
       }}
     />

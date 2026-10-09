@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { CalendrierAuth } from "@/components/calendrier/CalendrierAuth";
 import { CalendrierGrid } from "@/components/calendrier/CalendrierGrid";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { PageHero } from "@/components/site/PageHero";
+import { container, siteButton } from "@/components/site/styles";
+import { cn } from "@/lib/utils";
+import { LogOut, RefreshCw } from "lucide-react";
 
 function getInitialAuth() {
   if (typeof window === "undefined") return false;
@@ -22,38 +24,47 @@ export default function CalendrierPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+      <div className="flex min-h-[70vh] items-center justify-center pt-18">
+        <RefreshCw className="size-8 animate-spin text-primary-500" aria-label="Chargement" />
       </div>
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-12">
-      {!isAuthenticated ? (
-        <CalendrierAuth onSuccess={() => setIsAuthenticated(true)} />
-      ) : (
-        <div className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                Espace bénévoles
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Inscrivez-vous pour aider lors des matchs à domicile
-              </p>
-            </div>
-            <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
-              <LogOut className="h-4 w-4 mr-2" />
-              Se déconnecter
-            </Button>
-          </div>
+  if (!isAuthenticated) {
+    return (
+      // Écran de mot de passe : plein écran, dégagé sous le header fixe
+      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden bg-neutral-950 pb-20 pt-32 md:pb-28 md:pt-40">
+        <div aria-hidden className="absolute inset-0 -z-10 bg-stripes" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-b from-neutral-900/80 via-neutral-950/40 to-neutral-950" />
+        <div className={container}>
+          <CalendrierAuth onSuccess={() => setIsAuthenticated(true)} />
+        </div>
+      </section>
+    );
+  }
 
+  return (
+    <>
+      <PageHero
+        eyebrow="Bénévoles"
+        title="Espace bénévoles"
+        description="Inscrivez-vous pour aider lors des matchs à domicile : table de marque, arbitrage, responsable de salle ou buvette."
+      >
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={cn(siteButton({ variant: "outline", size: "sm" }), "h-10")}
+        >
+          <LogOut />
+          Se déconnecter
+        </button>
+      </PageHero>
+
+      <section className="py-12 md:py-16">
+        <div className={container}>
           <CalendrierGrid />
         </div>
-      )}
-    </div>
+      </section>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Users, Clipboard, Shield, Coffee } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Inscription {
   id: number;
@@ -21,22 +21,18 @@ const ROLE_CONFIG = {
   TABLE_DE_MARQUE: {
     label: "Table de marque",
     icon: Clipboard,
-    color: "bg-blue-500/10 text-blue-700 border-blue-200",
   },
   ARBITRE: {
     label: "Arbitre",
     icon: Shield,
-    color: "bg-green-500/10 text-green-700 border-green-200",
   },
   RESPONSABLE_SALLE: {
     label: "Responsable de salle",
     icon: Users,
-    color: "bg-purple-500/10 text-purple-700 border-purple-200",
   },
   BUVETTE: {
     label: "Buvette",
     icon: Coffee,
-    color: "bg-orange-500/10 text-orange-700 border-orange-200",
   },
 };
 
@@ -49,36 +45,50 @@ export function InscriptionsDisplay({
   const Icon = config.icon;
   const count = inscriptions.length;
   const isFull = max !== undefined && count >= max;
+  // Places restantes, matérialisées par des emplacements vides
+  const placesLibres = max !== undefined ? Math.max(max - count, 0) : 0;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4" />
-          <span className="font-medium text-sm">{config.label}</span>
+    <div className="rounded-lg border border-white/10 bg-neutral-900 p-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-500/10 text-primary-400">
+            <Icon aria-hidden className="size-4" />
+          </span>
+          <span className="text-sm font-semibold text-white">{config.label}</span>
         </div>
-        <Badge
-          variant={isFull ? "default" : "outline"}
-          className={isFull ? "bg-green-500" : ""}
+        <span
+          className={cn(
+            "rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums",
+            isFull
+              ? "bg-emerald-500/15 text-emerald-300"
+              : "bg-white/[0.04] text-neutral-300 ring-1 ring-inset ring-white/10"
+          )}
         >
           {max !== undefined ? `${count}/${max}` : count}
-        </Badge>
+        </span>
       </div>
-      {inscriptions.length > 0 ? (
-        <div className="space-y-1.5 pl-6">
+      {inscriptions.length > 0 || placesLibres > 0 ? (
+        <ul className="mt-3 flex flex-wrap gap-1.5">
           {inscriptions.map((inscription) => (
-            <div
+            <li
               key={inscription.id}
-              className={`text-sm p-2 rounded-md border ${config.color}`}
+              className="rounded-md bg-white/[0.07] px-2.5 py-1 text-sm text-neutral-100"
             >
               {inscription.prenom} {inscription.nom}
-            </div>
+            </li>
           ))}
-        </div>
+          {Array.from({ length: placesLibres }, (_, index) => (
+            <li
+              key={`libre-${index}`}
+              className="rounded-md border border-dashed border-white/15 px-2.5 py-1 text-sm text-neutral-500"
+            >
+              Place libre
+            </li>
+          ))}
+        </ul>
       ) : (
-        <div className="text-sm text-muted-foreground pl-6 italic">
-          Aucune inscription
-        </div>
+        <p className="mt-3 text-sm italic text-neutral-500">Aucune inscription</p>
       )}
     </div>
   );

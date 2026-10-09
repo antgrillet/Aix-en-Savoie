@@ -3,10 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from '@/lib/auth-client'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { LogIn } from 'lucide-react'
+import { siteButton } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
+import { CircleAlert, Loader2, LogIn } from 'lucide-react'
+
+// Champs sombres, cohérents avec les formulaires du site
+const fieldClass =
+  'mt-2 h-11 border-white/10 bg-neutral-950/60 text-base text-white shadow-none placeholder:text-neutral-500 focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
 
 export function LoginForm() {
   const router = useRouter()
@@ -45,9 +50,9 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="text-sm font-medium text-neutral-200">Email</Label>
         <Input
           id="email"
           name="email"
@@ -55,11 +60,12 @@ export function LoginForm() {
           required
           placeholder="admin@hbcaixensavoie.fr"
           autoComplete="email"
+          className={fieldClass}
         />
       </div>
 
       <div>
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password" className="text-sm font-medium text-neutral-200">Mot de passe</Label>
         <Input
           id="password"
           name="password"
@@ -67,30 +73,37 @@ export function LoginForm() {
           required
           placeholder="••••••••"
           autoComplete="current-password"
+          className={fieldClass}
         />
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm">
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+        >
+          <CircleAlert className="mt-0.5 size-4 shrink-0" />
           {error}
         </div>
       )}
 
-      <Button
+      <button
         type="submit"
         disabled={isLoading}
-        className="w-full"
-        size="lg"
+        className={cn(siteButton({ size: 'lg' }), 'w-full focus-visible:ring-offset-neutral-900')}
       >
         {isLoading ? (
-          'Connexion...'
+          <>
+            <Loader2 className="animate-spin" />
+            Connexion...
+          </>
         ) : (
           <>
-            <LogIn className="w-4 h-4 mr-2" />
+            <LogIn />
             Se connecter
           </>
         )}
-      </Button>
+      </button>
     </form>
   )
 }
