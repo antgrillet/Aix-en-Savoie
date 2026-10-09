@@ -59,7 +59,6 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
   return (
     <section className="relative isolate overflow-hidden border-y border-white/10 bg-neutral-900 py-20 md:py-28">
       <div aria-hidden className="absolute inset-0 -z-10 bg-stripes" />
-      <div aria-hidden className="absolute -left-48 top-1/2 -z-10 size-[32rem] -translate-y-1/2 rounded-full bg-primary-500/10 blur-3xl" />
 
       <div className={container}>
         <SectionHeader

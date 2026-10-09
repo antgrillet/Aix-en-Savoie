@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { motion, useReducedMotion } from 'framer-motion'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
-import { PartnerCard } from './PartnerCard'
-import { staggerContainer, staggerItem } from '@/lib/animations'
+import { sitePill } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
+import { PartnersSections } from './PartnersSections'
 
 interface Partenaire {
   id: number
@@ -32,7 +32,6 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const shouldReduceMotion = useReducedMotion()
 
   const selectedCategory = searchParams.get('categorie') ?? 'Tous'
   const queryParam = searchParams.get('q') ?? ''
@@ -86,141 +85,97 @@ export function PartnersPageClient({ partenaires, categories }: PartnersPageClie
     return filtered
   }, [partenaires, selectedCategory, searchQuery])
 
-  const partenairesMajeurs = filteredPartenaires.filter((p) => p.partenaire_majeur)
-  const autresPartenaires = filteredPartenaires.filter((p) => !p.partenaire_majeur)
-
   return (
-    <div className="space-y-10">
-      {/* Vitrine des partenaires majeurs */}
-      {partenairesMajeurs.length > 0 && (
-        <section className="space-y-5">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-white">
-              Partenaires majeurs
-            </h2>
-            <p className="text-neutral-400 text-sm mt-2">
-              Ils soutiennent le club au quotidien et rendent notre projet possible
-            </p>
+    <div>
+      {/* Recherche et filtres */}
+      <div className="mb-14 border-b border-white/10 pb-6 md:mb-20">
+        <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-center lg:justify-between">
+          <div className="flex gap-2 lg:w-80 lg:shrink-0">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-neutral-500" aria-hidden />
+              <label htmlFor="recherche-partenaire" className="sr-only">
+                Rechercher un partenaire
+              </label>
+              <input
+                id="recherche-partenaire"
+                type="search"
+                placeholder="Rechercher…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 w-full rounded-md border border-white/10 bg-neutral-900 pl-10 pr-11 text-sm text-white transition-colors placeholder:text-neutral-500 hover:border-white/20 focus-visible:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 [&::-webkit-search-cancel-button]:hidden"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Effacer la recherche"
+                  className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowFilters((value) => !value)}
+              aria-expanded={showFilters}
+              aria-controls="filtres-categories"
+              className={cn(
+                'inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border px-3.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:hidden',
+                showFilters || selectedCategory !== 'Tous'
+                  ? 'border-primary-500/60 bg-primary-500/10 text-primary-300'
+                  : 'border-white/10 bg-neutral-900 text-neutral-300'
+              )}
+            >
+              <SlidersHorizontal className="size-4" aria-hidden />
+              Catégories
+            </button>
           </div>
 
-          <motion.div
-            variants={shouldReduceMotion ? undefined : staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          <div
+            id="filtres-categories"
+            className={cn(showFilters ? 'flex' : 'hidden', 'flex-wrap gap-2 sm:flex')}
+            role="group"
+            aria-label="Filtrer par catégorie"
           >
-            {partenairesMajeurs.map((partenaire) => (
-              <motion.div key={partenaire.id} variants={shouldReduceMotion ? undefined : staggerItem}>
-                <PartnerCard partenaire={partenaire} featured />
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-      )}
-
-      {/* Recherche et filtres - secondaires */}
-      <section className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-            <label htmlFor="recherche-partenaire" className="sr-only">
-              Rechercher un partenaire
-            </label>
-            <input
-              id="recherche-partenaire"
-              type="search"
-              placeholder="Rechercher un partenaire..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 bg-zinc-900/60 border border-zinc-700 rounded-lg text-white placeholder:text-neutral-500 focus:outline-none focus:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500 transition-colors text-sm"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Effacer la recherche"
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4 text-neutral-400" />
-              </button>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowFilters((value) => !value)}
-            aria-expanded={showFilters}
-            aria-controls="filtres-categories"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 bg-zinc-900/60 text-sm font-semibold text-neutral-300 hover:bg-zinc-800 transition-colors sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Catégories
-            {selectedCategory !== 'Tous' && (
-              <span className="text-primary-400">· {selectedCategory}</span>
-            )}
-          </button>
-        </div>
-
-        <div
-          id="filtres-categories"
-          className={`${showFilters ? 'flex' : 'hidden'} sm:flex flex-wrap gap-2`}
-          role="group"
-          aria-label="Filtrer par catégorie"
-        >
-          <CategoryChip
-            label="Tous"
-            active={selectedCategory === 'Tous'}
-            onClick={() => updateParams({ categorie: null })}
-          />
-          {categories.map((cat) => (
             <CategoryChip
-              key={cat}
-              label={cat}
-              active={selectedCategory === cat}
-              onClick={() => updateParams({ categorie: cat })}
+              label="Tous"
+              active={selectedCategory === 'Tous'}
+              onClick={() => updateParams({ categorie: null })}
             />
-          ))}
+            {categories.map((cat) => (
+              <CategoryChip
+                key={cat}
+                label={cat}
+                active={selectedCategory === cat}
+                onClick={() => updateParams({ categorie: cat })}
+              />
+            ))}
+          </div>
         </div>
 
         {hasActiveFilter && (
-          <p className="text-xs text-neutral-400">
+          <p className="mt-4 text-sm text-neutral-400" aria-live="polite">
             {filteredPartenaires.length} partenaire{filteredPartenaires.length > 1 ? 's' : ''} affiché
             {filteredPartenaires.length > 1 ? 's' : ''} sur {partenaires.length}
+            {selectedCategory !== 'Tous' && (
+              <>
+                {' '}· catégorie <span className="font-semibold text-primary-400">{selectedCategory}</span>
+              </>
+            )}
           </p>
         )}
-      </section>
+      </div>
 
       {/* Résultats */}
       {filteredPartenaires.length === 0 ? (
-        <div className="text-center py-12 bg-white/5 border border-white/10 rounded-xl">
-          <h3 className="text-xl font-bold text-white mb-2">Aucun partenaire trouvé</h3>
-          <p className="text-neutral-300 text-sm">
-            Essayez de modifier votre recherche ou vos filtres
-          </p>
+        <div className="rounded-xl border border-dashed border-white/15 px-6 py-16 text-center">
+          <h2 className="font-display text-xl font-bold text-white">Aucun partenaire trouvé</h2>
+          <p className="mt-2 text-sm text-neutral-400">Essayez de modifier votre recherche ou vos filtres.</p>
         </div>
       ) : (
-        autresPartenaires.length > 0 && (
-          <section className="space-y-5">
-            {partenairesMajeurs.length > 0 && (
-              <h2 className="text-xl md:text-2xl font-display font-bold text-white text-center">
-                Tous nos partenaires
-              </h2>
-            )}
-
-            <motion.div
-              variants={shouldReduceMotion ? undefined : staggerContainer}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-              {autresPartenaires.map((partenaire) => (
-                <motion.div key={partenaire.id} variants={shouldReduceMotion ? undefined : staggerItem}>
-                  <PartnerCard partenaire={partenaire} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </section>
-        )
+        <PartnersSections partenaires={filteredPartenaires} />
       )}
     </div>
   )
@@ -240,11 +195,7 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-        active
-          ? 'bg-primary-500 text-white'
-          : 'bg-zinc-900/60 text-neutral-400 border border-zinc-700 hover:text-white hover:bg-zinc-800'
-      }`}
+      className={sitePill({ active })}
     >
       {label}
     </button>

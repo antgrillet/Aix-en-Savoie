@@ -28,8 +28,8 @@ export function PageHero({ eyebrow, title, description, backgroundImage, childre
         </div>
       ) : (
         <div aria-hidden className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-bl from-primary-500/[0.07] via-transparent to-transparent" />
           <div className="absolute inset-0 bg-stripes" />
-          <div className="absolute -right-40 -top-40 size-[36rem] rounded-full bg-primary-500/15 blur-3xl" />
         </div>
       )}
 

@@ -2,11 +2,10 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
 import {
-  ExternalLink, Globe, Mail, Phone, Calendar, Heart,
-  ArrowLeft,
+  ExternalLink, Globe, Mail, Phone, Calendar,
+  ArrowLeft, ArrowRight,
   Target, Users, Trophy, Zap, Shield, Star, Quote,
   Handshake, Lightbulb, CheckCircle
 } from 'lucide-react'
@@ -16,9 +15,13 @@ import instagramIcon from '@iconify-icons/simple-icons/instagram'
 import linkedinIcon from '@iconify-icons/simple-icons/linkedin'
 import twitterIcon from '@iconify-icons/simple-icons/twitter'
 import youtubeIcon from '@iconify-icons/simple-icons/youtube'
-import { normalizeImagePath } from '@/lib/utils'
+import { cn, normalizeImagePath } from '@/lib/utils'
 import { PartnerCard } from '@/components/partners/PartnerCard'
 import { PromoCard } from '@/components/partners/PromoCard'
+import { JoinClubCTA } from '@/components/home/JoinClubCTA'
+import { Eyebrow } from '@/components/site/Eyebrow'
+import { SectionHeader } from '@/components/site/SectionHeader'
+import { container, siteButton, siteCard } from '@/components/site/styles'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -57,6 +60,23 @@ export async function generateMetadata({ params }: PageProps) {
     }),
   }
 }
+
+/** Titre de bloc : petit libellé orange + titre condensé */
+function BlockTitle({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
+  return (
+    <div className="mb-6">
+      <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
+      <h2 className="font-headline text-3xl text-white sm:text-4xl">{title}</h2>
+      {description && <p className="mt-3 max-w-2xl text-neutral-400">{description}</p>}
+    </div>
+  )
+}
+
+const socialLinkClass =
+  'flex size-11 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-neutral-300 transition-colors hover:border-primary-500/60 hover:text-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
+
+const contactLinkClass =
+  '-mx-2 flex min-h-11 items-center gap-3 rounded-md px-2 text-neutral-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
 
 export default async function PartenaireDetailPage({ params }: PageProps) {
   const { slug } = await params
@@ -101,13 +121,47 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
   })
 
   const backgroundImage = await getPageBackgroundImage('partenaires')
-  const brandColor = partenaire.couleurPrincipale || '#FF6B35'
+
+  // Couleur de marque : simple accent discret (liseré du logo), la page reste aux couleurs du club
+  const brandColor =
+    partenaire.couleurPrincipale && /^#[0-9a-f]{3,8}$/i.test(partenaire.couleurPrincipale)
+      ? partenaire.couleurPrincipale
+      : null
 
   // Icônes pour les apports (rotation pour varier)
   const apportIcons = [Target, Users, Trophy, Zap, Shield, Star, Handshake, Lightbulb]
 
+  const socials = [
+    { name: 'Facebook', href: reseaux?.facebook, icon: facebookIcon },
+    { name: 'Instagram', href: reseaux?.instagram, icon: instagramIcon },
+    { name: 'Twitter', href: reseaux?.twitter, icon: twitterIcon },
+    { name: 'LinkedIn', href: reseaux?.linkedin, icon: linkedinIcon },
+    { name: 'YouTube', href: reseaux?.youtube, icon: youtubeIcon },
+  ].filter((social) => social.href)
+
+  const hasContact = Boolean(partenaire.site || partenaire.email || partenaire.telephone)
+  const hasValeurs = partenaire.valeurs && partenaire.valeurs.length > 0
+  const hasAside = hasContact || socials.length > 0 || hasValeurs
+
+  const typeLabel =
+    !partenaire.typePartenariat || partenaire.typePartenariat === 'Partenaire'
+      ? 'Partenaire'
+      : `Partenaire ${partenaire.typePartenariat.toLowerCase()}`
+
+  // Même règle d'expiration que PromoCard, pour ne pas laisser de bloc vide
+  const showPromo = Boolean(
+    partenaire.promoActive &&
+      partenaire.promoTitre &&
+      (!partenaire.promoExpiration || partenaire.promoExpiration >= new Date())
+  )
+
+  // Photo de couverture du partenaire, sinon l'image de fond de la page Partenaires
+  const heroImage = partenaire.photoCouverture
+    ? normalizeImagePath(partenaire.photoCouverture, backgroundImage || undefined)
+    : backgroundImage
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
+    <>
       <BreadcrumbSchema
         items={[
           { name: 'Accueil', url: '/' },
@@ -115,591 +169,329 @@ export default async function PartenaireDetailPage({ params }: PageProps) {
           { name: partenaire.nom, url: `/partenaires/${partenaire.slug}` },
         ]}
       />
-      <PageBackground imageUrl={backgroundImage} />
 
-      {/* Gradient overlay pour ajouter de la couleur */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-30"
-        style={{
-          background: `radial-gradient(circle at 20% 20%, ${brandColor}15 0%, transparent 50%), radial-gradient(circle at 80% 80%, #FF6B3515 0%, transparent 50%)`
-        }}
-      />
-
-      <div className="relative z-10">
-        {/* Bouton retour */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
-          <Link
-            href="/partenaires"
-            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour aux partenaires
-          </Link>
+      {/* En-tête : photo de couverture du partenaire si présente */}
+      <section className="relative isolate overflow-hidden border-b border-white/10 bg-neutral-950">
+        <div aria-hidden className="absolute inset-0 -z-10">
+          {heroImage ? (
+            <>
+              <Image src={heroImage} alt="" fill priority sizes="100vw" className="object-cover opacity-40" />
+              <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/80 to-neutral-950/30" />
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/60" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-stripes" />
+          )}
         </div>
 
-        {/* 🏁 HERO SECTION DÉDIÉE */}
-        <section className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden rounded-2xl">
-              {/* Background avec image ou dégradé */}
-              {partenaire.photoCouverture ? (
-                <div className="absolute inset-0 z-0">
-                  <Image
-                    src={normalizeImagePath(partenaire.photoCouverture || undefined, backgroundImage || undefined)}
-                    alt={`Couverture ${partenaire.nom}`}
-                    fill
-                    className="object-cover opacity-30"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/70 via-zinc-800/60 to-zinc-900/70" />
-                </div>
-              ) : (
-                <div
-                  className="absolute inset-0 z-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${brandColor}15 0%, transparent 50%, ${brandColor}10 100%)`
-                  }}
+        <div className={cn(container, 'pb-12 pt-28 md:pb-16 md:pt-36')}>
+          <Link
+            href="/partenaires"
+            className="inline-flex w-fit items-center gap-2 rounded-sm text-sm font-medium text-neutral-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            Tous les partenaires
+          </Link>
+
+          <div className="mt-8 flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
+            {/* Logo sur tuile blanche, liseré à la couleur du partenaire */}
+            <div className="relative flex h-36 w-full max-w-xs shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-7 md:h-44 md:w-80 md:max-w-none">
+              <span
+                aria-hidden
+                className={cn('absolute inset-x-0 top-0 h-1.5', !brandColor && 'bg-primary-500')}
+                style={brandColor ? { backgroundColor: brandColor } : undefined}
+              />
+              <div className="relative size-full">
+                <Image
+                  src={normalizeImagePath(partenaire.logo, '/img/partenaires/default.png')}
+                  alt={partenaire.nom}
+                  fill
+                  priority
+                  sizes="320px"
+                  className="object-contain"
                 />
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <Eyebrow className="mb-4">{typeLabel}</Eyebrow>
+              <h1 className="font-headline text-5xl text-white sm:text-6xl lg:text-7xl">{partenaire.nom}</h1>
+              {partenaire.accroche && (
+                <p className="mt-4 max-w-2xl text-lg text-neutral-200 md:text-xl">{partenaire.accroche}</p>
               )}
 
-              {/* Contenu Hero */}
-              <div className="relative z-10 px-6 md:px-12 py-10 md:py-14">
-                <div className="max-w-4xl mx-auto text-center space-y-5">
-                  {/* Logo */}
-                  <div className="flex justify-center">
-                    <div className="relative w-48 h-24 md:w-64 md:h-32 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                      <Image
-                        src={normalizeImagePath(partenaire.logo, '/img/partenaires/default.png')}
-                        alt={partenaire.nom}
-                        fill
-                        className="object-contain p-4"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <span
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold border-2"
-                      style={{
-                        backgroundColor: `${brandColor}20`,
-                        borderColor: `${brandColor}50`,
-                        color: brandColor
-                      }}
-                    >
-                      <Heart className="w-4 h-4" />
-                      {partenaire.typePartenariat}
-                    </span>
-                    {partenaire.partenaire_majeur && (
-                      <span className="inline-flex items-center gap-1 px-4 py-2 bg-secondary-500/20 border-2 border-secondary-500/50 rounded-full text-secondary-400 text-sm font-semibold">
-                        <Star className="w-4 h-4 fill-current" />
-                        Partenaire Majeur
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Titre */}
-                  <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-                    {partenaire.nom}
-                  </h1>
-
-                  {/* Accroche personnalisée */}
-                  {partenaire.accroche && (
-                    <p
-                      className="text-lg md:text-xl font-semibold"
-                      style={{ color: brandColor }}
-                    >
-                      {partenaire.accroche}
-                    </p>
-                  )}
-
-                  {/* Catégorie */}
-                  <p className="text-base text-neutral-300">{partenaire.categorie}</p>
-
-                  {/* CTA Buttons */}
-                  <div className="flex flex-wrap justify-center gap-3 pt-3">
-                    {partenaire.site && (
-                      <a
-                        href={partenaire.site}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
-                        style={{
-                          backgroundColor: brandColor,
-                          boxShadow: `0 10px 40px ${brandColor}40`
-                        }}
-                      >
-                        <Globe className="w-5 h-5" />
-                        Visiter le site
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                    {partenaire.email && (
-                      <a
-                        href={`mailto:${partenaire.email}`}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
-                      >
-                        <Mail className="w-4 h-4" />
-                        Nous contacter
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Année de partenariat */}
-                  {partenaire.anneeDemarrage && (
-                    <div className="flex items-center justify-center gap-2 text-neutral-400 pt-2 text-sm">
-                      <Calendar className="w-4 h-4" style={{ color: brandColor }} />
-                      <span>Partenaire depuis {partenaire.anneeDemarrage}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 📖 SECTION "À PROPOS DU PARTENAIRE" */}
-        <section className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Description principale */}
-              <div className="md:col-span-2 space-y-4">
-                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6">
-                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                    <div
-                      className="w-1 h-8 rounded-full"
-                      style={{ backgroundColor: brandColor }}
-                    />
-                    À propos de {partenaire.nom}
-                  </h2>
-                  <div className="prose prose-invert max-w-none">
-                    <p className="text-neutral-300 leading-relaxed whitespace-pre-line text-base">
-                      {partenaire.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Valeurs partagées */}
-                {partenaire.valeurs && partenaire.valeurs.length > 0 && (
-                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-                      <Heart className="w-5 h-5" style={{ color: brandColor }} />
-                      Valeurs partagées
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {partenaire.valeurs.map((valeur, index) => (
-                        <span
-                          key={index}
-                          className="px-4 py-2 rounded-lg font-semibold text-white text-sm border-2 transition-all hover:scale-105"
-                          style={{
-                            backgroundColor: `${brandColor}15`,
-                            borderColor: `${brandColor}40`
-                          }}
-                        >
-                          {valeur}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+              <ul className="mt-5 flex flex-wrap gap-2 text-sm">
+                <li className="rounded-md border border-white/10 bg-neutral-950/60 px-3 py-1.5 font-medium text-neutral-200">
+                  {partenaire.categorie}
+                </li>
+                {partenaire.anneeDemarrage && (
+                  <li className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-neutral-950/60 px-3 py-1.5 font-medium text-neutral-200">
+                    <Calendar className="size-3.5 text-primary-400" aria-hidden />
+                    Partenaire depuis {partenaire.anneeDemarrage}
+                  </li>
                 )}
-              </div>
+                {partenaire.partenaire_majeur && (
+                  <li className="inline-flex items-center gap-1.5 rounded-md border border-primary-500/40 bg-primary-500/10 px-3 py-1.5 font-semibold text-primary-300">
+                    <Star className="size-3.5 fill-current" aria-hidden />
+                    Partenaire majeur
+                  </li>
+                )}
+              </ul>
 
-              {/* Sidebar Contact */}
-              <div className="space-y-4">
-                <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5 space-y-3">
-                  <h3 className="text-lg font-bold text-white mb-3">Contact</h3>
-
+              {(partenaire.site || partenaire.email) && (
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   {partenaire.site && (
                     <a
                       href={partenaire.site}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-neutral-300 hover:text-white transition-colors group"
+                      className={siteButton()}
                     >
-                      <Globe className="w-5 h-5 flex-shrink-0" style={{ color: brandColor }} />
-                      <span className="truncate group-hover:underline">Site web</span>
-                      <ExternalLink className="w-4 h-4 ml-auto flex-shrink-0" />
-                    </a>
-                  )}
-
-                  {partenaire.email && (
-                    <a
-                      href={`mailto:${partenaire.email}`}
-                      className="flex items-center gap-3 text-neutral-300 hover:text-white transition-colors"
-                    >
-                      <Mail className="w-5 h-5 flex-shrink-0" style={{ color: brandColor }} />
-                      <span className="truncate">{partenaire.email}</span>
-                    </a>
-                  )}
-
-                  {partenaire.telephone && (
-                    <a
-                      href={`tel:${partenaire.telephone}`}
-                      className="flex items-center gap-3 text-neutral-300 hover:text-white transition-colors"
-                    >
-                      <Phone className="w-5 h-5 flex-shrink-0" style={{ color: brandColor }} />
-                      <span>{partenaire.telephone}</span>
-                    </a>
-                  )}
-                </div>
-
-                {/* Réseaux sociaux */}
-                {reseaux && Object.values(reseaux).some(v => v) && (
-                  <div className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5">
-                    <h3 className="text-lg font-bold text-white mb-3">Réseaux sociaux</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {reseaux.facebook && (
-                        <a
-                          href={reseaux.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-lg transition-all hover:scale-110"
-                          aria-label="Facebook"
-                        >
-                          <Icon icon={facebookIcon} className="w-5 h-5 text-white" />
-                        </a>
-                      )}
-                      {reseaux.instagram && (
-                        <a
-                          href={reseaux.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all hover:scale-110"
-                          aria-label="Instagram"
-                        >
-                          <Icon icon={instagramIcon} className="w-5 h-5 text-white" />
-                        </a>
-                      )}
-                      {reseaux.twitter && (
-                        <a
-                          href={reseaux.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-12 h-12 bg-sky-500 hover:bg-sky-600 rounded-lg transition-all hover:scale-110"
-                          aria-label="Twitter"
-                        >
-                          <Icon icon={twitterIcon} className="w-5 h-5 text-white" />
-                        </a>
-                      )}
-                      {reseaux.linkedin && (
-                        <a
-                          href={reseaux.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-12 h-12 bg-blue-700 hover:bg-blue-800 rounded-lg transition-all hover:scale-110"
-                          aria-label="LinkedIn"
-                        >
-                          <Icon icon={linkedinIcon} className="w-5 h-5 text-white" />
-                        </a>
-                      )}
-                      {reseaux.youtube && (
-                        <a
-                          href={reseaux.youtube}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-12 h-12 bg-red-600 hover:bg-red-700 rounded-lg transition-all hover:scale-110"
-                          aria-label="YouTube"
-                        >
-                          <Icon icon={youtubeIcon} className="w-5 h-5 text-white" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 🎯 SECTION "CE QU'ILS APPORTENT AU CLUB" */}
-        {partenaire.apports && partenaire.apports.length > 0 && (
-          <section className="py-8 bg-gradient-to-br from-zinc-800/30 to-transparent">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Ce qu'ils apportent au club
-                </h2>
-                <div
-                  className="w-20 h-1 rounded-full mx-auto"
-                  style={{ backgroundColor: brandColor }}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {partenaire.apports.map((apport, index) => {
-                  const Icon = apportIcons[index % apportIcons.length]
-                  return (
-                    <div
-                      key={index}
-                      className="group bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-5 hover:border-opacity-100 transition-all hover:scale-105"
-                      style={{
-                        borderColor: `${brandColor}40`,
-                      }}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
-                          style={{
-                            backgroundColor: `${brandColor}20`,
-                          }}
-                        >
-                          <Icon className="w-5 h-5" style={{ color: brandColor }} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white font-medium text-base leading-relaxed">
-                            {apport}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 📸 SECTION "EN IMAGES" / GALERIE */}
-        {partenaire.galerie && partenaire.galerie.length > 0 && (
-          <section className="py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  En images
-                </h2>
-                <div
-                  className="w-20 h-1 rounded-full mx-auto"
-                  style={{ backgroundColor: brandColor }}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {partenaire.galerie.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-video rounded-xl overflow-hidden group border-2 border-transparent hover:border-opacity-100 transition-all"
-                    style={{
-                      borderColor: `${brandColor}60`
-                    }}
-                  >
-                    <Image
-                      src={normalizeImagePath(image, '/img/partenaires/default.png')}
-                      alt={`${partenaire.nom} - Image ${index + 1}`}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 💬 SECTION TÉMOIGNAGE */}
-        {temoignage && temoignage.citation && (
-          <section className="py-8 bg-gradient-to-br from-zinc-800/30 to-transparent">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div
-                className="relative bg-zinc-800/60 backdrop-blur-sm border-2 rounded-2xl p-8 md:p-10"
-                style={{
-                  borderColor: `${brandColor}40`
-                }}
-              >
-                {/* Quote icon */}
-                <Quote
-                  className="absolute top-6 left-6 w-12 h-12 opacity-20"
-                  style={{ color: brandColor }}
-                />
-
-                <div className="relative z-10 space-y-6">
-                  {/* Citation */}
-                  <blockquote className="text-lg md:text-xl font-semibold text-white leading-relaxed text-center">
-                    "{temoignage.citation}"
-                  </blockquote>
-
-                  {/* Auteur */}
-                  <div className="flex items-center justify-center gap-4 pt-4">
-                    {temoignage.photo && (
-                      <div className="relative w-16 h-16 rounded-full overflow-hidden border-2" style={{ borderColor: brandColor }}>
-                        <Image
-                          src={normalizeImagePath(temoignage.photo, '/img/default-avatar.png')}
-                          alt={temoignage.auteur}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="text-left">
-                      <p className="text-lg font-bold text-white">{temoignage.auteur}</p>
-                      <p className="text-neutral-400">{temoignage.role}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Decoration */}
-                <div
-                  className="absolute bottom-8 right-8 w-32 h-32 rounded-full blur-3xl opacity-20"
-                  style={{ backgroundColor: brandColor }}
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 🤝 SECTION "NOS PROJETS COMMUNS" */}
-        {partenaire.projetsCommuns && partenaire.projetsCommuns.length > 0 && (
-          <section className="py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Nos projets communs
-                </h2>
-                <div
-                  className="w-20 h-1 rounded-full mx-auto mb-3"
-                  style={{ backgroundColor: brandColor }}
-                />
-                <p className="text-neutral-400 text-base max-w-2xl mx-auto">
-                  Ensemble, nous construisons l'avenir du handball à Aix-en-Savoie
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {partenaire.projetsCommuns.map((projet, index) => (
-                  <div
-                    key={index}
-                    className="bg-zinc-800/40 backdrop-blur-md border border-zinc-700/50 rounded-xl p-6 hover:border-opacity-100 transition-all group"
-                    style={{
-                      borderColor: `${brandColor}30`,
-                    }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-                        style={{
-                          backgroundColor: `${brandColor}20`,
-                        }}
-                      >
-                        <CheckCircle className="w-6 h-6" style={{ color: brandColor }} />
-                      </div>
-                      <p className="text-white text-base font-medium leading-relaxed flex-1">
-                        {projet}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 🎯 SECTION CTA FINALE */}
-        <section className="py-10">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div
-              className="relative overflow-hidden rounded-2xl p-8 md:p-10 text-center"
-              style={{
-                background: `linear-gradient(135deg, ${brandColor}20 0%, ${brandColor}05 100%)`
-              }}
-            >
-              {/* Background decoration */}
-              <div
-                className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl opacity-20"
-                style={{ backgroundColor: brandColor }}
-              />
-              <div
-                className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl opacity-20"
-                style={{ backgroundColor: brandColor }}
-              />
-
-              <div className="relative z-10 space-y-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-white">
-                  Intéressé par {partenaire.nom} ?
-                </h2>
-                <p className="text-base md:text-lg text-neutral-300 max-w-2xl mx-auto">
-                  Découvrez comment ce partenaire contribue au développement du handball
-                </p>
-
-                <div className="flex flex-wrap justify-center gap-3 pt-3">
-                  {partenaire.site && (
-                    <a
-                      href={partenaire.site}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
-                      style={{
-                        backgroundColor: brandColor,
-                        boxShadow: `0 10px 40px ${brandColor}40`
-                      }}
-                    >
-                      <Globe className="w-5 h-5" />
-                      Visiter leur site web
-                      <ExternalLink className="w-4 h-4" />
+                      <Globe />
+                      Visiter le site
+                      <ExternalLink />
                     </a>
                   )}
                   {partenaire.email && (
-                    <a
-                      href={`mailto:${partenaire.email}`}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
-                    >
-                      <Mail className="w-4 h-4" />
+                    <a href={`mailto:${partenaire.email}`} className={siteButton({ variant: 'outline' })}>
+                      <Mail />
                       Les contacter
                     </a>
                   )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* 🎁 SECTION OFFRE PROMOTIONNELLE */}
-        {partenaire.promoActive && partenaire.promoTitre && (
-          <section className="py-8">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Offre Exclusive
-                </h2>
-                <div
-                  className="w-20 h-1 rounded-full mx-auto"
-                  style={{ backgroundColor: brandColor }}
-                />
-              </div>
-
+      <section className="py-16 md:py-24">
+        <div className={container}>
+          {/* Offre réservée aux licenciés */}
+          {showPromo && partenaire.promoTitre && (
+            <div className="mb-16 md:mb-20">
               <PromoCard
                 titre={partenaire.promoTitre}
                 description={partenaire.promoDescription}
                 code={partenaire.promoCode}
                 expiration={partenaire.promoExpiration}
                 conditions={partenaire.promoConditions}
-                brandColor={brandColor}
+                brandColor={brandColor ?? undefined}
               />
             </div>
-          </section>
-        )}
+          )}
 
-        {/* Autres partenaires */}
-        {autresPartenaires.length > 0 && (
-          <section className="py-10 border-t border-zinc-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-2xl font-bold text-white mb-6">Autres partenaires</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {autresPartenaires.map((p) => (
-                  <PartnerCard key={p.id} partenaire={p} featured={p.partenaire_majeur} />
-                ))}
-              </div>
-              <div className="text-center mt-8">
-                <Link
-                  href="/partenaires"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white rounded-lg font-semibold transition-all"
-                >
-                  Voir tous les partenaires
-                </Link>
-              </div>
+          <div className={cn('grid gap-14', hasAside && 'lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_24rem]')}>
+            <div className="min-w-0 space-y-16">
+              {/* À propos */}
+              <section>
+                <BlockTitle eyebrow="Le partenaire" title={`À propos de ${partenaire.nom}`} />
+                <p className="max-w-3xl whitespace-pre-line text-base leading-relaxed text-neutral-300 md:text-lg">
+                  {partenaire.description}
+                </p>
+              </section>
+
+              {/* Ce qu'ils apportent au club */}
+              {partenaire.apports && partenaire.apports.length > 0 && (
+                <section>
+                  <BlockTitle eyebrow="Engagement" title="Ce qu'ils apportent au club" />
+                  <ul className="grid gap-4 sm:grid-cols-2">
+                    {partenaire.apports.map((apport, index) => {
+                      const ApportIcon = apportIcons[index % apportIcons.length]
+                      return (
+                        <li key={index} className={cn(siteCard, 'flex items-start gap-4 p-5')}>
+                          <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary-500/25 bg-primary-500/10 text-primary-400">
+                            <ApportIcon className="size-5" aria-hidden />
+                          </span>
+                          <p className="self-center font-medium leading-relaxed text-white">{apport}</p>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </section>
+              )}
+
+              {/* Nos projets communs */}
+              {partenaire.projetsCommuns && partenaire.projetsCommuns.length > 0 && (
+                <section>
+                  <BlockTitle
+                    eyebrow="Ensemble"
+                    title="Nos projets communs"
+                    description="Ensemble, nous construisons l'avenir du handball à Aix-en-Savoie."
+                  />
+                  <ul className="grid gap-4 sm:grid-cols-2">
+                    {partenaire.projetsCommuns.map((projet, index) => (
+                      <li key={index} className={cn(siteCard, 'flex items-start gap-3 p-5')}>
+                        <CheckCircle className="mt-0.5 size-5 shrink-0 text-primary-500" aria-hidden />
+                        <p className="font-medium leading-relaxed text-white">{projet}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </div>
-          </section>
-        )}
-      </div>
-    </div>
+
+            {hasAside && (
+              <aside className="min-w-0 space-y-6 lg:sticky lg:top-28 lg:self-start">
+                {hasContact && (
+                  <div className={cn(siteCard, 'p-5 sm:p-6')}>
+                    <h2 className="mb-3 font-eyebrow text-xs text-neutral-500">Coordonnées</h2>
+                    <ul className="space-y-1">
+                      {partenaire.site && (
+                        <li>
+                          <a href={partenaire.site} target="_blank" rel="noopener noreferrer" className={contactLinkClass}>
+                            <Globe className="size-4 shrink-0 text-primary-500" aria-hidden />
+                            <span className="truncate">Site web</span>
+                            <ExternalLink className="ml-auto size-4 shrink-0 text-neutral-500" aria-hidden />
+                          </a>
+                        </li>
+                      )}
+                      {partenaire.email && (
+                        <li>
+                          <a href={`mailto:${partenaire.email}`} className={contactLinkClass}>
+                            <Mail className="size-4 shrink-0 text-primary-500" aria-hidden />
+                            <span className="truncate">{partenaire.email}</span>
+                          </a>
+                        </li>
+                      )}
+                      {partenaire.telephone && (
+                        <li>
+                          <a href={`tel:${partenaire.telephone}`} className={contactLinkClass}>
+                            <Phone className="size-4 shrink-0 text-primary-500" aria-hidden />
+                            <span>{partenaire.telephone}</span>
+                          </a>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {socials.length > 0 && (
+                  <div className={cn(siteCard, 'p-5 sm:p-6')}>
+                    <h2 className="mb-4 font-eyebrow text-xs text-neutral-500">Réseaux sociaux</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {socials.map((social) => (
+                        <a
+                          key={social.name}
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={social.name}
+                          className={socialLinkClass}
+                        >
+                          <Icon icon={social.icon} className="size-5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {hasValeurs && (
+                  <div className={cn(siteCard, 'p-5 sm:p-6')}>
+                    <h2 className="mb-4 font-eyebrow text-xs text-neutral-500">Valeurs partagées</h2>
+                    <ul className="flex flex-wrap gap-2">
+                      {partenaire.valeurs.map((valeur, index) => (
+                        <li
+                          key={index}
+                          className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-sm font-semibold text-neutral-200"
+                        >
+                          {valeur}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </aside>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Témoignage */}
+      {temoignage && temoignage.citation && (
+        <section className="border-y border-white/10 bg-neutral-900 py-16 md:py-24">
+          <figure className={cn(container, 'max-w-4xl')}>
+            <Quote className="size-10 text-primary-500" aria-hidden />
+            <blockquote className="mt-6 font-display text-2xl font-semibold leading-snug text-white md:text-3xl">
+              «&nbsp;{temoignage.citation}&nbsp;»
+            </blockquote>
+            <figcaption className="mt-8 flex items-center gap-4">
+              {temoignage.photo && (
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-white/10">
+                  <Image
+                    src={normalizeImagePath(temoignage.photo, '/img/default-avatar.png')}
+                    alt={temoignage.auteur}
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div>
+                <p className="font-display text-lg font-bold text-white">{temoignage.auteur}</p>
+                {temoignage.role && <p className="text-sm text-neutral-400">{temoignage.role}</p>}
+              </div>
+            </figcaption>
+          </figure>
+        </section>
+      )}
+
+      {/* Galerie */}
+      {partenaire.galerie && partenaire.galerie.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className={container}>
+            <BlockTitle eyebrow="Galerie" title="En images" />
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {partenaire.galerie.map((image, index) => (
+                <li
+                  key={index}
+                  className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-neutral-900"
+                >
+                  <Image
+                    src={normalizeImagePath(image, '/img/partenaires/default.png')}
+                    alt={`${partenaire.nom} - Image ${index + 1}`}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {/* Autres partenaires */}
+      {autresPartenaires.length > 0 && (
+        <section className="border-t border-white/10 py-16 md:py-24">
+          <div className={container}>
+            <SectionHeader
+              eyebrow={partenaire.categorie}
+              title="Autres partenaires"
+              action={
+                <Link href="/partenaires" className={cn(siteButton({ variant: 'outline' }), 'group')}>
+                  Tous nos partenaires
+                  <ArrowRight className="transition-transform group-hover:translate-x-1" />
+                </Link>
+              }
+            />
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {autresPartenaires.map((p) => (
+                <li key={p.id}>
+                  <PartnerCard partenaire={p} featured={p.partenaire_majeur} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      <JoinClubCTA
+        title="Vous aussi, soutenez le club"
+        description={`Comme ${partenaire.nom}, associez votre entreprise au HBC Aix-en-Savoie et contribuez au développement du handball local.`}
+        primary={{ href: '/contact?sujet=partenariat', label: 'Contactez-nous' }}
+        secondary={{ href: '/equipes', label: 'Découvrir nos équipes' }}
+      />
+    </>
   )
 }

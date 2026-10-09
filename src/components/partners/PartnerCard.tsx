@@ -3,10 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion, useReducedMotion } from 'framer-motion'
-import { ExternalLink, Star, Tag, Copy, Check, Store, Clock } from 'lucide-react'
-import { cardHover } from '@/lib/animations'
-import { normalizeImagePath } from '@/lib/utils'
+import { ArrowRight, ArrowUpRight, Check, Clock, Copy, Star, Store, Tag } from 'lucide-react'
+import { cn, normalizeImagePath } from '@/lib/utils'
 import { toast } from 'sonner'
 
 interface Partenaire {
@@ -29,7 +27,6 @@ interface PartnerCardProps {
 }
 
 export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) {
-  const shouldReduceMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
 
   // Vérifier si l'offre est expirée
@@ -59,157 +56,130 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
     }
   }
 
-  const content = (
-    <motion.div
-      variants={shouldReduceMotion ? undefined : cardHover}
-      initial={shouldReduceMotion ? undefined : 'rest'}
-      whileHover={shouldReduceMotion ? undefined : 'hover'}
-      whileTap={shouldReduceMotion ? undefined : 'tap'}
-      className={`h-full flex flex-col transition-[border-color,box-shadow] duration-300 relative overflow-hidden ${
-        featured
-          ? 'bg-zinc-800/80 border-2 border-primary-500/50 rounded-2xl shadow-xl shadow-primary-500/20 hover:shadow-primary-500/30'
-          : 'bg-zinc-800/60 border border-zinc-700 rounded-xl shadow-lg hover:border-primary-500'
-      }`}
+  const href = partenaire.slug ? `/partenaires/${partenaire.slug}` : null
+
+  return (
+    <article
+      className={cn(
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 p-2 transition-colors duration-200',
+        href && 'hover:border-primary-500/60 has-[a[data-card-link]:focus-visible]:ring-2 has-[a[data-card-link]:focus-visible]:ring-primary-500'
+      )}
     >
-      {/* Badge partenaire majeur */}
-      {featured && (
-        <div className="absolute top-3 right-3 z-10">
-          <div className="flex items-center gap-1 px-2 py-1 bg-primary-500 rounded-full shadow-lg">
-            <Star className="w-3 h-3 text-white fill-white" />
-            <span className="text-xs font-bold text-white uppercase">Majeur</span>
-          </div>
-        </div>
-      )}
-
-      {/* Badge offre speciale */}
-      {showPromo && (
-        <div className={`absolute ${featured ? 'top-14' : 'top-3'} right-3 z-10`}>
-          <div className="flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full shadow-lg">
-            <Tag className="w-3 h-3 text-white" />
-            <span className="text-xs font-bold text-white">Offre</span>
-          </div>
-        </div>
-      )}
-
-      {/* Logo - fond blanc uniforme pour tous les logos */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-white rounded-t-xl">
-        <div className={`relative w-full ${featured ? 'h-40' : 'h-32'}`}>
+      {/* Logo sur tuile blanche : les logos sont conçus pour un fond clair */}
+      <div
+        className={cn(
+          // Proportions fixes : cartes alignées même quand majeurs et autres partenaires se côtoient
+          'relative flex aspect-[2/1] items-center justify-center rounded-lg bg-white',
+          featured ? 'p-8' : 'p-6'
+        )}
+      >
+        <div className="relative size-full transition-transform duration-500 group-hover:scale-[1.03]">
           <Image
             src={normalizeImagePath(partenaire.logo, '/img/partenaires/default.png')}
             alt={partenaire.nom}
             fill
             className="object-contain"
-            sizes={featured ? '(max-width: 768px) 100vw, 33vw' : '(max-width: 768px) 100vw, 25vw'}
+            sizes={featured ? '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw' : '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'}
           />
         </div>
+
+        {(featured || showPromo) && (
+          <div className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
+            {featured ? (
+              <span className="inline-flex items-center gap-1 rounded-sm bg-neutral-950 px-1.5 py-1 font-eyebrow text-[0.6rem] text-primary-300">
+                <Star className="size-2.5 fill-current" aria-hidden />
+                Majeur
+              </span>
+            ) : (
+              <span />
+            )}
+            {showPromo && (
+              <span className="inline-flex items-center gap-1 rounded-sm bg-primary-500 px-1.5 py-1 font-eyebrow text-[0.6rem] text-neutral-950">
+                <Tag className="size-2.5" aria-hidden />
+                Offre
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Info */}
-      <div className="p-5 space-y-3 flex flex-col">
-        {/* Catégorie */}
-        <div className="flex justify-center">
-          <span className={`text-xs font-semibold uppercase px-2 py-1 rounded ${
-            featured
-              ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-              : 'bg-zinc-700/50 text-neutral-400'
-          }`}>
-            {partenaire.categorie}
-          </span>
-        </div>
-
-        {/* Nom */}
-        <h3 className={`font-display font-bold text-center ${
-          featured ? 'text-xl text-white' : 'text-lg text-white'
-        }`}>
-          {partenaire.nom}
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-4 sm:px-4 sm:pb-4">
+        <p className="font-eyebrow text-[0.65rem] text-primary-400">{partenaire.categorie}</p>
+        <h3 className="mt-1.5 font-display text-lg font-bold leading-tight text-white transition-colors group-hover:text-primary-300">
+          {href ? (
+            // Lien étiré : toute la carte mène à la fiche partenaire
+            <Link href={href} data-card-link className="after:absolute after:inset-0 focus-visible:outline-none">
+              {partenaire.nom}
+            </Link>
+          ) : (
+            partenaire.nom
+          )}
         </h3>
-
-        {/* Description */}
-        <p className={`text-center line-clamp-2 ${
-          featured ? 'text-sm text-neutral-300' : 'text-xs text-neutral-400'
-        }`}>
+        <p className="mt-2 line-clamp-2 text-sm text-neutral-400">
           {partenaire.description}
         </p>
 
-        {/* Section Code Promo intégrée */}
+        {/* Offre réservée aux licenciés */}
         {showPromo && (
-          <div className="mt-2 p-3 bg-green-500/10 border border-dashed border-green-500/40 rounded-lg space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-green-400 font-semibold text-xs line-clamp-1 flex-1">
-                {partenaire.promoTitre}
-              </p>
+          <div className="relative z-10 mt-4 rounded-lg border border-dashed border-primary-500/40 bg-primary-500/[0.07] p-3">
+            <div className="flex items-start justify-between gap-2">
+              <p className="line-clamp-2 text-sm font-semibold text-primary-300">{partenaire.promoTitre}</p>
               {daysLeft !== null && daysLeft <= 7 && daysLeft >= 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 rounded text-amber-400 text-[10px] font-semibold flex-shrink-0">
-                  <Clock className="w-2.5 h-2.5" />
-                  {daysLeft === 0 ? 'Dernier jour' : `${daysLeft}j`}
-                </div>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-primary-500/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-primary-300">
+                  <Clock className="size-2.5" aria-hidden />
+                  {daysLeft === 0 ? 'Dernier jour' : `${daysLeft} j`}
+                </span>
               )}
             </div>
 
             {partenaire.promoCode ? (
               <button
+                type="button"
                 onClick={copyCode}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-600 rounded-md transition-colors duration-200 group"
+                aria-label={`Copier le code promo ${partenaire.promoCode}`}
+                className="mt-2.5 flex min-h-10 w-full items-center justify-between gap-2 rounded-md bg-primary-500 px-3 text-neutral-950 transition-colors hover:bg-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
               >
-                <span className="font-mono font-bold text-white tracking-wider text-sm">
-                  {partenaire.promoCode}
+                <span className="font-mono text-sm font-bold tracking-wider">{partenaire.promoCode}</span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                  {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+                  {copied ? 'Copié' : 'Copier'}
                 </span>
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4 text-neutral-400 group-hover:text-green-400" />
-                )}
               </button>
             ) : (
-              <div className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800/60 border border-zinc-700 rounded-md text-xs">
-                <Store className="w-3.5 h-3.5 text-primary-400" />
-                <span className="text-neutral-300">Mentionnez le club</span>
-              </div>
+              <p className="mt-2 flex items-center gap-2 text-xs text-neutral-300">
+                <Store className="size-3.5 shrink-0 text-primary-400" aria-hidden />
+                Mentionnez le club en magasin
+              </p>
             )}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col gap-2 pt-2">
-          <div className={`flex items-center justify-center font-semibold text-sm gap-1 ${
-            featured
-              ? 'text-primary-400 hover:text-primary-300'
-              : 'text-primary-500 hover:text-primary-400'
-          } transition-colors`}>
-            En savoir plus
+        {(href || partenaire.site) && (
+          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+            {href ? (
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary-400 transition-colors group-hover:text-primary-300">
+                En savoir plus
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
+              </span>
+            ) : (
+              <span />
+            )}
+            {partenaire.site && (
+              <a
+                href={partenaire.site}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 -mr-1 inline-flex min-h-10 items-center gap-1 rounded-md px-1 text-xs font-medium text-neutral-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              >
+                Site web
+                <ArrowUpRight className="size-3.5" aria-hidden />
+                <span className="sr-only">de {partenaire.nom} (nouvel onglet)</span>
+              </a>
+            )}
           </div>
-
-          {partenaire.site && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                window.open(partenaire.site!, '_blank', 'noopener,noreferrer')
-              }}
-              className={`flex items-center justify-center gap-1 text-xs font-medium transition-colors cursor-pointer ${
-                featured
-                  ? 'text-neutral-400 hover:text-neutral-300'
-                  : 'text-neutral-500 hover:text-neutral-400'
-              }`}
-            >
-              Visiter le site
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          )}
-        </div>
+        )}
       </div>
-    </motion.div>
+    </article>
   )
-
-  // Link to detail page if slug exists, otherwise just display card
-  if (partenaire.slug) {
-    return (
-      <Link href={`/partenaires/${partenaire.slug}`} className="block h-full">
-        {content}
-      </Link>
-    )
-  }
-
-  return <div className="h-full">{content}</div>
 }

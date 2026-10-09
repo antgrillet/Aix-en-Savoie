@@ -1,10 +1,7 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { Users, Calendar, MapPin } from 'lucide-react'
-import { cardHover } from '@/lib/animations'
+import { Calendar, Clock, MapPin } from 'lucide-react'
+import { normalizeImagePath } from '@/lib/utils'
 
 interface Entrainement {
   jour: string
@@ -27,63 +24,53 @@ interface TeamCardProps {
   equipe: Equipe
 }
 
+/** Carte d'équipe compacte (photo, niveau, premier créneau d'entraînement) */
 export function TeamCard({ equipe }: TeamCardProps) {
+  const entrainement = equipe.entrainements[0]
+
   return (
-    <motion.div
-      variants={cardHover}
-      initial="rest"
-      whileHover="hover"
-      whileTap="tap"
+    <Link
+      href={`/equipes/${equipe.slug}`}
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 transition-colors duration-200 hover:border-primary-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
     >
-      <Link href={`/equipes/${equipe.slug}`} className="group block">
-        <article className="card h-full">
-          {/* Image */}
-          <div className="relative h-48 overflow-hidden">
-            <Image
-              src={equipe.photo}
-              alt={equipe.nom}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-            <div className="absolute top-4 left-4">
-              <span className="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-bold rounded-full">
-                {equipe.categorie}
+      <div className="relative aspect-[16/10] overflow-hidden bg-neutral-800">
+        <Image
+          src={normalizeImagePath(equipe.photo, '/img/equipes/default.jpg')}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <span className="absolute left-4 top-4 rounded-sm bg-primary-500 px-2 py-1 font-eyebrow text-[0.65rem] text-neutral-950">
+          {equipe.categorie}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-primary-300">
+          {equipe.nom}
+        </h3>
+        <p className="mt-1 text-sm text-neutral-400">{equipe.niveau}</p>
+
+        {entrainement && (
+          <ul className="mt-4 space-y-1.5 border-t border-white/10 pt-4 text-sm text-neutral-300">
+            <li className="flex items-center gap-2">
+              <Calendar className="size-4 shrink-0 text-primary-500" aria-hidden />
+              <span className="font-semibold text-white">{entrainement.jour}</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Clock className="size-4 shrink-0 text-primary-500" aria-hidden />
+              <span>
+                {entrainement.heureDebut} - {entrainement.heureFin}
               </span>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            <h3 className="font-display font-bold text-xl mb-2 group-hover:text-primary-600 transition-colors">
-              {equipe.nom}
-            </h3>
-            <p className="text-neutral-600 text-sm mb-4">{equipe.niveau}</p>
-
-            {/* Entrainements */}
-            {equipe.entrainements.length > 0 && (
-              <div className="space-y-2 text-sm text-neutral-600">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary-500" />
-                  <span className="font-semibold">
-                    {equipe.entrainements[0].jour}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary-500" />
-                  <span>
-                    {equipe.entrainements[0].heureDebut} -{' '}
-                    {equipe.entrainements[0].heureFin}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary-500" />
-                  <span>{equipe.entrainements[0].lieu}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </article>
-      </Link>
-    </motion.div>
+            </li>
+            <li className="flex items-center gap-2">
+              <MapPin className="size-4 shrink-0 text-primary-500" aria-hidden />
+              <span>{entrainement.lieu}</span>
+            </li>
+          </ul>
+        )}
+      </div>
+    </Link>
   )
 }

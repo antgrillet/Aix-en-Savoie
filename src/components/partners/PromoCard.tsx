@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { Copy, Check, Tag, Clock, Store, AlertCircle } from 'lucide-react'
+import { AlertCircle, Check, Clock, Copy, Store, Tag } from 'lucide-react'
 import { toast } from 'sonner'
-import { fadeInUp } from '@/lib/animations'
+import { formatParis } from '@/lib/match-format'
 
 interface PromoCardProps {
   titre: string
@@ -12,17 +11,12 @@ interface PromoCardProps {
   code?: string | null
   expiration?: Date | string | null
   conditions?: string | null
+  /** Conservée pour compatibilité : l'offre suit désormais la charte orange/noir du club */
   brandColor?: string
 }
 
-export function PromoCard({
-  titre,
-  description,
-  code,
-  expiration,
-  conditions,
-  brandColor = '#FF6B35',
-}: PromoCardProps) {
+/** Coupon de l'offre réservée aux licenciés (fiche partenaire) */
+export function PromoCard({ titre, description, code, expiration, conditions }: PromoCardProps) {
   const [copied, setCopied] = useState(false)
 
   const { isExpired, daysLeft } = useMemo(() => {
@@ -42,124 +36,81 @@ export function PromoCard({
     try {
       await navigator.clipboard.writeText(code)
       setCopied(true)
-      toast.success('Code copie dans le presse-papiers !')
+      toast.success('Code copié dans le presse-papiers !')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       toast.error('Erreur lors de la copie')
     }
   }
 
-  // Don't render if expired
+  // Ne rien afficher si l'offre est expirée
   if (isExpired) return null
 
   return (
-    <motion.div
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-      className="relative overflow-hidden rounded-xl"
-    >
-      {/* Dashed border coupon style */}
-      <div
-        className="border-2 border-dashed rounded-xl p-6 space-y-4"
-        style={{
-          borderColor: `${brandColor}60`,
-          background: `linear-gradient(135deg, ${brandColor}10 0%, transparent 100%)`,
-        }}
-      >
-        {/* Header with icon */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${brandColor}20` }}
-            >
-              <Tag className="w-6 h-6" style={{ color: brandColor }} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">{titre}</h3>
-              <p className="text-sm text-neutral-400">Offre exclusive membres HBC</p>
-            </div>
-          </div>
-
-          {/* Expiration badge */}
+    <div className="grid overflow-hidden rounded-xl border border-primary-500/40 bg-neutral-900 md:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* Détail de l'offre */}
+      <div className="p-6 sm:p-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary-500/25 bg-primary-500/10 text-primary-400">
+            <Tag className="size-5" aria-hidden />
+          </span>
+          <p className="font-eyebrow text-xs text-primary-400">Offre exclusive licenciés</p>
           {daysLeft !== null && daysLeft <= 7 && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-full text-amber-400 text-xs font-semibold">
-              <Clock className="w-3 h-3" />
-              {daysLeft === 0 ? 'Dernier jour !' : `${daysLeft}j restants`}
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-sm bg-primary-500/15 px-2 py-1 text-xs font-semibold text-primary-300">
+              <Clock className="size-3" aria-hidden />
+              {daysLeft === 0 ? 'Dernier jour !' : `${daysLeft} j restants`}
+            </span>
           )}
         </div>
 
-        {/* Description */}
-        {description && (
-          <p className="text-neutral-300 text-sm leading-relaxed">{description}</p>
+        <h3 className="mt-5 font-headline text-3xl text-white sm:text-4xl">{titre}</h3>
+        {description && <p className="mt-3 max-w-2xl leading-relaxed text-neutral-300">{description}</p>}
+
+        {expiration && daysLeft !== null && daysLeft > 7 && (
+          <p className="mt-4 text-sm text-neutral-400">
+            Valable jusqu&apos;au{' '}
+            {formatParis(expiration, { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
         )}
 
-        {/* Code section OR in-store mention */}
+        {conditions && (
+          <p className="mt-5 flex items-start gap-2 border-t border-white/10 pt-4 text-xs text-neutral-500">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {conditions}
+          </p>
+        )}
+      </div>
+
+      {/* Talon du coupon : code à copier ou mention en magasin */}
+      <div className="flex flex-col justify-center gap-3 border-t-2 border-dashed border-neutral-950/25 bg-primary-500 p-6 text-neutral-950 sm:p-8 md:border-l-2 md:border-t-0">
         {code ? (
-          <div className="space-y-2">
-            <p className="text-xs text-neutral-400 uppercase tracking-wide font-semibold">
-              Votre code promo
-            </p>
+          <>
+            <p className="font-eyebrow text-xs text-neutral-950/70">Votre code promo</p>
             <button
+              type="button"
               onClick={copyToClipboard}
-              className="w-full group flex items-center justify-between px-4 py-3 bg-zinc-800/60 border border-zinc-700 hover:border-primary-500 rounded-lg transition-all"
+              aria-label={`Copier le code promo ${code}`}
+              className="group flex min-h-13 w-full items-center justify-between gap-3 rounded-md bg-neutral-950 px-4 text-white transition-colors hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
             >
-              <span className="font-mono text-lg font-bold text-white tracking-wider">
-                {code}
+              <span className="font-mono text-lg font-bold tracking-widest">{code}</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-400 group-hover:text-primary-300">
+                {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+                {copied ? 'Copié !' : 'Copier'}
               </span>
-              <div className="flex items-center gap-2 text-neutral-400 group-hover:text-primary-400 transition-colors">
-                {copied ? (
-                  <>
-                    <Check className="w-5 h-5 text-green-500" />
-                    <span className="text-sm text-green-500">Copie !</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-5 h-5" />
-                    <span className="text-sm">Copier</span>
-                  </>
-                )}
-              </div>
             </button>
-          </div>
+          </>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-3 bg-zinc-800/60 border border-zinc-700 rounded-lg">
-            <Store className="w-5 h-5 text-primary-400" />
+          <div className="flex items-start gap-3">
+            <Store className="mt-0.5 size-5 shrink-0" aria-hidden />
             <div>
-              <p className="text-white font-semibold">Offre en magasin</p>
-              <p className="text-sm text-neutral-400">
-                Mentionnez &quot;HBC Aix-en-Savoie&quot; pour beneficier de l&apos;offre
+              <p className="font-display font-bold">Offre en magasin</p>
+              <p className="mt-1 text-sm text-neutral-950/80">
+                Mentionnez «&nbsp;HBC Aix-en-Savoie&nbsp;» pour bénéficier de l&apos;offre.
               </p>
             </div>
           </div>
         )}
-
-        {/* Conditions */}
-        {conditions && (
-          <div className="flex items-start gap-2 text-xs text-neutral-500 pt-2 border-t border-zinc-700/50">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <p>{conditions}</p>
-          </div>
-        )}
-
-        {/* Expiration date display */}
-        {expiration && !isExpired && daysLeft !== null && daysLeft > 7 && (
-          <p className="text-xs text-neutral-500">
-            Valable jusqu&apos;au{' '}
-            {new Date(expiration).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-        )}
-
-        {/* Decorative scissors circles (coupon style) */}
-        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full" />
-        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full" />
       </div>
-    </motion.div>
+    </div>
   )
 }

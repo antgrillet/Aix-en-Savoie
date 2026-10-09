@@ -1,7 +1,10 @@
 import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
 import { TeamsPageClient } from '@/components/teams/TeamsPageClient'
-import { PageBackground } from '@/components/layout/PageBackground'
+import { TeamsGrid } from '@/components/teams/TeamsGrid'
+import { PageHero } from '@/components/site/PageHero'
+import { container } from '@/components/site/styles'
+import { JoinClubCTA } from '@/components/home/JoinClubCTA'
 import { getPageBackgroundImage } from '@/lib/settings'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
@@ -44,35 +47,35 @@ export default async function EquipesPage() {
   const backgroundImage = await getPageBackgroundImage('equipes')
 
   return (
-    <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
+    <>
       <BreadcrumbSchema
         items={[
           { name: 'Accueil', url: '/' },
           { name: 'Équipes', url: '/equipes' },
         ]}
       />
-      {/* Background */}
-      <PageBackground imageUrl={backgroundImage} />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-16 overflow-hidden z-10">
-        {/* Contenu */}
-        <div className="relative z-30 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-display">
-            Nos Équipes
-          </h1>
-          <p className="text-lg md:text-xl text-white/90 font-display">
-            Découvrez les équipes qui font la fierté du HBC Aix-en-Savoie
-          </p>
+      <PageHero
+        eyebrow="Du Baby Hand aux seniors"
+        title="Nos équipes"
+        description="Entraînements, prochains matchs, classements&nbsp;: retrouvez toutes les équipes qui portent les couleurs du HBC Aix-en-Savoie."
+        backgroundImage={backgroundImage}
+      />
+
+      <section className="py-16 md:py-24">
+        <div className={container}>
+          {/* Sans JavaScript (ou avant hydratation), toutes les équipes restent visibles */}
+          <Suspense fallback={<TeamsGrid equipes={equipes} />}>
+            <TeamsPageClient equipes={equipes} />
+          </Suspense>
         </div>
       </section>
 
-      {/* Contenu principal */}
-      <main className="py-12 md:py-16 lg:py-20 relative z-10">
-        <Suspense fallback={null}>
-          <TeamsPageClient equipes={equipes} />
-        </Suspense>
-      </main>
-    </div>
+      <JoinClubCTA
+        title="Rejoignez nos équipes&nbsp;!"
+        description="Envie de pratiquer le handball dans une ambiance conviviale&nbsp;? Des équipes pour tous les âges, des entraîneurs qualifiés et un club familial&nbsp;: nous accueillons de nouveaux joueurs tout au long de l'année, quel que soit votre niveau."
+        secondary={{ href: '/contact', label: 'Nous contacter' }}
+      />
+    </>
   )
 }

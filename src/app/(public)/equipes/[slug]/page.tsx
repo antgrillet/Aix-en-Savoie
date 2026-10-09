@@ -2,10 +2,17 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Calendar, MapPin, Clock, Trophy, User } from 'lucide-react'
-import { normalizeImagePath } from '@/lib/utils'
+import { ArrowLeft, Clock, MapPin } from 'lucide-react'
+import { cn, normalizeImagePath } from '@/lib/utils'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
-import { buildMetadata, excerptFromHtml } from '@/lib/seo'
+import { buildMetadata, excerptFromHtml, stripHtml } from '@/lib/seo'
+import { Eyebrow } from '@/components/site/Eyebrow'
+import { container, siteCard } from '@/components/site/styles'
+import { JoinClubCTA } from '@/components/home/JoinClubCTA'
+import { TeamMatchList } from '@/components/teams/TeamMatchList'
+import { StandingsTable } from '@/components/teams/StandingsTable'
+import { getCategoryLabel, getGenreLabel, isClubRow, rankSuffix } from '@/components/teams/categories'
+import { formatMatchDay, formatMatchTime, getMatchOutcome } from '@/lib/match-format'
 
 export const revalidate = 1800
 
@@ -44,6 +51,26 @@ export async function generateMetadata({ params }: EquipePageProps) {
   })
 }
 
+// Colonnes du bandeau de chiffres clés sur grand écran (classes écrites en entier pour Tailwind)
+const STAT_COLUMNS: Record<number, string> = {
+  1: 'lg:grid-cols-1',
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+}
+
+/** Titre de bloc : petit libellé orange + titre condensé */
+function BlockTitle({ eyebrow, title, id }: { eyebrow?: string; title: string; id?: string }) {
+  return (
+    <div className="mb-6">
+      {eyebrow && <Eyebrow className="mb-3">{eyebrow}</Eyebrow>}
+      <h2 id={id} className="font-headline text-3xl text-white sm:text-4xl">
+        {title}
+      </h2>
+    </div>
+  )
+}
+
 export default async function EquipePage({ params }: EquipePageProps) {
   const { slug } = await params
 
@@ -76,10 +103,70 @@ export default async function EquipePage({ params }: EquipePageProps) {
   const upcomingMatches = equipe.matchs.filter(
     (match) => match.date >= now && !match.termine
   )
-  const allMatches = equipe.matchs
+  // Le reste du calendrier, du plus récent au plus ancien
+  const pastMatches = equipe.matchs
+    .filter((match) => !(match.date >= now && !match.termine))
+    .reverse()
+
+  // Chiffres clés affichés dans l'en-tête
+  const ourTeam = equipe.classement.find((team) => isClubRow(team.club))
+  const outcomes = pastMatches
+    .map((match) => getMatchOutcome(match.scoreEquipe, match.scoreAdversaire))
+    .filter((outcome) => outcome !== null)
+  const record = {
+    win: outcomes.filter((o) => o === 'win').length,
+    draw: outcomes.filter((o) => o === 'draw').length,
+    loss: outcomes.filter((o) => o === 'loss').length,
+  }
+  const nextMatch = upcomingMatches[0]
+
+  const stats: { label: string; value: React.ReactNode; hint?: string }[] = []
+  if (ourTeam) {
+    stats.push({
+      label: 'Classement',
+      value: (
+        <>
+          {ourTeam.position}
+          <sup className="ml-0.5 text-[0.5em] normal-case">{rankSuffix(ourTeam.position)}</sup>
+        </>
+      ),
+      hint: `${ourTeam.points} pts`,
+    })
+  }
+  if (outcomes.length > 0) {
+    stats.push({
+      label: 'Bilan',
+      value: `${record.win}V ${record.draw}N ${record.loss}D`,
+      hint: `${outcomes.length} match${outcomes.length > 1 ? 's' : ''} joué${outcomes.length > 1 ? 's' : ''}`,
+    })
+  }
+  if (nextMatch) {
+    stats.push({
+      label: 'Prochain match',
+      value: formatMatchDay(nextMatch.date),
+      hint: `${formatMatchTime(nextMatch.date)} · ${nextMatch.domicile ? 'vs' : 'à'} ${nextMatch.adversaire}`,
+    })
+  }
+  if (equipe.entrainements.length > 0) {
+    stats.push({
+      label: 'Entraînements',
+      value: equipe.entrainements.length,
+      hint: `créneau${equipe.entrainements.length > 1 ? 'x' : ''} par semaine`,
+    })
+  }
+
+  const heroImage = normalizeImagePath(equipe.banniere || equipe.photo, '/img/equipes/default.jpg')
+  const hasDescription = stripHtml(equipe.description).trim().length > 0
+  const genreLabel = getGenreLabel(equipe.genre)
+
+  const infos = [
+    { label: 'Catégorie', value: getCategoryLabel(equipe.categorie) },
+    { label: 'Genre', value: genreLabel },
+    { label: 'Entraîneur', value: equipe.entraineur },
+  ].filter((info) => info.value)
 
   return (
-    <div className="pt-24 min-h-screen bg-zinc-900 relative">
+    <>
       <BreadcrumbSchema
         items={[
           { name: 'Accueil', url: '/' },
@@ -87,323 +174,170 @@ export default async function EquipePage({ params }: EquipePageProps) {
           { name: equipe.nom, url: `/equipes/${equipe.slug}` },
         ]}
       />
-      {/* Background Image avec overlay */}
-      {equipe.banniere && (
-        <div className="fixed inset-0 z-0">
+
+      {/* En-tête : bannière (ou photo) de l'équipe */}
+      <section className="relative isolate overflow-hidden border-b border-white/10 bg-neutral-950">
+        <div aria-hidden className="absolute inset-0 -z-10">
           <Image
-            src={normalizeImagePath(equipe.banniere, '')}
-            alt={`Background ${equipe.nom}`}
+            src={heroImage}
+            alt=""
             fill
-            className="object-cover"
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_30%] opacity-60"
           />
-          {/* Overlay gradient équilibré */}
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 via-zinc-900/55 to-zinc-900/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-neutral-950/70" />
         </div>
-      )}
 
-      {/* Fond statique si pas de bannière */}
-      {!equipe.banniere && (
-        <div className="fixed inset-0 z-0 bg-zinc-900 bg-[radial-gradient(circle_at_top_right,var(--color-primary-900)_0%,transparent_55%)]" />
-      )}
-
-      {/* Content wrapper */}
-      <div className="relative z-10">
-        {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className={cn(container, 'flex min-h-[32rem] flex-col justify-end pb-10 pt-28 md:min-h-[38rem] md:pb-14 md:pt-36')}>
           <Link
             href="/equipes"
-            className="inline-flex items-center text-neutral-300 hover:text-primary-500 transition-colors"
+            className="mb-8 inline-flex w-fit items-center gap-2 rounded-sm text-sm font-medium text-neutral-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux équipes
+            <ArrowLeft className="size-4" aria-hidden />
+            Toutes les équipes
           </Link>
-        </div>
 
-        {/* Team Header */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="max-w-7xl mx-auto">
-          {/* Featured Image */}
-          <div className="relative h-96 rounded-2xl overflow-hidden mb-8">
-            <Image
-              src={normalizeImagePath(equipe.photo, '/img/equipes/default.jpg')}
-              alt={equipe.nom}
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
+          <Eyebrow className="mb-5">{getCategoryLabel(equipe.categorie)}</Eyebrow>
+          <h1 className="max-w-5xl font-headline text-5xl text-white sm:text-7xl lg:text-8xl">{equipe.nom}</h1>
 
-          {/* Meta */}
-          <div className="mb-6">
-            <span className="inline-block px-4 py-2 bg-primary-500 text-white rounded-full font-semibold">
-              {equipe.categorie}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-display font-bold mb-8 text-white">
-            {equipe.nom}
-          </h1>
-
-          {/* Entraîneur */}
-          {equipe.entraineur && (
-            <div className="inline-flex items-center gap-3 mb-8 bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl px-5 py-3">
-              <User className="w-5 h-5 text-primary-500" />
-              <span className="text-neutral-300">Entraîneur</span>
-              <span className="font-semibold text-primary-500">{equipe.entraineur}</span>
-            </div>
+          {infos.length > 0 && (
+            <dl className="mt-7 flex flex-wrap gap-2">
+              {infos.map((info) => (
+                <div
+                  key={info.label}
+                  className="rounded-md border border-white/10 bg-neutral-950/60 px-3.5 py-2 backdrop-blur"
+                >
+                  <dt className="font-eyebrow text-[0.6rem] text-neutral-500">{info.label}</dt>
+                  <dd className="text-sm font-semibold text-white">{info.value}</dd>
+                </div>
+              ))}
+            </dl>
           )}
 
-          {/* Description */}
-          <div
-            className="prose prose-lg prose-invert max-w-none mb-12 [&_*]:text-neutral-200 [&_p]:text-neutral-200 [&_strong]:text-white [&_em]:text-neutral-300 text-neutral-200"
-            dangerouslySetInnerHTML={{ __html: equipe.description }}
-          />
-
-          {/* Training Schedule & Upcoming Matches - 2 colonnes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Training Schedule */}
-            {equipe.entrainements.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Calendar className="w-5 h-5 text-primary-500" />
-                  Horaires d'entraînement
-                </h2>
-                <div className="space-y-3">
-                  {equipe.entrainements.map((entrainement, index) => (
-                    <div
-                      key={index}
-                      className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar className="w-4 h-4 text-primary-500" />
-                        <span className="font-semibold text-white">{entrainement.jour}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-neutral-300">
-                        <Clock className="w-4 h-4" />
-                        <span>{entrainement.horaire}</span>
-                      </div>
-                      {entrainement.lieu && (
-                        <div className="flex items-center gap-2 text-sm text-neutral-300 mt-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{entrainement.lieu}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+          {stats.length > 0 && (
+            <dl
+              className={cn(
+                'mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10',
+                STAT_COLUMNS[stats.length]
+              )}
+            >
+              {stats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="min-w-0 bg-neutral-950/85 p-4 backdrop-blur last:odd:col-span-2 sm:p-5 lg:last:odd:col-span-1"
+                >
+                  <dt className="font-eyebrow text-[0.6rem] text-neutral-500 sm:text-[0.65rem]">{stat.label}</dt>
+                  <dd className="mt-1.5 font-headline text-2xl text-white sm:text-3xl">{stat.value}</dd>
+                  {stat.hint && <dd className="mt-1 truncate text-xs text-neutral-400">{stat.hint}</dd>}
                 </div>
-              </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24">
+        <div className={cn(container, 'grid gap-14 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_24rem]')}>
+          <div className="min-w-0 space-y-16">
+            {/* Présentation */}
+            {(hasDescription || equipe.banniere) && (
+              <section aria-labelledby="presentation">
+                <BlockTitle eyebrow="L'équipe" title="Présentation" id="presentation" />
+                {hasDescription && (
+                  <div
+                    className="prose prose-invert max-w-none prose-p:text-neutral-300 prose-headings:text-white prose-strong:text-white prose-a:text-primary-400 md:prose-lg"
+                    dangerouslySetInnerHTML={{ __html: equipe.description }}
+                  />
+                )}
+                {/* La photo n'est pas déjà visible dans l'en-tête quand une bannière est définie */}
+                {equipe.banniere && equipe.photo && (
+                  <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-xl border border-white/10 bg-neutral-900">
+                    <Image
+                      src={normalizeImagePath(equipe.photo, '/img/equipes/default.jpg')}
+                      alt={`Photo de l'équipe ${equipe.nom}`}
+                      fill
+                      sizes="(min-width: 1024px) 60vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+              </section>
             )}
 
-            {/* Upcoming Matches */}
-            {upcomingMatches.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Trophy className="w-5 h-5 text-primary-500" />
-                  Prochains matchs
-                </h2>
-                <div className="space-y-3">
-                  {upcomingMatches.slice(0, 5).map((match) => (
-                    <div
-                      key={match.id}
-                      className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50 hover:border-primary-500/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {match.logoAdversaire && (
-                          <div className="w-8 h-8 relative flex-shrink-0">
-                            <Image
-                              src={match.logoAdversaire}
-                              alt={match.adversaire}
-                              fill
-                              className="object-contain"
-                              unoptimized
-                            />
-                          </div>
-                        )}
-                        <span className="font-semibold text-white">{match.adversaire}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-neutral-300">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          {new Date(match.date).toLocaleDateString('fr-FR', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <span
-                          className={`ml-auto px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            match.domicile
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-blue-500/20 text-blue-400'
-                          }`}
-                        >
-                          {match.domicile ? 'Domicile' : 'Extérieur'}
-                        </span>
-                      </div>
+            {/* Calendrier et résultats */}
+            <section aria-labelledby="calendrier">
+              <BlockTitle eyebrow="Saison" title="Calendrier & résultats" id="calendrier" />
+
+              {upcomingMatches.length === 0 && pastMatches.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-white/15 px-6 py-12 text-center text-neutral-400">
+                  Le calendrier de l&apos;équipe sera publié prochainement.
+                </p>
+              ) : (
+                <div className="space-y-10">
+                  {upcomingMatches.length > 0 && (
+                    <div>
+                      <h3 className="mb-3 font-eyebrow text-xs text-neutral-500">À venir</h3>
+                      <TeamMatchList matches={upcomingMatches} upcoming />
                     </div>
-                  ))}
+                  )}
+                  {pastMatches.length > 0 && (
+                    <div>
+                      <h3 className="mb-3 font-eyebrow text-xs text-neutral-500">Résultats</h3>
+                      <TeamMatchList matches={pastMatches} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+            </section>
           </div>
 
-          {/* Calendrier complet & Classement - 2 colonnes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Full Calendar */}
-            {allMatches.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Calendar className="w-5 h-5 text-primary-500" />
-                  Calendrier complet
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-700">
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Date
-                        </th>
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Adversaire
-                        </th>
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Score
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allMatches.map((match, index) => (
-                        <tr
-                          key={match.id}
-                          className={`border-b border-zinc-700/50 hover:bg-zinc-900/50 transition-colors ${
-                            index % 2 === 0 ? 'bg-transparent' : 'bg-zinc-900/30'
-                          }`}
-                        >
-                          <td className="py-2 px-2 text-xs text-neutral-300">
-                            {new Date(match.date).toLocaleDateString('fr-FR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                            })}
-                            <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-semibold ${
-                              match.domicile
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {match.domicile ? 'Dom.' : 'Ext.'}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2">
-                            <div className="flex items-center gap-2">
-                              {match.logoAdversaire && (
-                                <div className="w-6 h-6 relative flex-shrink-0">
-                                  <Image
-                                    src={match.logoAdversaire}
-                                    alt={match.adversaire}
-                                    fill
-                                    className="object-contain"
-                                    unoptimized
-                                  />
-                                </div>
-                              )}
-                              <span className="text-sm text-white">{match.adversaire}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            {match.termine &&
-                            match.scoreEquipe !== null &&
-                            match.scoreAdversaire !== null ? (
-                              <span
-                                className={`font-bold text-sm ${
-                                  match.scoreEquipe > match.scoreAdversaire
-                                    ? 'text-green-500'
-                                    : match.scoreEquipe < match.scoreAdversaire
-                                    ? 'text-red-500'
-                                    : 'text-yellow-500'
-                                }`}
-                              >
-                                {match.scoreEquipe} - {match.scoreAdversaire}
-                              </span>
-                            ) : (
-                              <span className="text-neutral-400 text-xs">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+          <aside className="min-w-0 space-y-12">
+            {/* Entraînements */}
+            {equipe.entrainements.length > 0 && (
+              <section aria-labelledby="entrainements">
+                <BlockTitle eyebrow="Sur le terrain" title="Entraînements" id="entrainements" />
+                <ul className={cn(siteCard, 'divide-y divide-white/10')}>
+                  {equipe.entrainements.map((entrainement) => (
+                    <li key={entrainement.id} className="flex gap-4 p-4 sm:p-5">
+                      <span
+                        aria-hidden
+                        className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary-500/25 bg-primary-500/10 font-headline text-sm text-primary-400"
+                      >
+                        {entrainement.jour.slice(0, 3)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-display font-bold text-white">{entrainement.jour}</p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-300">
+                          <Clock className="size-3.5 shrink-0 text-primary-500" aria-hidden />
+                          {entrainement.horaire}
+                        </p>
+                        {entrainement.lieu && (
+                          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-400">
+                            <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary-500" aria-hidden />
+                            {entrainement.lieu}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
 
             {/* Classement */}
             {equipe.classement.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Trophy className="w-5 h-5 text-primary-500" />
-                  Classement de la poule
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-zinc-700">
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Pos
-                        </th>
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Équipe
-                        </th>
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Pts
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {equipe.classement.map((team) => {
-                        const isOurTeam = team.club.toUpperCase().includes('HBC AIX') ||
-                                         team.club.toUpperCase().includes('AIX EN SAVOIE')
-                        return (
-                          <tr
-                            key={team.id}
-                            className={`border-b border-zinc-700/50 transition-colors ${
-                              isOurTeam
-                                ? 'bg-primary-500/20 font-bold'
-                                : 'hover:bg-zinc-900/50'
-                            }`}
-                          >
-                            <td className="py-2 px-2 text-center">
-                              <span
-                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm ${
-                                  isOurTeam
-                                    ? 'bg-primary-500 text-white'
-                                    : team.position <= 3
-                                    ? 'bg-zinc-700 text-white font-semibold'
-                                    : 'text-neutral-300'
-                                }`}
-                              >
-                                {team.position}
-                              </span>
-                            </td>
-                            <td className={`py-2 px-2 text-sm ${isOurTeam ? 'text-primary-400' : 'text-white'}`}>
-                              {team.club}
-                            </td>
-                            <td className="py-2 px-2 text-center font-semibold text-white text-sm">
-                              {team.points}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <section aria-labelledby="classement">
+                <BlockTitle eyebrow="Championnat" title="Classement" id="classement" />
+                <StandingsTable classement={equipe.classement} />
+              </section>
             )}
-          </div>
+          </aside>
         </div>
-      </div>
-      </div>
-    </div>
+      </section>
+
+      <JoinClubCTA />
+    </>
   )
 }
