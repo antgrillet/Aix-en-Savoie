@@ -5,15 +5,16 @@ import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/li
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-inter',
   display: 'swap',
 })
 
-// Police d'affichage du club : grotesque sportive, plus typée que le sans par défaut
+// Police d'affichage du club : grotesque sportive ; l'axe de largeur
+// permet les titres condensés (utilitaire `font-headline`)
 const archivo = Archivo({
   subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-archivo',
+  axes: ['wdth'],
   display: 'swap',
 })
 
@@ -70,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
+    <html lang="fr" data-scroll-behavior="smooth" className={`${inter.variable} ${archivo.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
       </body>

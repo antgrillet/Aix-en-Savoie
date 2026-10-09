@@ -1,8 +1,4 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import { ArticleCard } from './ArticleCard'
-import { staggerContainer, staggerItem } from '@/lib/animations'
 
 interface Article {
   id: number
@@ -20,17 +16,10 @@ interface ArticlesGridProps {
 
 export function ArticlesGrid({ articles }: ArticlesGridProps) {
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
-    >
+    <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
       {articles.map((article) => (
-        <motion.div key={article.id} variants={staggerItem} className="h-full">
-          <ArticleCard article={article} />
-        </motion.div>
+        <ArticleCard key={article.id} article={article} />
       ))}
-    </motion.div>
+    </div>
   )
 }

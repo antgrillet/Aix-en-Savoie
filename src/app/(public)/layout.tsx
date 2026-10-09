@@ -7,17 +7,18 @@ export default function PublicLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
-      {/* Skip to content link for keyboard navigation */}
+    // `theme-site` active les couleurs sombres du site (voir styles.css)
+    <div className="theme-site dark flex min-h-screen flex-col bg-neutral-950 text-neutral-100">
+      {/* Lien d'évitement pour la navigation au clavier */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-lg focus:font-semibold focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary-500 focus:px-4 focus:py-2 focus:font-semibold focus:text-neutral-950 focus:shadow-lg"
       >
         Aller au contenu principal
       </a>
       <Header />
-      <main id="main-content" className="min-h-screen">{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
       <Footer />
-    </>
+    </div>
   )
 }

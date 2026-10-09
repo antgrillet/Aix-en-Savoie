@@ -1,180 +1,145 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Mail, MapPin } from 'lucide-react'
+import { ArrowUpRight, Mail, MapPin } from 'lucide-react'
 import { Icon } from '@iconify/react/offline'
 import facebookIcon from '@iconify-icons/simple-icons/facebook'
 import instagramIcon from '@iconify-icons/simple-icons/instagram'
+import { ADDRESS_LINES, CONTACT_EMAIL, SHOP_URL, SOCIAL_LINKS } from '@/lib/site'
+import { container } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
+
+const columns = [
+  {
+    title: 'Le club',
+    links: [
+      { name: 'Actualités', href: '/actus' },
+      { name: 'Nos équipes', href: '/equipes' },
+      { name: 'Partenaires', href: '/partenaires' },
+      { name: 'Contact', href: '/contact' },
+    ],
+  },
+  {
+    title: 'Participer',
+    links: [
+      { name: "S'inscrire", href: '/contact?sujet=inscription' },
+      { name: 'Devenir partenaire', href: '/contact?sujet=partenariat' },
+      { name: 'Espace bénévoles', href: '/calendrier' },
+      { name: 'Boutique', href: SHOP_URL, external: true },
+    ],
+  },
+]
+
+const linkClass =
+  'inline-flex items-center gap-1 rounded-sm text-sm text-neutral-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-600/5 pointer-events-none" />
-
-      <div className="relative z-10 container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Logo & Description */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-block group">
-              <div className="flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-colors duration-300 shadow-xl">
-                <Image
-                  src="/img/home/logo.png"
-                  alt="HBC Aix-en-Savoie"
-                  width={80}
-                  height={80}
-                  className="w-16 h-16 object-contain"
-                />
-              </div>
+    <footer className="relative overflow-hidden border-t border-white/10 bg-neutral-950 text-white">
+      <div className={cn(container, 'relative z-10 pt-16 pb-10 md:pt-20')}>
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          <div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-4 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              <Image src="/img/home/logo.png" alt="" width={72} height={72} className="size-16 object-contain" />
+              <span className="flex flex-col leading-none">
+                <span className="font-headline text-3xl">HBC</span>
+                <span className="font-eyebrow text-xs text-primary-400">Aix-en-Savoie</span>
+              </span>
             </Link>
-            <div>
-              <h3 className="font-display font-bold text-xl mb-3 text-white">
-                HBC Aix-en-Savoie
-              </h3>
-              <p className="text-neutral-300 text-sm leading-relaxed">
-                Club de handball passionné, engagé dans la formation et le développement des jeunes talents.
-              </p>
+            <p className="mt-6 max-w-xs text-sm text-neutral-400">
+              Club de handball passionné, engagé dans la formation et le développement des jeunes talents.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <a
+                href={SOCIAL_LINKS.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-neutral-300 transition-colors hover:border-primary-500 hover:bg-primary-500 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              >
+                <Icon icon={facebookIcon} className="size-4" />
+              </a>
+              <a
+                href={SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-neutral-300 transition-colors hover:border-primary-500 hover:bg-primary-500 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              >
+                <Icon icon={instagramIcon} className="size-4" />
+              </a>
             </div>
           </div>
 
-          {/* Navigation */}
-          <div>
-            <h4 className="font-display font-bold text-lg mb-6 text-white">Navigation</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Accueil
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/actus"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Actualités
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/equipes"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Équipes
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/partenaires"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Partenaires
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/calendrier"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Espace bénévoles
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {columns.map((column) => (
+            <div key={column.title}>
+              <h2 className="font-eyebrow text-xs text-neutral-500">{column.title}</h2>
+              <ul className="mt-5 space-y-3">
+                {column.links.map((link) => (
+                  <li key={link.name}>
+                    {'external' in link && link.external ? (
+                      <a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                        {link.name}
+                        <ArrowUpRight className="size-3.5" />
+                      </a>
+                    ) : (
+                      <Link href={link.href} className={linkClass}>
+                        {link.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-          {/* Contact */}
           <div>
-            <h4 className="font-display font-bold text-lg mb-6 text-white">Contact</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">
-                  <MapPin className="w-5 h-5 text-orange-500" />
-                </div>
-                <div className="text-neutral-300 text-sm leading-relaxed">
-                  7 rue des Prés Riants<br />
-                  73100 Aix-les-Bains<br />
-                  France
-                </div>
+            <h2 className="font-eyebrow text-xs text-neutral-500">Nous trouver</h2>
+            <ul className="mt-5 space-y-4 text-sm text-neutral-400">
+              <li className="flex gap-3">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-primary-500" />
+                <address className="not-italic">
+                  {ADDRESS_LINES.map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </address>
               </li>
-              <li className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">
-                  <Mail className="w-5 h-5 text-orange-500" />
-                </div>
-                <a
-                  href="mailto:contact@hbcaixensavoie.fr"
-                  className="text-white/70 hover:text-orange-500 transition-colors text-sm break-all"
-                >
-                  contact@hbcaixensavoie.fr
+              <li className="flex gap-3">
+                <Mail className="mt-0.5 size-4 shrink-0 text-primary-500" />
+                <a href={`mailto:${CONTACT_EMAIL}`} className={cn(linkClass, 'break-all')}>
+                  {CONTACT_EMAIL}
                 </a>
               </li>
             </ul>
           </div>
-
-          {/* Réseaux Sociaux */}
-          <div>
-            <h4 className="font-display font-bold text-lg mb-6 text-white">
-              Suivez-nous
-            </h4>
-            <p className="text-neutral-300 text-sm mb-6">
-              Restez connectés avec notre club sur les réseaux sociaux.
-            </p>
-            <div className="flex gap-3">
-              <a
-                href="https://www.facebook.com/hbcaixensavoie"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
-                aria-label="Facebook"
-              >
-                <Icon icon={facebookIcon} className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
-              </a>
-              <a
-                href="https://www.instagram.com/hbcaixensavoie/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
-                aria-label="Instagram"
-              >
-                <Icon icon={instagramIcon} className="w-5 h-5 text-neutral-300 group-hover:text-white transition-colors" />
-              </a>
-            </div>
-          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-white/10 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-neutral-400 text-sm">
-              &copy; {currentYear} HBC Aix-en-Savoie. Tous droits réservés.
-            </p>
-            <div className="flex items-center gap-6 text-sm text-neutral-400">
-              <Link href="/mentions-legales" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
-                Mentions légales
-              </Link>
-              <span>•</span>
-              <Link href="/politique-confidentialite" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
-                Politique de confidentialité
-              </Link>
-            </div>
+        <div className="mt-16 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-neutral-500 md:flex-row md:items-center md:justify-between">
+          <p>&copy; {currentYear} HBC Aix-en-Savoie. Tous droits réservés.</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link href="/mentions-legales" className={linkClass}>
+              Mentions légales
+            </Link>
+            <Link href="/politique-confidentialite" className={linkClass}>
+              Politique de confidentialité
+            </Link>
           </div>
         </div>
       </div>
+
+      {/* Grand lettrage décoratif */}
+      <p
+        aria-hidden
+        className="pointer-events-none -mb-[0.12em] select-none whitespace-nowrap text-center font-headline text-[13vw] leading-none text-white/[0.04]"
+      >
+        Aix-en-Savoie
+      </p>
     </footer>
   )
 }

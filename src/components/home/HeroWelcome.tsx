@@ -3,7 +3,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowRight, Trophy } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { Eyebrow } from '@/components/site/Eyebrow'
+import { container, siteButton } from '@/components/site/styles'
+import { cn } from '@/lib/utils'
 
 interface HeroWelcomeProps {
   backgroundImage?: string | null
@@ -18,8 +21,8 @@ export function HeroWelcome({ backgroundImage, children }: HeroWelcomeProps) {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.12,
-        delayChildren: shouldReduceMotion ? 0 : 0.15,
+        staggerChildren: shouldReduceMotion ? 0 : 0.1,
+        delayChildren: shouldReduceMotion ? 0 : 0.1,
       },
     },
   }
@@ -29,99 +32,60 @@ export function HeroWelcome({ backgroundImage, children }: HeroWelcomeProps) {
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: shouldReduceMotion ? 0 : 0.5,
-        ease: 'easeOut' as const,
-      },
+      transition: { duration: shouldReduceMotion ? 0 : 0.6, ease: 'easeOut' as const },
     },
   }
 
   return (
-    <section className="relative w-full bg-zinc-950 flex items-center overflow-hidden pt-16">
-      {/* Background Image */}
-      {backgroundImage && (
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={backgroundImage}
-            alt="HBC Aix-en-Savoie"
-            fill
-            className="object-cover opacity-40"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-zinc-950" />
-        </div>
-      )}
+    <section className="relative isolate flex min-h-[92svh] items-center overflow-hidden bg-neutral-950">
+      <div aria-hidden className="absolute inset-0 -z-10">
+        {backgroundImage && (
+          <Image src={backgroundImage} alt="" fill priority sizes="100vw" className="object-cover opacity-50" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 to-neutral-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/70" />
+        <div className="absolute inset-0 bg-stripes" />
+      </div>
 
-      {/* Content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20 lg:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          {/* Left Column - Identité du club */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
-          >
-            <motion.span
-              variants={itemVariants}
-              className="inline-flex items-center px-4 py-1.5 mb-6 bg-primary-500/15 border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold uppercase tracking-wide"
-            >
-              Club de handball depuis 1964
-            </motion.span>
-
-            <motion.h1
-              variants={itemVariants}
-              className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight"
-            >
-              Bienvenue au{' '}
-              <span className="text-primary-500">HBC Aix-en-Savoie</span>
-            </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="text-lg md:text-xl text-neutral-300 mb-8 leading-relaxed max-w-xl"
-            >
-              Une solide institution sportive aixoise, passionnée par le handball
-              et dédiée à la formation de jeunes talents
-            </motion.p>
-
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto"
-            >
-              <Link
-                href="/contact?sujet=inscription"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-colors duration-200 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-              >
-                Inscrire un joueur
-                <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/equipes"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 border border-white/20 text-white font-bold rounded-lg hover:bg-white/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-              >
-                Découvrir nos équipes
-              </Link>
-            </motion.div>
+      <div className={cn(container, 'grid items-center gap-12 pb-16 pt-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:pb-24 lg:pt-36')}>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible">
+          <motion.div variants={itemVariants}>
+            <Eyebrow>Club de handball depuis 1964</Eyebrow>
           </motion.div>
 
-          {/* Right Column - Matchs (prochains + derniers résultats) */}
-          <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
-            <div className="flex items-center justify-between gap-3 mb-5">
-              <h2 className="flex items-center gap-2 text-base font-display font-bold text-white uppercase tracking-wide">
-                <Trophy className="w-4 h-4 text-primary-500" />
-                Nos matchs
-              </h2>
-              <Link
-                href="/equipes"
-                className="text-sm font-semibold text-primary-400 hover:text-primary-300 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-              >
-                Tout voir
-              </Link>
-            </div>
+          <motion.h1 variants={itemVariants} className="mt-6 font-headline text-white">
+            <span className="block text-2xl text-neutral-300 sm:text-3xl">Bienvenue au</span>
+            <span className="mt-2 block text-[3.25rem] sm:text-7xl xl:text-8xl">
+              HBC <span className="whitespace-nowrap text-primary-500">Aix-en-Savoie</span>
+            </span>
+          </motion.h1>
+
+          <motion.p variants={itemVariants} className="mt-6 max-w-xl text-lg text-neutral-300">
+            Une solide institution sportive aixoise, passionnée par le handball et dédiée à la formation de
+            jeunes talents.
+          </motion.p>
+
+          <motion.div variants={itemVariants} className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Link href="/contact?sujet=inscription" className={cn(siteButton({ size: 'lg' }), 'group')}>
+              Inscrire un joueur
+              <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+            <Link href="/equipes" className={siteButton({ variant: 'outline', size: 'lg' })}>
+              Découvrir nos équipes
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {children && (
+          <motion.div
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.35 }}
+            className="w-full"
+          >
             {children}
-          </div>
-        </div>
+          </motion.div>
+        )}
       </div>
     </section>
   )

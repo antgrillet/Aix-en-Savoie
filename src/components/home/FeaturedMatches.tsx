@@ -1,8 +1,8 @@
-'use client'
-
-import { Calendar, Trophy, TrendingUp } from 'lucide-react'
-import { motion } from 'framer-motion'
-import Image from 'next/image'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+import { TeamCrest } from '@/components/matches/TeamCrest'
+import { formatMatchDay, formatMatchTime, getMatchOutcome, OUTCOME_LABELS } from '@/lib/match-format'
+import { cn } from '@/lib/utils'
 
 interface Match {
   id: number
@@ -26,203 +26,115 @@ interface FeaturedMatchesProps {
   lastResults: Match[]
 }
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: 'easeOut' as const,
-    },
-  },
+function TeamSide({ team }: { team: { name: string; logo: string | null; isHbc: boolean } }) {
+  return (
+    <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
+      <TeamCrest name={team.name} logo={team.logo} isHbc={team.isHbc} size="sm" />
+      <span className={cn('line-clamp-2 text-xs font-semibold leading-tight', team.isHbc ? 'text-white' : 'text-neutral-300')}>
+        {team.isHbc ? 'HBC Aix' : team.name}
+      </span>
+    </div>
+  )
+}
+
+function MatchRow({ match, upcoming }: { match: Match; upcoming: boolean }) {
+  const hbc = { name: match.equipe.nom, logo: null, isHbc: true }
+  const opponent = { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
+  const [home, away] = match.domicile ? [hbc, opponent] : [opponent, hbc]
+  const [homeScore, awayScore] = match.domicile
+    ? [match.scoreEquipe, match.scoreAdversaire]
+    : [match.scoreAdversaire, match.scoreEquipe]
+  const outcome = upcoming ? null : getMatchOutcome(match.scoreEquipe, match.scoreAdversaire)
+
+  return (
+    <li className="rounded-lg border border-white/10 bg-neutral-950/60 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3 text-xs">
+        <span className="truncate font-semibold text-neutral-300">{match.equipe.nom}</span>
+        {upcoming ? (
+          <span
+            className={cn(
+              'shrink-0 rounded-sm px-1.5 py-0.5 font-eyebrow text-[0.6rem]',
+              match.domicile ? 'bg-primary-500/15 text-primary-300' : 'bg-white/10 text-neutral-300'
+            )}
+          >
+            {match.domicile ? 'Domicile' : 'Extérieur'}
+          </span>
+        ) : (
+          outcome && (
+            <span
+              className={cn(
+                'shrink-0 rounded-sm px-1.5 py-0.5 font-eyebrow text-[0.6rem]',
+                outcome === 'win' && 'bg-emerald-500/15 text-emerald-300',
+                outcome === 'loss' && 'bg-red-500/15 text-red-300',
+                outcome === 'draw' && 'bg-white/10 text-neutral-300'
+              )}
+            >
+              {OUTCOME_LABELS[outcome]}
+            </span>
+          )
+        )}
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <TeamSide team={home} />
+
+        {upcoming ? (
+          <div className="text-center">
+            <p className="font-headline text-xl text-primary-400">{formatMatchTime(match.date)}</p>
+            <p className="text-[0.7rem] font-medium capitalize text-neutral-400">{formatMatchDay(match.date)}</p>
+          </div>
+        ) : (
+          <p className="whitespace-nowrap font-headline text-3xl tabular-nums text-white">
+            {homeScore}
+            <span className="mx-1.5 text-neutral-600">–</span>
+            {awayScore}
+          </p>
+        )}
+
+        <TeamSide team={away} />
+      </div>
+    </li>
+  )
 }
 
 export function FeaturedMatches({ upcomingMatches, lastResults }: FeaturedMatchesProps) {
-  const formatDate = (date: Date) => {
-    const d = new Date(date)
-    return d.toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    }).toUpperCase()
-  }
+  const results = lastResults.filter((m) => m.scoreEquipe !== null && m.scoreAdversaire !== null).slice(0, 2)
+  const upcoming = upcomingMatches.slice(0, 2)
 
-  const formatTime = (date: Date) => {
-    const d = new Date(date)
-    return d.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(':', 'H')
-  }
-
-  const renderMatchCard = (match: Match, isUpcoming: boolean) => {
-    const isWin = !isUpcoming && match.scoreEquipe !== null && match.scoreAdversaire !== null && match.scoreEquipe > match.scoreAdversaire
-    const isLoss = !isUpcoming && match.scoreEquipe !== null && match.scoreAdversaire !== null && match.scoreEquipe < match.scoreAdversaire
-    const homeTeam = match.domicile
-      ? { name: match.equipe.nom, logo: '/img/home/logo.png', isHbc: true }
-      : { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
-    const awayTeam = match.domicile
-      ? { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
-      : { name: match.equipe.nom, logo: '/img/home/logo.png', isHbc: true }
-
-    const renderTeamLogo = (team: { name: string; logo: string | null; isHbc: boolean }) => {
-      if (team.logo) {
-        return (
-          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-            <Image
-              src={team.logo}
-              alt={team.name}
-              fill
-              className="object-contain p-2"
-              unoptimized={!team.isHbc}
-            />
-          </div>
-        )
-      }
-
-      return (
-        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-2">
-          <span className="text-white font-bold text-xs text-center px-1">
-            {team.name.substring(0, 3).toUpperCase()}
-          </span>
-        </div>
-      )
-    }
-
-    return (
-      <motion.div variants={cardVariants} initial="rest" whileHover="hover" className="h-full">
-        <div className={`rounded-2xl p-5 shadow-xl h-full flex flex-col ${
-          isUpcoming
-            ? 'bg-gradient-to-br from-primary-500 to-primary-600'
-            : 'bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-white font-bold text-sm mb-1">
-                {isUpcoming ? 'PROCHAIN MATCH' : 'DERNIER RÉSULTAT'}
-              </p>
-              <p className={`text-xs ${isUpcoming ? 'text-white/80' : 'text-white/60'}`}>
-                {match.equipe.categorie}
-              </p>
-            </div>
-            {isUpcoming ? (
-              <Calendar className="w-5 h-5 text-white/80" />
-            ) : (
-              <Trophy className={`w-5 h-5 ${isWin ? 'text-green-500' : isLoss ? 'text-red-500' : 'text-yellow-500'}`} />
-            )}
-          </div>
-
-          {isUpcoming ? (
-            <>
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="text-center">
-                  {renderTeamLogo(homeTeam)}
-                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">
-                    {homeTeam.isHbc ? homeTeam.name : homeTeam.name.split(' ').slice(0, 2).join(' ')}
-                  </p>
-                </div>
-                <span className="text-white text-lg font-bold">VS</span>
-                <div className="text-center">
-                  {renderTeamLogo(awayTeam)}
-                  <p className="text-xs text-white/80 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">
-                    {awayTeam.isHbc ? awayTeam.name : awayTeam.name.split(' ').slice(0, 2).join(' ')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 text-white text-sm mt-auto">
-                <div className="flex items-center gap-2 justify-center">
-                  <Calendar className="w-4 h-4" />
-                  <span className="font-semibold">
-                    {formatDate(match.date)} • {formatTime(match.date)}
-                  </span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-center gap-4 mb-3">
-                <div className="text-center flex-1">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-2 mx-auto p-2 relative overflow-hidden">
-                    <Image
-                      src="/img/home/logo.png"
-                      alt="HBC Aix-en-Savoie"
-                      fill
-                      className="object-contain p-1.5"
-                    />
-                  </div>
-                  <div className={`text-3xl font-bold ${isWin ? 'text-green-500' : 'text-white/60'}`}>
-                    {match.scoreEquipe}
-                  </div>
-                  <p className="text-xs text-white/60 mt-1 line-clamp-2 font-medium max-w-[80px] mx-auto leading-tight">{match.equipe.nom}</p>
-                </div>
-                <div className="text-white/40 text-xl font-bold">-</div>
-                <div className="text-center flex-1">
-                  {match.logoAdversaire ? (
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-2 mx-auto p-2 relative overflow-hidden">
-                      <Image
-                        src={match.logoAdversaire}
-                        alt={match.adversaire}
-                        fill
-                        className="object-contain p-1.5"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 mx-auto">
-                      <span className="text-white/60 font-bold text-xs">
-                        {match.adversaire.substring(0, 3)}
-                      </span>
-                    </div>
-                  )}
-                  <div className={`text-3xl font-bold ${isLoss ? 'text-red-500' : 'text-white/60'}`}>
-                    {match.scoreAdversaire}
-                  </div>
-                  <p className="text-xs text-white/60 mt-1 line-clamp-1 font-medium">{match.adversaire.split(' ').slice(0, 2).join(' ')}</p>
-                </div>
-              </div>
-
-              <div className={`flex items-center justify-center gap-2 ${isWin ? 'text-green-500' : isLoss ? 'text-red-500' : 'text-yellow-500'} text-sm font-bold mt-auto`}>
-                {isWin ? (
-                  <>
-                    <TrendingUp className="w-4 h-4" />
-                    <span>VICTOIRE</span>
-                  </>
-                ) : match.scoreEquipe === match.scoreAdversaire ? (
-                  <span>MATCH NUL</span>
-                ) : (
-                  <span>DÉFAITE</span>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </motion.div>
-    )
-  }
+  if (upcoming.length === 0 && results.length === 0) return null
 
   return (
-    <div className="space-y-8">
-      {/* Prochains matchs */}
-      {upcomingMatches.length > 0 && (
-        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
-          {upcomingMatches.slice(0, 2).map((match) => (
-            <div key={match.id}>
-              {renderMatchCard(match, true)}
-            </div>
-          ))}
+    <div className="rounded-2xl border border-white/10 bg-neutral-900/70 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="font-headline text-2xl text-white">Nos matchs</h2>
+        <Link
+          href="/equipes"
+          className="group inline-flex items-center gap-1 rounded-sm text-sm font-semibold text-primary-400 transition-colors hover:text-primary-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        >
+          Tout voir
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+
+      {upcoming.length > 0 && (
+        <div>
+          <h3 className="mb-3 font-eyebrow text-[0.7rem] text-neutral-500">À venir</h3>
+          <ul className="space-y-2.5">
+            {upcoming.map((match) => (
+              <MatchRow key={match.id} match={match} upcoming />
+            ))}
+          </ul>
         </div>
       )}
 
-      {/* Derniers résultats */}
-      {lastResults.filter(m => m.scoreEquipe !== null && m.scoreAdversaire !== null).length > 0 && (
-        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
-          {lastResults.filter(m => m.scoreEquipe !== null && m.scoreAdversaire !== null).slice(0, 2).map((match) => (
-            <div key={match.id}>
-              {renderMatchCard(match, false)}
-            </div>
-          ))}
+      {results.length > 0 && (
+        <div className={cn(upcoming.length > 0 && 'mt-6')}>
+          <h3 className="mb-3 font-eyebrow text-[0.7rem] text-neutral-500">Derniers résultats</h3>
+          <ul className="space-y-2.5">
+            {results.map((match) => (
+              <MatchRow key={match.id} match={match} upcoming={false} />
+            ))}
+          </ul>
         </div>
       )}
     </div>

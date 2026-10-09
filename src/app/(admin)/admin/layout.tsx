@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/auth-utils'
+import { prisma } from '@/lib/prisma'
 import { AdminNav } from '@/components/admin/AdminNav'
 import { buildMetadata } from '@/lib/seo'
 
@@ -18,12 +19,19 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   // Vérifier l'authentification
-  await requireAdmin()
+  const session = await requireAdmin()
+
+  const unreadMessages = await prisma.contactMessage.count({
+    where: { read: false, archived: false },
+  })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-orange-50 to-orange-200">
-      <AdminNav />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+    <div className="min-h-screen bg-background lg:pl-64">
+      <AdminNav
+        user={{ name: session.user.name, email: session.user.email }}
+        unreadMessages={unreadMessages}
+      />
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">{children}</main>
     </div>
   )
 }

@@ -7,86 +7,121 @@
 
 @theme {
   /* ================================
-   * HBC AIX BRAND COLORS
+   * HBC AIX — COULEURS DU LOGO
+   * Orange tigre (#D77F29) + noir (#222221)
    * ================================ */
 
-  /* Primary - Handball Orange */
-  --color-primary-50: oklch(0.98 0.01 40);
-  --color-primary-100: oklch(0.95 0.05 40);
-  --color-primary-200: oklch(0.90 0.10 40);
-  --color-primary-300: oklch(0.82 0.15 40);
-  --color-primary-400: oklch(0.72 0.18 40);
-  --color-primary-500: oklch(0.65 0.20 40);
-  --color-primary-600: oklch(0.58 0.18 40);
-  --color-primary-700: oklch(0.48 0.15 40);
-  --color-primary-800: oklch(0.38 0.12 40);
-  --color-primary-900: oklch(0.28 0.08 40);
-  --color-primary-950: oklch(0.18 0.04 40);
+  --color-primary-50: #fdf6ee;
+  --color-primary-100: #fae8d4;
+  --color-primary-200: #f4cda5;
+  --color-primary-300: #edae70;
+  --color-primary-400: #e5953f;
+  --color-primary-500: #d77f29;
+  --color-primary-600: #bc6a1c;
+  --color-primary-700: #9b5418;
+  --color-primary-800: #7c4419;
+  --color-primary-900: #653818;
+  --color-primary-950: #371b0a;
 
-  /* Secondary - Deep Blue */
-  --color-secondary-50: oklch(0.98 0.01 250);
-  --color-secondary-100: oklch(0.95 0.03 250);
-  --color-secondary-200: oklch(0.88 0.06 250);
-  --color-secondary-300: oklch(0.78 0.09 250);
-  --color-secondary-400: oklch(0.65 0.12 250);
-  --color-secondary-500: oklch(0.50 0.15 250);
-  --color-secondary-600: oklch(0.42 0.14 250);
-  --color-secondary-700: oklch(0.35 0.12 250);
-  --color-secondary-800: oklch(0.28 0.10 250);
-  --color-secondary-900: oklch(0.20 0.08 250);
-  --color-secondary-950: oklch(0.12 0.05 250);
+  /* Ancienne couleur secondaire (bleu) retirée : on la fait pointer
+     sur le noir du logo pour qu'aucun reliquat ne réintroduise du bleu */
+  --color-secondary-50: #f6f6f5;
+  --color-secondary-100: #e7e7e6;
+  --color-secondary-200: #d1d1cf;
+  --color-secondary-300: #b0b0ad;
+  --color-secondary-400: #888885;
+  --color-secondary-500: #6d6d6a;
+  --color-secondary-600: #5d5d5a;
+  --color-secondary-700: #4f4f4c;
+  --color-secondary-800: #454543;
+  --color-secondary-900: #3c3c3a;
+  --color-secondary-950: #222221;
 
-  /* Neutrals */
-  --color-neutral-50: oklch(0.99 0 0);
-  --color-neutral-100: oklch(0.97 0 0);
-  --color-neutral-200: oklch(0.93 0 0);
-  --color-neutral-300: oklch(0.87 0 0);
-  --color-neutral-400: oklch(0.70 0 0);
-  --color-neutral-500: oklch(0.55 0 0);
-  --color-neutral-600: oklch(0.45 0 0);
-  --color-neutral-700: oklch(0.35 0 0);
-  --color-neutral-800: oklch(0.25 0 0);
-  --color-neutral-900: oklch(0.15 0 0);
-  --color-neutral-950: oklch(0.08 0 0);
+  /* Neutres légèrement chauds, alignés sur le noir du logo */
+  --color-neutral-50: #fafaf9;
+  --color-neutral-100: #f4f4f3;
+  --color-neutral-200: #e6e6e4;
+  --color-neutral-300: #d4d4d1;
+  --color-neutral-400: #a3a39f;
+  --color-neutral-500: #73736f;
+  --color-neutral-600: #565652;
+  --color-neutral-700: #40403d;
+  --color-neutral-800: #292927;
+  --color-neutral-900: #1a1a19;
+  --color-neutral-950: #0e0e0d;
 
-  /* shadcn/ui variables mapped to HBC colors */
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Light mode */
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.65 0.20 40);  /* HBC Orange */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.50 0.15 250);  /* HBC Blue */
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.15 0 0);  /* HBC Black */
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.60 0.22 25);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.65 0.20 40);  /* HBC Orange for focus rings */
+  /* Typographie : Archivo (titres, avec axe de largeur) + Inter (texte) */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-archivo), var(--font-inter), sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
 
-  /* Chart colors using HBC palette */
-  --chart-1: oklch(0.65 0.20 40);   /* Orange */
-  --chart-2: oklch(0.50 0.15 250);  /* Blue */
-  --chart-3: oklch(0.15 0 0);       /* Black */
-  --chart-4: oklch(0.75 0.15 70);   /* Yellow-Orange */
-  --chart-5: oklch(0.40 0.18 40);   /* Dark Orange */
+/* ================================
+ * TOKENS SÉMANTIQUES (shadcn/ui)
+ * Clair par défaut (admin) ; sombre sur le site public.
+ * ================================ */
 
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Archivo', 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+:root {
+  --background: #f6f6f5;
+  --foreground: #1a1a19;
+  --card: #ffffff;
+  --card-foreground: #1a1a19;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a19;
+  --primary: #1a1a19;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0ef;
+  --secondary-foreground: #1a1a19;
+  --muted: #f0f0ef;
+  --muted-foreground: #6b6b67;
+  --accent: #f0f0ef;
+  --accent-foreground: #1a1a19;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e4e4e2;
+  --input: #dcdcd9;
+  --ring: #d77f29;
+
+  --chart-1: #d77f29;
+  --chart-2: #1a1a19;
+  --chart-3: #e5953f;
+  --chart-4: #73736f;
+  --chart-5: #9b5418;
+}
+
+/* Le site public est entièrement sombre. `:root:has(...)` étend le thème
+   aux éléments rendus en portail (dialogues, menus, toasts). */
+.dark,
+:root:has(.theme-site) {
+  --background: #0e0e0d;
+  --foreground: #f4f4f3;
+  --card: #1a1a19;
+  --card-foreground: #f4f4f3;
+  --popover: #1a1a19;
+  --popover-foreground: #f4f4f3;
+  --primary: #d77f29;
+  --primary-foreground: #0e0e0d;
+  --secondary: #292927;
+  --secondary-foreground: #f4f4f3;
+  --muted: #292927;
+  --muted-foreground: #a3a39f;
+  --accent: #292927;
+  --accent-foreground: #f4f4f3;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #d77f29;
+}
+
+:root:has(.theme-site) {
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -105,6 +140,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -115,30 +151,8 @@
   --color-chart-5: var(--chart-5);
 }
 
-/* Dark mode (optional for future) */
-.dark {
-  --background: oklch(0.15 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.20 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.20 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.72 0.18 40);  /* Lighter orange for dark mode */
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.65 0.12 250);  /* Lighter blue for dark mode */
-  --secondary-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.70 0 0);
-  --accent: oklch(0.85 0 0);  /* Light gray for dark mode */
-  --accent-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.70 0.19 22);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.18 40);
-}
-
 /* ================================
- * BASE STYLES
+ * BASE
  * ================================ */
 
 @layer base {
@@ -147,107 +161,61 @@
   }
 
   html {
-    @apply antialiased;
-    @apply scroll-smooth;
+    @apply antialiased scroll-smooth;
   }
 
   body {
-    @apply bg-background text-foreground;
-    @apply font-sans;
-    @apply leading-relaxed;
+    @apply bg-background text-foreground font-sans leading-relaxed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
-    @apply font-bold;
-    @apply tracking-tight;
-    @apply text-balance;
-  }
-
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
-    @apply leading-tight;
-  }
-
-  h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
-    @apply leading-tight;
-  }
-
-  h3 {
-    @apply text-2xl md:text-3xl;
-    @apply leading-snug;
-  }
-
-  h4 {
-    @apply text-xl md:text-2xl;
-    @apply leading-snug;
+    @apply font-display font-bold tracking-tight text-balance;
   }
 
   p {
     @apply text-pretty;
-    @apply leading-relaxed;
+  }
+
+  ::selection {
+    background: var(--color-primary-500);
+    color: var(--color-neutral-950);
   }
 }
 
 /* ================================
- * NAVIGATION STYLES (from original)
+ * UTILITAIRES DE MARQUE
  * ================================ */
 
-.nav-link {
-  @apply font-sans font-semibold text-white relative;
-  transition: color 0.3s ease;
+/* Grands titres sportifs : Archivo condensé, capitales */
+@utility font-headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 72%;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  line-height: 0.95;
 }
 
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #f97316, #ea580c);
-  transition: width 0.3s ease;
+/* Petits libellés au-dessus des titres */
+@utility font-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 85%;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
-.nav-link:hover::after {
-  width: 100%;
-}
-
-.nav-link:hover {
-  color: #f97316;
-}
-
-.header-scrolled {
-  @apply bg-black/90 backdrop-blur-xl shadow-2xl border-b border-orange-500/30;
-}
-
-.logo-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 50%;
-  display: inline-block;
-  transition: all 0.3s ease;
-}
-
-.logo-container:hover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle,
-    rgba(249, 115, 22, 0.3) 0%,
-    transparent 70%
+/* Rayures obliques discrètes, rappel du maillot */
+@utility bg-stripes {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    rgb(255 255 255 / 0.035) 0 2px,
+    transparent 2px 22px
   );
-  z-index: 1;
-}
-
-.mobile-menu {
-  animation: menuAppear 0.3s ease forwards;
 }
 
 /* ================================
- * ARTICLE / EDITOR CONTENT
+ * CONTENU D'ARTICLE / ÉDITEUR
  * Tailwind preflight retire puces et marges :
  * sans ces règles, listes et sauts de ligne disparaissent.
  * ================================ */
@@ -332,258 +300,13 @@
   }
 
   ::marker {
-    color: currentColor;
+    color: var(--color-primary-500);
   }
 }
 
 /* ================================
- * UTILITY CLASSES
+ * ACCESSIBILITÉ
  * ================================ */
-
-@layer utilities {
-  .text-stroke {
-    -webkit-text-fill-color: transparent;
-    -webkit-text-stroke-color: rgb(249 115 22 / var(--tw-text-opacity));
-    -webkit-text-stroke-width: 0.0625rem;
-  }
-
-  .bg-gradient-overlay-home {
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.7), transparent);
-  }
-
-  .bg-gradient-overlay-card {
-    background: linear-gradient(57deg, #f97316 7.3%, #351e14 92.81%);
-  }
-
-  .bg-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500;
-    @apply bg-clip-text text-transparent;
-  }
-}
-
-/* ================================
- * COMPONENT STYLES
- * ================================ */
-
-/* Partner Cards */
-.partner-card {
-  @apply bg-zinc-800/80 rounded-lg overflow-hidden transition-all duration-300;
-}
-
-.partner-card:hover {
-  @apply transform -translate-y-1;
-  box-shadow: 0 10px 25px -5px rgba(249, 115, 34, 0.3);
-}
-
-.partner-logo {
-  @apply transition-all duration-300;
-}
-
-.partner-logo:hover {
-  @apply brightness-110 scale-105;
-}
-
-.partner-card-new {
-  @apply h-full bg-white/5 rounded-2xl overflow-hidden shadow-lg border border-white/10 transition-all duration-300;
-}
-
-.partner-card-new:hover {
-  @apply -translate-y-2;
-  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3);
-}
-
-/* Carousel */
-.carousel-container {
-  @apply relative;
-}
-
-.carousel-track {
-  @apply flex transition-transform duration-500 space-x-4 py-4 px-2;
-}
-
-.carousel-button {
-  @apply absolute top-1/2 transform -translate-y-1/2 bg-black/70 rounded-full p-2 text-white hover:bg-primary-500 transition-colors z-10 hidden md:block;
-}
-
-.carousel-button-prev {
-  @apply -left-2;
-}
-
-.carousel-button-next {
-  @apply -right-2;
-}
-
-/* ================================
- * ANIMATIONS
- * ================================ */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes menuAppear {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes light-effect {
-  0% {
-    opacity: 0;
-    transform: scale(0.1) rotate(0deg);
-  }
-  50% {
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2) rotate(45deg);
-  }
-}
-
-@keyframes subtleFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes heroLight {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Hero light effect styling */
-.hero-light {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(
-    circle at 30% 40%,
-    rgba(249, 115, 22, 0.2),
-    transparent 70%
-  );
-  z-index: 6;
-  animation: heroLight 15s infinite;
-  pointer-events: none;
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.animate-fade-in-down {
-  animation: fadeInDown 0.6s ease-out;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.4s ease-out;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.8s ease-out forwards;
-}
-
-.light-effect {
-  position: absolute;
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.3) 0%,
-    transparent 70%
-  );
-  top: -25%;
-  left: -25%;
-  animation: light-effect 6s infinite;
-  pointer-events: none;
-}
-
-/* ================================
- * RESPONSIVE UTILITIES
- * ================================ */
-
-.mobile-only {
-  @apply block md:hidden;
-}
-
-.desktop-only {
-  @apply hidden md:block;
-}
-
-/* ================================
- * ACCESSIBILITY
- * ================================ */
-
-.sr-only {
-  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
-}
 
 /* Respect de la préférence système « réduire les animations » */
 @media (prefers-reduced-motion: reduce) {
@@ -602,7 +325,7 @@
 }
 
 /* ================================
- * PRINT STYLES
+ * IMPRESSION
  * ================================ */
 
 @media print {

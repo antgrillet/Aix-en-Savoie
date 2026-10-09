@@ -1,210 +1,196 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Menu, X, ChevronRight } from 'lucide-react'
-import { mobileMenuContainer, mobileMenuItem } from '@/lib/animations'
+import { usePathname } from 'next/navigation'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ArrowUpRight, Menu, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { siteButton } from '@/components/site/styles'
+import { SHOP_URL } from '@/lib/site'
 
-interface NavigationItem {
-  name: string
-  href: string
-  external?: boolean
-}
-
-const leftNavigation: NavigationItem[] = [
-  { name: 'Inscription', href: '/contact' },
-  { name: 'Boutique', href: 'https://www.helloasso.com/associations/hbc-aix-en-savoie/boutiques/boutique-septembre', external: true },
-]
-
-const mainNavigation: NavigationItem[] = [
-  { name: 'Nos actus', href: '/actus' },
-  { name: 'Nos équipes', href: '/equipes' },
-  { name: 'Espace bénévoles', href: '/calendrier' },
-  { name: 'Nos partenaires', href: '/partenaires' },
+const navigation = [
+  { name: 'Actualités', href: '/actus' },
+  { name: 'Équipes', href: '/equipes' },
+  { name: 'Partenaires', href: '/partenaires' },
+  { name: 'Bénévoles', href: '/calendrier' },
   { name: 'Contact', href: '/contact' },
 ]
 
-const allNavigation: NavigationItem[] = [
-  { name: 'Accueil', href: '/' },
-  ...leftNavigation,
-  ...mainNavigation,
-]
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 export function Header() {
+  const pathname = usePathname()
   const shouldReduceMotion = useReducedMotion()
   const [isScrolled, setIsScrolled] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
+    const onScroll = () => setIsScrolled(window.scrollY > 24)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-      // Mettre à jour isScrolled
-      setIsScrolled(currentScrollY > 50)
-
-      // Si on est tout en haut, toujours visible
-      if (currentScrollY < 10) {
-        setIsVisible(true)
-      }
-      // Si on scroll vers le bas, cacher le header
-      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false)
-      }
-      // Si on scroll vers le haut, afficher le header
-      else if (currentScrollY < lastScrollY) {
-        setIsVisible(true)
-      }
-
-      setLastScrollY(currentScrollY)
+  // Bloque le défilement de la page quand le menu mobile est ouvert
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
     }
+  }, [isMenuOpen])
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
+  const solid = isScrolled || isMenuOpen
 
   return (
     <>
       <header
-        className={`top-0 left-0 right-0 transition-[transform,background-color,box-shadow,border-color] duration-300 ease-in-out ${
-          isScrolled
-            ? 'header-scrolled fixed'
-            : 'absolute bg-black/30 backdrop-blur-md border-b border-white/10'
-        } ${
-          !isVisible && !isMobileMenuOpen ? '-translate-y-full' : 'translate-y-0'
-        } ${
-          isMobileMenuOpen ? 'z-[70]' : 'z-40'
-        }`}
+        className={cn(
+          'fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-300',
+          solid
+            ? 'border-b border-white/10 bg-neutral-950/90 backdrop-blur-xl'
+            : 'border-b border-transparent bg-gradient-to-b from-neutral-950/80 to-transparent'
+        )}
       >
-        <div className="px-4 xl:px-8 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            {/* Left Side: Logo + Left Navigation */}
-            <div className="flex items-center gap-8 md:gap-16">
-              {/* Modern Logo */}
-              <Link
-                href="/"
-                aria-label="Accueil"
-                className="group relative z-10"
-              >
-                <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 group-hover:border-orange-500/50 transition-colors duration-300 shadow-xl">
-                  <Image
-                    src="/img/home/logo.png"
-                    alt="Logo HBC Aix-en-Savoie"
-                    width={80}
-                    height={80}
-                    className="w-12 h-12 md:w-16 md:h-16 object-contain"
-                  />
-                </div>
-              </Link>
+        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            aria-label="HBC Aix-en-Savoie — accueil"
+            className="group flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <Image
+              src="/img/home/logo.png"
+              alt=""
+              width={52}
+              height={52}
+              priority
+              className="size-11 object-contain transition-transform duration-300 group-hover:scale-105 md:size-13"
+            />
+            <span className="hidden flex-col leading-none sm:flex lg:hidden xl:flex">
+              <span className="font-headline text-xl text-white">HBC</span>
+              <span className="font-eyebrow text-[0.65rem] text-primary-400">Aix-en-Savoie</span>
+            </span>
+          </Link>
 
-              {/* Left Navigation Links (Desktop) */}
-              <div className="hidden xl:flex gap-8">
-                {leftNavigation.map((item) =>
-                  item.external ? (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="nav-link font-display font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
-                    >
-                      {item.name}
-                    </a>
-                  ) : (
+          <nav aria-label="Navigation principale" className="hidden lg:block">
+            <ul className="flex items-center gap-1">
+              {navigation.map((item) => {
+                const active = isActive(pathname, item.href)
+                return (
+                  <li key={item.href}>
                     <Link
-                      key={item.name}
                       href={item.href}
-                      className="nav-link font-display font-bold uppercase text-sm tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'relative rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                        active ? 'text-white' : 'text-neutral-300 hover:text-white'
+                      )}
                     >
                       {item.name}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'absolute inset-x-3 -bottom-0.5 h-0.5 origin-left bg-primary-500 transition-transform duration-300',
+                          active ? 'scale-x-100' : 'scale-x-0'
+                        )}
+                      />
                     </Link>
-                  )
-                )}
-              </div>
-            </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
 
-            {/* Right Side: Main Navigation (Desktop) */}
-            <nav className="hidden xl:flex items-center gap-12 md:gap-16">
-              {mainNavigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="nav-link text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`xl:hidden transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                isMobileMenuOpen
-                  ? 'fixed top-4 right-4 z-[60] p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20'
-                  : 'relative z-50 p-3'
-              }`}
-              aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-menu"
+          <div className="hidden items-center gap-2 lg:flex">
+            <a
+              href={SHOP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={siteButton({ variant: 'outline', size: 'sm' })}
             >
-                            {isMobileMenuOpen ? (
-                <X className="w-7 h-7 text-white" />
-              ) : (
-                <Menu className="w-6 h-6 text-white" />
-              )}
-            </button>
+              Boutique
+              <ArrowUpRight />
+            </a>
+            <Link href="/contact?sujet=inscription" className={siteButton({ size: 'sm' })}>
+              S&apos;inscrire
+            </Link>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="-mr-2 inline-flex size-11 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 lg:hidden"
+            aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
         </div>
       </header>
 
-      {/* Mobile Menu - Outside header */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {isMenuOpen && (
           <motion.div
-            variants={shouldReduceMotion ? undefined : mobileMenuContainer}
-            initial={shouldReduceMotion ? { opacity: 0 } : 'hidden'}
-            animate={shouldReduceMotion ? { opacity: 1 } : 'visible'}
-            exit={shouldReduceMotion ? { opacity: 0 } : 'exit'}
             id="mobile-menu"
-            className="fixed inset-0 bg-gradient-to-br from-black/95 via-zinc-900/95 to-black/95 backdrop-blur-xl z-[45] overflow-auto pt-24"
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-x-0 bottom-0 top-18 z-40 overflow-y-auto bg-neutral-950 bg-stripes lg:hidden"
           >
-            <nav className="p-6">
-              <ul className="space-y-1">
-                {allNavigation.map((item, index) => (
-                  <motion.li
-                    key={item.name}
-                    variants={shouldReduceMotion ? undefined : mobileMenuItem}
-                    custom={index}
-                    className="relative overflow-hidden"
-                  >
-                    {item.external ? (
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-[color,transform,background-color] duration-300 hover:translate-x-2 flex items-center justify-between font-display text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
-                      >
-                        <span>{item.name}</span>
-                        <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />
-                      </a>
-                    ) : (
+            <nav aria-label="Navigation mobile" className="flex min-h-full flex-col px-4 pb-8 pt-6 sm:px-6">
+              <ul className="divide-y divide-white/10 border-y border-white/10">
+                {[{ name: 'Accueil', href: '/' }, ...navigation].map((item, index) => {
+                  const active = item.href === '/' ? pathname === '/' : isActive(pathname, item.href)
+                  return (
+                    <motion.li
+                      key={item.href}
+                      initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: shouldReduceMotion ? 0 : 0.03 * index }}
+                    >
                       <Link
                         href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="group block py-5 px-6 text-white hover:text-orange-500 transition-[color,transform,background-color] duration-300 hover:translate-x-2 flex items-center justify-between font-display text-2xl font-bold rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:bg-white/5"
+                        onClick={() => setIsMenuOpen(false)}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'flex items-center justify-between py-4 font-headline text-4xl transition-colors focus-visible:outline-none focus-visible:text-primary-400',
+                          active ? 'text-primary-400' : 'text-white hover:text-primary-400'
+                        )}
                       >
-                        <span>{item.name}</span>
-                        <ChevronRight className="h-6 w-6 group-hover:text-orange-500 transition-colors" />
+                        {item.name}
+                        <span aria-hidden className="font-eyebrow text-xs text-neutral-500">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
                       </Link>
-                    )}
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
-                  </motion.li>
-                ))}
+                    </motion.li>
+                  )
+                })}
               </ul>
+
+              <div className="mt-auto grid gap-3 pt-10 sm:grid-cols-2">
+                <Link
+                  href="/contact?sujet=inscription"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={siteButton({ size: 'lg' })}
+                >
+                  S&apos;inscrire au club
+                </Link>
+                <a
+                  href={SHOP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={siteButton({ variant: 'outline', size: 'lg' })}
+                >
+                  Boutique
+                  <ArrowUpRight />
+                </a>
+              </div>
             </nav>
           </motion.div>
         )}

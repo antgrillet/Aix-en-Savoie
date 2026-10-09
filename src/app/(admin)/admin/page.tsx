@@ -1,14 +1,61 @@
-import { prisma } from '@/lib/prisma'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Newspaper, Users, Handshake, MessageSquare, Calendar, TrendingUp, Eye, Clock, ArrowUpRight, FileText, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { prisma } from '@/lib/prisma'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { formatParis } from '@/lib/match-format'
+import { cn } from '@/lib/utils'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Calendar,
+  ClipboardList,
+  Eye,
+  Handshake,
+  MessageSquare,
+  Newspaper,
+  Plus,
+  Users,
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
+function Panel({
+  title,
+  href,
+  children,
+}: {
+  title: string
+  href?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-center justify-between border-b px-5 py-4">
+        <h2 className="font-display text-base font-semibold">{title}</h2>
+        {href && (
+          <Link
+            href={href}
+            className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Voir tout
+            <ArrowRight className="size-3.5" />
+          </Link>
+        )}
+      </div>
+      {children}
+    </Card>
+  )
+}
+
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return <p className="px-5 py-10 text-center text-sm text-muted-foreground">{children}</p>
+}
+
 export default async function AdminDashboard() {
-  // Récupérer les statistiques détaillées
+  const now = new Date()
+
   const [
     articlesCount,
     articlesPublished,
@@ -21,6 +68,10 @@ export default async function AdminDashboard() {
     matchsUpcoming,
     inscriptionsCount,
     totalViews,
+    popularArticles,
+    upcomingMatches,
+    recentArticles,
+    recentInscriptions,
   ] = await Promise.all([
     prisma.article.count(),
     prisma.article.count({ where: { published: true } }),
@@ -30,18 +81,39 @@ export default async function AdminDashboard() {
     prisma.partenaire.count({ where: { published: true } }),
     prisma.contactMessage.count({ where: { read: false } }),
     prisma.match.count(),
-    prisma.match.count({ where: { date: { gte: new Date() }, termine: false } }),
+    prisma.match.count({ where: { date: { gte: now }, termine: false } }),
     prisma.inscription.count(),
     prisma.article.aggregate({ _sum: { views: true } }),
+    prisma.article.findMany({
+      where: { published: true },
+      take: 5,
+      orderBy: { views: 'desc' },
+      select: { id: true, titre: true, views: true },
+    }),
+    prisma.match.findMany({
+      where: { date: { gte: now }, termine: false, published: true },
+      take: 5,
+      orderBy: { date: 'asc' },
+      select: { id: true, adversaire: true, date: true, domicile: true, equipe: { select: { nom: true } } },
+    }),
+    prisma.article.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, titre: true, categorie: true, createdAt: true, published: true },
+    }),
+    prisma.inscription.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, nom: true, prenom: true, createdAt: true },
+    }),
   ])
 
   const stats = [
     {
       title: 'Articles',
       value: articlesCount,
-      subtitle: `${articlesPublished} publiés, ${articlesDraft} brouillons`,
+      subtitle: `${articlesPublished} publiés · ${articlesDraft} brouillons`,
       icon: Newspaper,
-      gradient: 'from-primary-500 to-secondary-500',
       href: '/admin/articles',
     },
     {
@@ -49,7 +121,6 @@ export default async function AdminDashboard() {
       value: equipesCount,
       subtitle: `${equipesPublished} publiées`,
       icon: Users,
-      gradient: 'from-secondary-500 to-primary-500',
       href: '/admin/equipes',
     },
     {
@@ -57,328 +128,194 @@ export default async function AdminDashboard() {
       value: matchsCount,
       subtitle: `${matchsUpcoming} à venir`,
       icon: Calendar,
-      gradient: 'from-blue-500 to-cyan-500',
       href: '/admin/matchs',
     },
     {
-      title: 'Messages',
+      title: 'Messages non lus',
       value: messagesCount,
-      subtitle: 'non lus',
+      subtitle: messagesCount > 0 ? 'À traiter' : 'Tout est lu',
       icon: MessageSquare,
-      gradient: messagesCount > 0 ? 'from-red-500 to-orange-500' : 'from-green-500 to-emerald-500',
       href: '/admin/messages',
+      highlight: messagesCount > 0,
     },
   ]
 
-  // Articles les plus vus
-  const popularArticles = await prisma.article.findMany({
-    where: { published: true },
-    take: 5,
-    orderBy: { views: 'desc' },
-    select: {
-      id: true,
-      titre: true,
-      views: true,
-      slug: true,
-    },
-  })
-
-  // Prochains matchs
-  const upcomingMatches = await prisma.match.findMany({
-    where: {
-      date: { gte: new Date() },
-      termine: false,
-      published: true,
-    },
-    take: 5,
-    orderBy: { date: 'asc' },
-    select: {
-      id: true,
-      adversaire: true,
-      date: true,
-      domicile: true,
-      equipe: {
-        select: { nom: true },
-      },
-    },
-  })
-
-  // Derniers articles
-  const recentArticles = await prisma.article.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      titre: true,
-      categorie: true,
-      createdAt: true,
-      published: true,
-    },
-  })
-
-  // Dernières inscriptions
-  const recentInscriptions = await prisma.inscription.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      nom: true,
-      prenom: true,
-      createdAt: true,
-    },
-  })
+  const secondaryStats = [
+    { label: 'Vues des articles', value: totalViews._sum.views || 0, icon: Eye },
+    { label: 'Partenaires publiés', value: partenairesCount, icon: Handshake },
+    { label: 'Inscriptions bénévoles', value: inscriptionsCount, icon: ClipboardList },
+  ]
 
   return (
     <div>
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-neutral-900">
-          Dashboard
-        </h1>
-        <p className="text-sm sm:text-base text-neutral-600 mt-1 sm:mt-2">
-          Vue d'ensemble de votre site web
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Tableau de bord"
+        description="Vue d'ensemble du site du club"
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <a href="/" target="_blank" rel="noopener noreferrer">
+                Voir le site
+                <ArrowUpRight />
+              </a>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/articles/new">
+                <Plus />
+                Nouvel article
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Link key={stat.title} href={stat.href}>
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer h-full">
-                <CardContent className={`p-3 sm:p-6 bg-gradient-to-br ${stat.gradient}`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-white/90 truncate">
-                        {stat.title}
-                      </p>
-                      <p className="text-xl sm:text-3xl font-bold mt-0.5 sm:mt-1 text-white">{stat.value}</p>
-                      <p className="text-[10px] sm:text-xs text-white/70 mt-0.5 sm:mt-1 truncate">{stat.subtitle}</p>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-sm p-2 sm:p-3 rounded-lg w-fit">
-                      <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
+            <Link
+              key={stat.title}
+              href={stat.href}
+              className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Card className="h-full p-4 transition-colors group-hover:border-neutral-300 sm:p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <span
+                    className={cn(
+                      'flex size-8 shrink-0 items-center justify-center rounded-md',
+                      stat.highlight ? 'bg-primary-500 text-neutral-950' : 'bg-primary-50 text-primary-700'
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                </div>
+                <p className="mt-3 font-display text-3xl font-bold tabular-nums">{stat.value}</p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">{stat.subtitle}</p>
               </Card>
             </Link>
           )
         })}
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-6 sm:mb-8">
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
-              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg mb-2 sm:mb-0">
-                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{totalViews._sum.views || 0}</p>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">Vues</p>
-              </div>
+      <Card className="mt-3 grid divide-y sm:mt-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        {secondaryStats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <div key={stat.label} className="flex items-center gap-3 px-5 py-3.5">
+              <Icon className="size-4 text-muted-foreground" />
+              <span className="flex-1 text-sm text-muted-foreground">{stat.label}</span>
+              <span className="font-display text-lg font-bold tabular-nums">{stat.value}</span>
             </div>
-          </CardContent>
-        </Card>
+          )
+        })}
+      </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
-              <div className="p-2 sm:p-3 bg-green-100 rounded-lg mb-2 sm:mb-0">
-                <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{partenairesCount}</p>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">Partenaires</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
-              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg mb-2 sm:mb-0">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{inscriptionsCount}</p>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">Inscriptions</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-        {/* Popular Articles */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
-                <span className="hidden sm:inline">Articles populaires</span>
-                <span className="sm:hidden">Populaires</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Les plus consultés</CardDescription>
-            </div>
-            <Link href="/admin/articles" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
-              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </Link>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-            <div className="space-y-2 sm:space-y-3">
-              {popularArticles.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Aucun article</p>
-              ) : (
-                popularArticles.map((article, index) => (
-                  <div
-                    key={article.id}
-                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <span className="text-sm sm:text-lg font-bold text-muted-foreground w-5 sm:w-6 flex-shrink-0">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium text-sm sm:text-base truncate">{article.titre}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                      {article.views}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Matches */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                <span className="hidden sm:inline">Prochains matchs</span>
-                <span className="sm:hidden">Matchs</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">À venir</CardDescription>
-            </div>
-            <Link href="/admin/matchs" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
-              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </Link>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-            <div className="space-y-2 sm:space-y-3">
-              {upcomingMatches.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Aucun match à venir</p>
-              ) : (
-                upcomingMatches.map((match) => (
-                  <div
-                    key={match.id}
-                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg gap-2"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm sm:text-base truncate">
-                        {match.equipe.nom} vs {match.adversaire}
-                      </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {format(new Date(match.date), 'EEE d MMM HH:mm', { locale: fr })}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-1 text-[10px] sm:text-xs rounded-full flex-shrink-0 ${
-                      match.domicile
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {match.domicile ? 'Dom' : 'Ext'}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Articles */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-                <span className="hidden sm:inline">Derniers articles</span>
-                <span className="sm:hidden">Récents</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Récemment créés</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-            <div className="space-y-2 sm:space-y-3">
-              {recentArticles.map((article) => (
-                <Link
-                  key={article.id}
-                  href={`/admin/articles/${article.id}`}
-                  className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors gap-2"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                    {article.published ? (
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
-                    ) : (
-                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm sm:text-base truncate">{article.titre}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">{article.categorie}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-                    {format(new Date(article.createdAt), 'dd/MM', { locale: fr })}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Inscriptions */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
-                <span className="hidden sm:inline">Dernières inscriptions</span>
-                <span className="sm:hidden">Inscriptions</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Nouvelles demandes</CardDescription>
-            </div>
-            <Link href="/admin/inscriptions" className="text-xs sm:text-sm text-primary-500 hover:underline flex items-center gap-1">
-              <span className="hidden sm:inline">Voir tout</span> <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </Link>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-            <div className="space-y-2 sm:space-y-3">
-              {recentInscriptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Aucune inscription</p>
-              ) : (
-                recentInscriptions.map((inscription) => (
-                  <div
-                    key={inscription.id}
-                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg gap-2"
-                  >
-                    <p className="font-medium text-sm sm:text-base truncate">
-                      {inscription.prenom} {inscription.nom}
+      <div className="mt-8 grid gap-4 lg:grid-cols-2 lg:gap-6">
+        <Panel title="Prochains matchs" href="/admin/matchs">
+          {upcomingMatches.length === 0 ? (
+            <EmptyRow>Aucun match à venir</EmptyRow>
+          ) : (
+            <ul className="divide-y">
+              {upcomingMatches.map((match) => (
+                <li key={match.id} className="flex items-center gap-4 px-5 py-3">
+                  <div className="w-14 shrink-0 text-center">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {formatParis(match.date, { weekday: 'short' }).replace('.', '')}
                     </p>
-                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-                      {format(new Date(inscription.createdAt), 'dd/MM HH:mm', { locale: fr })}
-                    </span>
+                    <p className="font-display text-lg font-bold leading-tight">
+                      {formatParis(match.date, { day: 'numeric', month: 'short' }).replace('.', '')}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {match.equipe.nom} <span className="text-muted-foreground">vs</span> {match.adversaire}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatParis(match.date, { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                      match.domicile ? 'bg-primary-50 text-primary-800' : 'bg-neutral-100 text-neutral-600'
+                    )}
+                  >
+                    {match.domicile ? 'Domicile' : 'Extérieur'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title="Derniers articles" href="/admin/articles">
+          {recentArticles.length === 0 ? (
+            <EmptyRow>Aucun article</EmptyRow>
+          ) : (
+            <ul className="divide-y">
+              {recentArticles.map((article) => (
+                <li key={article.id}>
+                  <Link
+                    href={`/admin/articles/${article.id}`}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{article.titre}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {article.categorie} · {formatParis(article.createdAt, { day: 'numeric', month: 'short' })}
+                      </p>
+                    </div>
+                    <StatusBadge status={article.published ? 'published' : 'draft'} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title="Articles les plus lus">
+          {popularArticles.length === 0 ? (
+            <EmptyRow>Aucun article</EmptyRow>
+          ) : (
+            <ol className="divide-y">
+              {popularArticles.map((article, index) => (
+                <li key={article.id}>
+                  <Link
+                    href={`/admin/articles/${article.id}`}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none"
+                  >
+                    <span className="w-5 shrink-0 font-display text-sm font-bold text-muted-foreground">{index + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{article.titre}</span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                      <Eye className="size-3.5" />
+                      {article.views}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+
+        <Panel title="Dernières inscriptions bénévoles" href="/admin/inscriptions">
+          {recentInscriptions.length === 0 ? (
+            <EmptyRow>Aucune inscription</EmptyRow>
+          ) : (
+            <ul className="divide-y">
+              {recentInscriptions.map((inscription) => (
+                <li key={inscription.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                  <span className="truncate text-sm font-medium">
+                    {inscription.prenom} {inscription.nom}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatParis(inscription.createdAt, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
     </div>
   )
