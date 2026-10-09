@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface SyncMatchesButtonProps {
   equipeId: number
   equipeNom: string
   hasMatchesUrl: boolean
+  className?: string
 }
 
-export function SyncMatchesButton({ equipeId, equipeNom, hasMatchesUrl }: SyncMatchesButtonProps) {
+export function SyncMatchesButton({ equipeId, equipeNom, hasMatchesUrl, className }: SyncMatchesButtonProps) {
   const [isSyncing, setIsSyncing] = useState(false)
 
   const handleSync = async () => {
@@ -51,16 +53,18 @@ export function SyncMatchesButton({ equipeId, equipeNom, hasMatchesUrl }: SyncMa
     }
   }
 
+  // type="button" : le bouton peut être placé dans un formulaire sans le soumettre
   return (
     <Button
+      type="button"
       onClick={handleSync}
       disabled={isSyncing || !hasMatchesUrl}
       variant="outline"
-      size="sm"
-      className="gap-2"
+      className={cn('h-10', className)}
+      title={`Importer les matchs de ${equipeNom} depuis FFHANDBALL`}
     >
-      <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-      {isSyncing ? 'Synchronisation...' : 'Synchroniser les matchs'}
+      <RefreshCw className={isSyncing ? 'animate-spin' : undefined} />
+      {isSyncing ? 'Synchronisation…' : 'Synchroniser les matchs'}
     </Button>
   )
 }

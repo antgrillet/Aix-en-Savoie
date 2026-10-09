@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, ExternalLink, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { RefreshCw, ArrowUpRight, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatParis } from '@/lib/match-format';
 import { toast } from 'sonner';
 
 interface LastRun {
@@ -58,50 +59,47 @@ export function SyncButton() {
     }
   };
 
-  const getStatusIcon = () => {
+  const getStatus = () => {
     if (!lastRun) return null;
     if (lastRun.status === 'in_progress' || lastRun.status === 'queued') {
-      return <Clock className="w-4 h-4 text-yellow-500" />;
+      return { icon: <Clock className="size-3.5 text-primary-600" />, label: 'en cours' };
     }
     if (lastRun.conclusion === 'success') {
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return { icon: <CheckCircle2 className="size-3.5 text-emerald-600" />, label: 'réussie' };
     }
-    return <XCircle className="w-4 h-4 text-red-500" />;
+    return { icon: <XCircle className="size-3.5 text-red-600" />, label: 'en échec' };
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const status = getStatus();
 
   return (
-    <div className="flex items-center gap-3">
-      <Button
-        onClick={handleSync}
-        disabled={isSyncing}
-        variant="outline"
-        className="border-primary-600 text-primary-600 hover:bg-primary-50"
-      >
-        <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-        {isSyncing ? 'Lancement...' : 'Synchroniser'}
-      </Button>
-
-      {lastRun && (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      {lastRun && status && (
         <a
           href={lastRun.html_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          title={`Dernière synchronisation ${status.label}`}
         >
-          {getStatusIcon()}
-          <span>Dernière sync: {formatDate(lastRun.created_at)}</span>
-          <ExternalLink className="w-3 h-3" />
+          {status.icon}
+          <span>
+            Dernière sync. {formatParis(lastRun.created_at, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <ArrowUpRight className="size-3" />
         </a>
       )}
+
+      <Button
+        type="button"
+        onClick={handleSync}
+        disabled={isSyncing}
+        variant="outline"
+        title="Importer les matchs de toutes les équipes depuis FFHANDBALL"
+      >
+        <RefreshCw className={isSyncing ? 'animate-spin' : undefined} />
+        {isSyncing ? 'Lancement…' : 'Synchroniser FFHB'}
+      </Button>
     </div>
   );
 }

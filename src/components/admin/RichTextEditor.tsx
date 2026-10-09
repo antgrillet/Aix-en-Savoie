@@ -20,7 +20,6 @@ import {
   Heading2,
   Loader2,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   looksLikePlainList,
@@ -35,6 +34,15 @@ interface RichTextEditorProps {
   onChange: (content: string) => void
   placeholder?: string
   className?: string
+}
+
+interface ToolbarItem {
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  onClick: () => void
+  active?: boolean
+  disabled?: boolean
+  spin?: boolean
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -143,7 +151,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          'tiptap article-content prose prose-sm max-w-none focus:outline-none min-h-[500px] px-4 py-3 [&_img]:max-w-full [&_img]:h-auto',
+          'tiptap article-content prose prose-sm max-w-none min-h-[500px] px-4 py-3 text-foreground focus:outline-none sm:px-6 sm:py-4 [&_img]:h-auto [&_img]:max-w-full [&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-left [&_p.is-editor-empty:first-child]:before:h-0 [&_p.is-editor-empty:first-child]:before:text-muted-foreground [&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
       },
       transformPastedHTML: (html) => normalizePastedHtml(html),
       handlePaste: (_view, event) => {
@@ -161,8 +169,9 @@ export function RichTextEditor({
 
   editorRef.current = editor
 
+  // Réserve la place de l'éditeur pendant son initialisation (évite un saut de mise en page)
   if (!editor) {
-    return null
+    return <div aria-hidden className={cn('min-h-[548px] rounded-lg border border-input bg-card shadow-xs', className)} />
   }
 
   const addLink = () => {
@@ -186,8 +195,44 @@ export function RichTextEditor({
     }
   }
 
+  const tools: ToolbarItem[][] = [
+    [
+      { label: 'Gras', icon: Bold, onClick: () => editor.chain().focus().toggleBold().run(), active: editor.isActive('bold') },
+      { label: 'Italique', icon: Italic, onClick: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive('italic') },
+      {
+        label: 'Intertitre',
+        icon: Heading2,
+        onClick: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+        active: editor.isActive('heading', { level: 2 }),
+      },
+    ],
+    [
+      { label: 'Liste à puces', icon: List, onClick: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive('bulletList') },
+      {
+        label: 'Liste numérotée',
+        icon: ListOrdered,
+        onClick: () => editor.chain().focus().toggleOrderedList().run(),
+        active: editor.isActive('orderedList'),
+      },
+      { label: 'Citation', icon: Quote, onClick: () => editor.chain().focus().toggleBlockquote().run(), active: editor.isActive('blockquote') },
+    ],
+    [
+      { label: 'Lien', icon: LinkIcon, onClick: addLink, active: editor.isActive('link') },
+      { label: 'Insérer une image', icon: isUploading ? Loader2 : ImageIcon, onClick: triggerImageUpload, disabled: isUploading, spin: isUploading },
+    ],
+    [
+      { label: 'Annuler la dernière modification', icon: Undo, onClick: () => editor.chain().focus().undo().run(), disabled: !editor.can().undo() },
+      { label: 'Rétablir', icon: Redo, onClick: () => editor.chain().focus().redo().run(), disabled: !editor.can().redo() },
+    ],
+  ]
+
   return (
-    <div className={cn('border rounded-lg overflow-hidden', className)}>
+    <div
+      className={cn(
+        'overflow-hidden rounded-lg border border-input bg-card shadow-xs transition-colors focus-within:border-primary-500/60',
+        className
+      )}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -196,106 +241,39 @@ export function RichTextEditor({
         className="hidden"
       />
 
-      <div className="border-b bg-muted/30 p-2 flex flex-wrap gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted' : ''}
-        >
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted' : ''}
-        >
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}
-        >
-          <Heading2 className="w-4 h-4" />
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted' : ''}
-        >
-          <List className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted' : ''}
-        >
-          <ListOrdered className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editor.isActive('blockquote') ? 'bg-muted' : ''}
-        >
-          <Quote className="w-4 h-4" />
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={addLink}
-          className={editor.isActive('link') ? 'bg-muted' : ''}
-        >
-          <LinkIcon className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={triggerImageUpload}
-          disabled={isUploading}
-        >
-          {isUploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <ImageIcon className="w-4 h-4" />
-          )}
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-        >
-          <Undo className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-        >
-          <Redo className="w-4 h-4" />
-        </Button>
+      {/* Barre d'outils */}
+      <div
+        role="toolbar"
+        aria-label="Mise en forme"
+        className="flex flex-wrap items-center gap-0.5 border-b bg-muted/40 px-1.5 py-1.5"
+      >
+        {tools.map((group, groupIndex) => (
+          <div key={groupIndex} className="flex items-center gap-0.5">
+            {groupIndex > 0 && <span aria-hidden className="mx-1 h-5 w-px bg-border" />}
+            {group.map((tool) => {
+              const Icon = tool.icon
+              return (
+                <button
+                  key={tool.label}
+                  type="button"
+                  onClick={tool.onClick}
+                  disabled={tool.disabled}
+                  title={tool.label}
+                  aria-label={tool.label}
+                  aria-pressed={tool.active === undefined ? undefined : tool.active}
+                  className={cn(
+                    'inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 sm:size-8',
+                    tool.active && 'bg-primary-50 text-primary-800 hover:bg-primary-100 hover:text-primary-800'
+                  )}
+                >
+                  <Icon className={cn('size-4', tool.spin && 'animate-spin')} />
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </div>
-      <div className="overflow-auto max-h-[800px]">
+      <div className="max-h-[800px] overflow-auto">
         <EditorContent editor={editor} />
       </div>
     </div>

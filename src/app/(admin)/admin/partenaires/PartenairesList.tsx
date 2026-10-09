@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Edit, Trash2, Eye, EyeOff, GripVertical, MoreVertical, ExternalLink } from 'lucide-react'
+import { Edit, Trash2, Eye, EyeOff, GripVertical, MoreHorizontal, ExternalLink, Handshake, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deletePartenaire, togglePublished, deleteMultiplePartenaires, updateOrdre } from './actions'
@@ -29,23 +29,80 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 import type { Partenaire } from '@/generated/prisma/client'
 
 interface PartenairesListProps {
   initialPartenaires: Partenaire[]
+}
+
+const headCell = 'h-10 px-3 text-left align-middle text-xs font-medium uppercase tracking-wide text-muted-foreground'
+
+/** Vignette du logo, entièrement visible sur fond blanc */
+function LogoThumb({ partenaire, className }: { partenaire: Partenaire; className?: string }) {
+  return (
+    <div className={cn('relative h-11 w-16 shrink-0 overflow-hidden rounded-md border bg-white', className)}>
+      <Image src={partenaire.logo} alt="" fill sizes="64px" className="object-contain p-1.5" />
+    </div>
+  )
+}
+
+/** Menu d'actions d'un partenaire (commun aux vues bureau et mobile) */
+function PartenaireActions({ partenaire, onDelete, onTogglePublished }: {
+  partenaire: Partenaire
+  onDelete: () => void
+  onTogglePublished: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+          <MoreHorizontal />
+          <span className="sr-only">Actions pour {partenaire.nom}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/partenaires/${partenaire.id}`}>
+            <Edit className="mr-2 size-4" />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        {partenaire.site && (
+          <DropdownMenuItem asChild>
+            <a href={partenaire.site} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="mr-2 size-4" />
+              Voir le site
+            </a>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={onTogglePublished}>
+          {partenaire.published ? (
+            <>
+              <EyeOff className="mr-2 size-4" />
+              Dépublier
+            </>
+          ) : (
+            <>
+              <Eye className="mr-2 size-4" />
+              Publier
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:bg-red-50 focus:text-red-700">
+          <Trash2 className="mr-2 size-4" />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, isSelected }: {
@@ -71,168 +128,87 @@ function SortableRow({ partenaire, onDelete, onTogglePublished, onToggleSelect, 
   }
 
   return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell className="hidden md:table-cell">
+    <tr
+      ref={setNodeRef}
+      style={style}
+      data-state={isSelected ? 'selected' : undefined}
+      className={cn(
+        'bg-card transition-colors hover:bg-muted/40 data-[state=selected]:bg-primary-50/50',
+        isDragging && 'relative z-10 shadow-sm'
+      )}
+    >
+      <td className="w-10 py-3 pl-4 pr-1 align-middle">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onToggleSelect}
+          aria-label={`Sélectionner ${partenaire.nom}`}
+          className="rounded-[4px]"
         />
-      </TableCell>
-      <TableCell className="hidden md:table-cell">
-        <div {...attributes} {...listeners} className="cursor-move">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </td>
+      <td className="w-10 px-1 py-3 align-middle">
+        <div
+          {...attributes}
+          {...listeners}
+          aria-label={`Déplacer ${partenaire.nom}`}
+          className="flex size-8 cursor-grab items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+        >
+          <GripVertical className="size-4" />
         </div>
-      </TableCell>
-      <TableCell>
-        <div className="relative w-12 h-12 rounded overflow-hidden bg-muted">
-          <Image
-            src={partenaire.logo}
-            alt={partenaire.nom}
-            fill
-            className="object-contain"
-          />
-        </div>
-      </TableCell>
-      <TableCell className="font-medium">{partenaire.nom}</TableCell>
-      <TableCell className="hidden lg:table-cell">{partenaire.categorie}</TableCell>
-      <TableCell>
-        <div className="flex flex-col gap-1">
-          <StatusBadge
-            status={partenaire.published ? 'published' : 'draft'}
-          />
-          {partenaire.partenaire_majeur && (
-            <StatusBadge status="featured" />
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="hidden lg:table-cell">{partenaire.ordre}</TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreVertical className="w-4 h-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/partenaires/${partenaire.id}`}>
-                <Edit className="w-4 h-4 mr-2" />
-                Modifier
-              </Link>
-            </DropdownMenuItem>
-            {partenaire.site && (
-              <DropdownMenuItem asChild>
-                <a href={partenaire.site} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Voir le site
-                </a>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={onTogglePublished}>
-              {partenaire.published ? (
-                <>
-                  <EyeOff className="w-4 h-4 mr-2" />
-                  Dépublier
-                </>
-              ) : (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Publier
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-destructive"
+      </td>
+      <td className="px-3 py-3 align-middle">
+        <div className="flex items-center gap-3">
+          <LogoThumb partenaire={partenaire} />
+          <div className="min-w-0">
+            <Link
+              href={`/admin/partenaires/${partenaire.id}`}
+              className="block truncate font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+              {partenaire.nom}
+            </Link>
+            <p className="truncate text-xs text-muted-foreground">{partenaire.categorie}</p>
+          </div>
+        </div>
+      </td>
+      <td className="hidden px-3 py-3 align-middle text-sm text-muted-foreground lg:table-cell">
+        {partenaire.typePartenariat}
+      </td>
+      <td className="px-3 py-3 align-middle">
+        <div className="flex flex-wrap gap-1.5">
+          <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
+          {partenaire.partenaire_majeur && <StatusBadge status="featured" />}
+        </div>
+      </td>
+      <td className="hidden px-3 py-3 text-center align-middle text-sm tabular-nums text-muted-foreground lg:table-cell">
+        {partenaire.ordre}
+      </td>
+      <td className="py-3 pl-3 pr-4 text-right align-middle">
+        <PartenaireActions partenaire={partenaire} onDelete={onDelete} onTogglePublished={onTogglePublished} />
+      </td>
+    </tr>
   )
 }
 
-// Mobile Card Component
-function PartenaireCard({ partenaire, onDelete, onTogglePublished }: {
+// Ligne de la vue mobile
+function PartenaireItem({ partenaire, onDelete, onTogglePublished }: {
   partenaire: Partenaire
   onDelete: () => void
   onTogglePublished: () => void
 }) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex gap-3">
-          <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-            <Image
-              src={partenaire.logo}
-              alt={partenaire.nom}
-              fill
-              className="object-contain"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-medium text-sm">{partenaire.nom}</h3>
-                <p className="text-xs text-muted-foreground">{partenaire.categorie}</p>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="w-4 h-4" />
-                    <span className="sr-only">Actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/partenaires/${partenaire.id}`}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Modifier
-                    </Link>
-                  </DropdownMenuItem>
-                  {partenaire.site && (
-                    <DropdownMenuItem asChild>
-                      <a href={partenaire.site} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Voir le site
-                      </a>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={onTogglePublished}>
-                    {partenaire.published ? (
-                      <>
-                        <EyeOff className="w-4 h-4 mr-2" />
-                        Dépublier
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Publier
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={onDelete}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Supprimer
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
-              {partenaire.partenaire_majeur && <StatusBadge status="featured" />}
-            </div>
-          </div>
+    <li className="flex items-center gap-3 px-4 py-3">
+      <LogoThumb partenaire={partenaire} className="h-12 w-[4.5rem]" />
+      <div className="min-w-0 flex-1">
+        <Link href={`/admin/partenaires/${partenaire.id}`} className="block truncate text-sm font-medium">
+          {partenaire.nom}
+        </Link>
+        <p className="truncate text-xs text-muted-foreground">{partenaire.categorie}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
+          {partenaire.partenaire_majeur && <StatusBadge status="featured" />}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <PartenaireActions partenaire={partenaire} onDelete={onDelete} onTogglePublished={onTogglePublished} />
+    </li>
   )
 }
 
@@ -344,84 +320,105 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
     }
   }
 
+  const allSelected = selectedIds.length === partenaires.length && partenaires.length > 0
+
+  if (partenaires.length === 0) {
+    return (
+      <Card className="flex flex-col items-center px-6 py-16 text-center">
+        <span className="flex size-11 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+          <Handshake className="size-5" />
+        </span>
+        <h2 className="mt-4 font-display text-base font-semibold">Aucun partenaire</h2>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          Ajoutez les entreprises et institutions qui soutiennent le club.
+        </p>
+        <Button asChild className="mt-5">
+          <Link href="/admin/partenaires/new">
+            <Plus />
+            Nouveau partenaire
+          </Link>
+        </Button>
+      </Card>
+    )
+  }
+
   return (
     <>
-      {selectedIds.length > 0 && (
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedIds.length} partenaire{selectedIds.length > 1 ? 's' : ''} sélectionné{selectedIds.length > 1 ? 's' : ''}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowBulkDelete(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Supprimer
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedIds([])}
-            >
-              Annuler
-            </Button>
-          </div>
+      <Card className="overflow-hidden">
+        {/* Barre d'état : sélection ou aide au réordonnancement */}
+        <div className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5">
+          {selectedIds.length > 0 ? (
+            <>
+              <span className="text-sm font-medium">
+                {selectedIds.length} partenaire{selectedIds.length > 1 ? 's' : ''} sélectionné{selectedIds.length > 1 ? 's' : ''}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => setShowBulkDelete(true)}>
+                  <Trash2 />
+                  Supprimer
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {partenaires.length} partenaire{partenaires.length > 1 ? 's' : ''}
+              </span>
+              <span className="hidden items-center gap-1.5 text-xs text-muted-foreground md:inline-flex">
+                <GripVertical className="size-3.5" />
+                Glissez les lignes pour modifier l&apos;ordre d&apos;affichage
+              </span>
+            </>
+          )}
         </div>
-      )}
 
-      {/* Vue Mobile - Cartes */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {partenaires.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            Aucun partenaire
-          </div>
-        ) : (
-          partenaires.map((partenaire) => (
-            <PartenaireCard
+        {/* Vue mobile : liste */}
+        <ul className="divide-y md:hidden">
+          {partenaires.map((partenaire) => (
+            <PartenaireItem
               key={partenaire.id}
               partenaire={partenaire}
               onDelete={() => setDeleteId(partenaire.id)}
               onTogglePublished={() => handleTogglePublished(partenaire.id)}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </ul>
 
-      {/* Vue Desktop - Table avec drag & drop */}
-      <div className="hidden md:block">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={selectedIds.length === partenaires.length && partenaires.length > 0}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                </TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-                <TableHead className="w-[70px]">Logo</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead className="hidden lg:table-cell">Catégorie</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="hidden lg:table-cell">Ordre</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {partenaires.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Aucun partenaire
-                  </TableCell>
-                </TableRow>
-              ) : (
+        {/* Vue bureau : tableau réordonnable par glisser-déposer */}
+        <div className="hidden md:block">
+          <DndContext
+            id="partenaires-ordre"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/50">
+                <tr>
+                  <th className="h-10 w-10 py-0 pl-4 pr-1 align-middle">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Tout sélectionner"
+                      className="rounded-[4px]"
+                    />
+                  </th>
+                  <th className="w-10 px-1">
+                    <span className="sr-only">Ordre</span>
+                  </th>
+                  <th className={headCell}>Partenaire</th>
+                  <th className={cn(headCell, 'hidden lg:table-cell')}>Type</th>
+                  <th className={headCell}>Statut</th>
+                  <th className={cn(headCell, 'hidden text-center lg:table-cell')}>Ordre</th>
+                  <th className={cn(headCell, 'pr-4 text-right')}>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
                 <SortableContext
                   items={partenaires.map((p) => p.id)}
                   strategy={verticalListSortingStrategy}
@@ -437,11 +434,11 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
                     />
                   ))}
                 </SortableContext>
-              )}
-            </TableBody>
-          </Table>
-        </DndContext>
-      </div>
+              </tbody>
+            </table>
+          </DndContext>
+        </div>
+      </Card>
 
       <DeleteDialog
         open={deleteId !== null}

@@ -2,21 +2,13 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Edit, Trash2, Calendar, Filter, MoreVertical, MapPin } from 'lucide-react'
+import { CalendarDays, Edit, MoreHorizontal, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteMatch } from './actions'
 import { toast } from 'sonner'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
@@ -28,8 +20,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { formatMatchTime, formatParis, getMatchOutcome, OUTCOME_LABELS } from '@/lib/match-format'
+import { cn } from '@/lib/utils'
 
 interface Match {
   id: number
@@ -51,6 +46,77 @@ interface Match {
 
 interface MatchsListProps {
   initialMatchs: Match[]
+}
+
+const OUTCOME_CLASSES = {
+  win: 'text-emerald-700',
+  loss: 'text-red-700',
+  draw: 'text-muted-foreground',
+} as const
+
+/** Pastille Domicile / Extérieur (même style que le tableau de bord) */
+function VenuePill({ domicile }: { domicile: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium',
+        domicile ? 'bg-primary-50 text-primary-800' : 'bg-neutral-100 text-neutral-600'
+      )}
+    >
+      {domicile ? 'Domicile' : 'Extérieur'}
+    </span>
+  )
+}
+
+/** Score final (avec issue du match) ou mention « À venir » */
+function MatchScore({ match, compact }: { match: Match; compact?: boolean }) {
+  if (!match.termine || match.scoreEquipe === null || match.scoreAdversaire === null) {
+    return compact ? null : <span className="text-xs text-muted-foreground">À venir</span>
+  }
+
+  const outcome = getMatchOutcome(match.scoreEquipe, match.scoreAdversaire)
+
+  return (
+    <span className={cn('inline-flex items-baseline', compact ? 'gap-1.5' : 'flex-col gap-0.5')}>
+      <span className="whitespace-nowrap font-display font-bold tabular-nums text-foreground">
+        {match.scoreEquipe} – {match.scoreAdversaire}
+      </span>
+      {outcome && (
+        <span className={cn('text-xs font-medium', OUTCOME_CLASSES[outcome])}>{OUTCOME_LABELS[outcome]}</span>
+      )}
+    </span>
+  )
+}
+
+function MatchActions({ match, onDelete }: { match: Match; onDelete: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+          <MoreHorizontal />
+          <span className="sr-only">
+            Actions pour {match.equipe.nom} contre {match.adversaire}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/matchs/${match.id}`}>
+            <Edit />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={onDelete}
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+        >
+          <Trash2 />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 export function MatchsList({ initialMatchs }: MatchsListProps) {
@@ -85,228 +151,121 @@ export function MatchsList({ initialMatchs }: MatchsListProps) {
       setMatchs(matchs.filter((m) => m.id !== deleteId))
       toast.success('Match supprimé')
       setDeleteId(null)
-    } catch (_error) {
+    } catch {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(false)
     }
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  const formatFullDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  const MatchActions = ({ match }: { match: Match }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreVertical className="w-4 h-4" />
-          <span className="sr-only">Actions</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/admin/matchs/${match.id}`}>
-            <Edit className="w-4 h-4 mr-2" />
-            Modifier
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setDeleteId(match.id)}
-          className="text-destructive"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Supprimer
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-
   return (
     <>
-      {/* Filtre par équipe - responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Filter className="w-4 h-4" />
-          <span>Filtrer :</span>
+      <Card className="overflow-hidden">
+        {/* Filtre par équipe */}
+        <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:items-center sm:gap-3">
+          <label htmlFor="filtre-equipe" className="text-sm font-medium text-muted-foreground">
+            Équipe
+          </label>
+          <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
+            <SelectTrigger id="filtre-equipe" className="h-10 w-full sm:h-9 sm:w-72">
+              <SelectValue placeholder="Toutes les équipes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les équipes</SelectItem>
+              {equipes.map((equipe) => (
+                <SelectItem key={equipe.id} value={equipe.id.toString()}>
+                  {equipe.nom} ({equipe.categorie})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
-          <SelectTrigger className="w-full sm:w-[250px]">
-            <SelectValue placeholder="Toutes les équipes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les équipes</SelectItem>
-            {equipes.map((equipe) => (
-              <SelectItem key={equipe.id} value={equipe.id.toString()}>
-                {equipe.nom} ({equipe.categorie})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground">
-          {filteredMatchs.length} match{filteredMatchs.length > 1 ? 's' : ''}
-        </span>
-      </div>
 
-      {/* Vue Mobile - Cartes */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
         {filteredMatchs.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            {selectedEquipeId === 'all' ? 'Aucun match' : 'Aucun match pour cette équipe'}
+          <div className="flex flex-col items-center px-6 py-14 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+              <CalendarDays className="size-5" />
+            </span>
+            <p className="mt-3 text-sm font-medium">
+              {selectedEquipeId === 'all' ? 'Aucun match' : 'Aucun match pour cette équipe'}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Les matchs ajoutés ou synchronisés depuis FFHANDBALL apparaîtront ici.
+            </p>
           </div>
         ) : (
-          filteredMatchs.map((match) => (
-            <Card key={match.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <div className="font-medium text-sm">{match.equipe.nom}</div>
-                    <div className="text-xs text-muted-foreground">{match.equipe.categorie}</div>
-                  </div>
-                  <MatchActions match={match} />
-                </div>
-
-                <div className="flex items-center justify-center gap-3 py-3 bg-muted/50 rounded-lg mb-3">
-                  <span className="font-semibold text-sm">{match.equipe.nom}</span>
-                  {match.termine && match.scoreEquipe !== null && match.scoreAdversaire !== null ? (
-                    <span className="font-bold text-lg px-3">
-                      {match.scoreEquipe} - {match.scoreAdversaire}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground px-3">vs</span>
-                  )}
-                  <span className="font-semibold text-sm">{match.adversaire}</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(match.date)} à {formatTime(match.date)}
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full ${
-                    match.domicile
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {match.domicile ? 'Dom' : 'Ext'}
-                  </span>
-                  {match.competition && (
-                    <span className="bg-muted px-2 py-0.5 rounded">{match.competition}</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate max-w-[150px]">{match.lieu}</span>
-                  </div>
-                  <StatusBadge status={match.published ? 'published' : 'draft'} />
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Vue Desktop - Table */}
-      <div className="hidden md:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Équipe</TableHead>
-              <TableHead>Match</TableHead>
-              <TableHead className="hidden lg:table-cell">Score</TableHead>
-              <TableHead className="hidden lg:table-cell">Lieu</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredMatchs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  {selectedEquipeId === 'all' ? 'Aucun match' : 'Aucun match pour cette équipe'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredMatchs.map((match) => (
-                <TableRow key={match.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground hidden lg:block" />
-                      <div>
-                        <span className="font-medium">{formatDate(match.date)}</span>
-                        <span className="text-muted-foreground text-xs block lg:inline lg:ml-1">
-                          {formatTime(match.date)}
-                        </span>
-                      </div>
+          <table className="w-full text-sm">
+            <thead className="hidden border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground md:table-header-group">
+              <tr>
+                <th scope="col" className="px-4 py-3 font-medium">Date</th>
+                <th scope="col" className="px-4 py-3 font-medium">Rencontre</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium xl:table-cell">Lieu</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Score</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Statut</th>
+                <th scope="col" className="w-14 px-4 py-3">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filteredMatchs.map((match) => (
+                <tr key={match.id} className="transition-colors hover:bg-muted/40">
+                  <td className="w-24 py-3 pl-4 pr-2 align-top md:w-auto md:px-4 md:align-middle">
+                    <p className="whitespace-nowrap font-medium">
+                      {formatParis(match.date, { weekday: 'short', day: 'numeric', month: 'short' })}
+                      <span className="hidden lg:inline"> {formatParis(match.date, { year: 'numeric' })}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatMatchTime(match.date)}</p>
+                  </td>
+                  <td className="px-2 py-3 md:px-4">
+                    <Link
+                      href={`/admin/matchs/${match.id}`}
+                      className="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {match.equipe.nom} <span className="font-normal text-muted-foreground">vs</span> {match.adversaire}
+                    </Link>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {match.equipe.categorie}
+                      {match.competition && ` · ${match.competition}`}
+                    </p>
+                    {/* Mobile : lieu, score et statut sous la rencontre */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 md:hidden">
+                      <VenuePill domicile={match.domicile} />
+                      <StatusBadge status={match.published ? 'published' : 'draft'} />
+                      <MatchScore match={match} compact />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{match.equipe.nom}</div>
-                      <div className="text-sm text-muted-foreground">{match.equipe.categorie}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
-                      <span className="font-medium">{match.equipe.nom}</span>
-                      <span className="text-muted-foreground">vs</span>
-                      <span className="font-medium">{match.adversaire}</span>
-                      {match.competition && (
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded w-fit">{match.competition}</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {match.termine && match.scoreEquipe !== null && match.scoreAdversaire !== null ? (
-                      <span className="font-bold">
-                        {match.scoreEquipe} - {match.scoreAdversaire}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">À venir</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <span className={`text-sm ${match.domicile ? 'text-green-600' : 'text-blue-600'}`}>
-                      {match.domicile ? 'Dom' : 'Ext'}
-                    </span>
-                    <div className="text-xs text-muted-foreground truncate max-w-[150px]">{match.lieu}</div>
-                  </TableCell>
-                  <TableCell>
+                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground xl:hidden">
+                      <span className="hidden md:inline">{match.domicile ? 'Domicile' : 'Extérieur'} · </span>
+                      {match.lieu}
+                    </p>
+                  </td>
+                  <td className="hidden px-4 py-3 xl:table-cell">
+                    <VenuePill domicile={match.domicile} />
+                    <p className="mt-1 max-w-[200px] truncate text-xs text-muted-foreground" title={match.lieu}>
+                      {match.lieu}
+                    </p>
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
+                    <MatchScore match={match} />
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
                     <StatusBadge status={match.published ? 'published' : 'draft'} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <MatchActions match={match} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  </td>
+                  <td className="px-2 py-3 text-right align-top sm:px-4 md:align-middle">
+                    <MatchActions match={match} onDelete={() => setDeleteId(match.id)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <div className="border-t bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          {selectedEquipeId === 'all'
+            ? `${matchs.length} match${matchs.length > 1 ? 's' : ''}`
+            : `${filteredMatchs.length} sur ${matchs.length} match${matchs.length > 1 ? 's' : ''}`}
+        </div>
+      </Card>
 
       <DeleteDialog
         open={deleteId !== null}

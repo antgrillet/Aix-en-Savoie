@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Calendar, MapPin, Home, Plane } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { Card } from "@/components/ui/card";
+import { Check, CircleCheck, TriangleAlert } from "lucide-react";
+import { formatParis } from "@/lib/match-format";
+import { cn } from "@/lib/utils";
 
 interface MatchAvecManques {
   id: number;
@@ -46,25 +39,109 @@ interface ManquesResumeProps {
   matchs: MatchAvecManques[];
 }
 
+// Postes suivis (la buvette n'a pas de besoin minimum)
+const POSTES = [
+  { key: "tableDeMarque", label: "Table de marque" },
+  { key: "arbitre", label: "Arbitre" },
+  { key: "responsableSalle", label: "Resp. de salle" },
+] as const;
+
+function MatchRow({ match }: { match: MatchAvecManques }) {
+  const inscrits = [
+    { label: "Table", noms: match.inscritsParRole.tableDeMarque },
+    { label: "Arbitre", noms: match.inscritsParRole.arbitre },
+    { label: "Resp. salle", noms: match.inscritsParRole.responsableSalle },
+    { label: "Buvette", noms: match.inscritsParRole.buvette },
+  ].filter((r) => r.noms.length > 0);
+
+  return (
+    <li className="flex gap-4 px-4 py-4 sm:px-5">
+      {/* Date */}
+      <div className="w-12 shrink-0 text-center sm:w-14">
+        <p className="text-xs font-medium uppercase text-muted-foreground">
+          {formatParis(match.date, { weekday: "short" }).replace(".", "")}
+        </p>
+        <p className="font-display text-lg font-bold leading-tight">
+          {formatParis(match.date, { day: "numeric" })}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatParis(match.date, { month: "short" }).replace(".", "")}
+        </p>
+      </div>
+
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {match.equipe.nom} <span className="text-muted-foreground">vs</span> {match.adversaire}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {match.equipe.categorie} · {formatParis(match.date, { hour: "2-digit", minute: "2-digit" })}
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-800 ring-1 ring-inset ring-primary-600/25">
+            {match.totalManques} poste{match.totalManques > 1 ? "s" : ""} à pourvoir
+          </span>
+        </div>
+
+        {/* Postes : inscrits / besoin */}
+        <ul className="flex flex-wrap gap-1.5">
+          {POSTES.map((poste) => {
+            const nbInscrits = match.inscriptionsParRole[poste.key];
+            const manque = match.manques[poste.key];
+            const complet = manque === 0;
+            return (
+              <li
+                key={poste.key}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
+                  complet
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-border bg-card text-foreground"
+                )}
+              >
+                {complet ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <span aria-hidden className="size-1.5 rounded-full bg-primary-500" />
+                )}
+                {poste.label}
+                <span className={cn("font-semibold tabular-nums", !complet && "text-primary-800")}>
+                  {nbInscrits}/{nbInscrits + manque}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        {inscrits.length > 0 && (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {inscrits.map((r, i) => (
+              <span key={r.label}>
+                {i > 0 && " · "}
+                {r.label} : <span className="text-foreground">{r.noms.join(", ")}</span>
+              </span>
+            ))}
+          </p>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export function ManquesResume({ matchs }: ManquesResumeProps) {
   if (matchs.length === 0) {
     return (
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-orange-50 to-blue-50">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full">
-              <AlertTriangle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-secondary-700">
-                Aucun manque de bénévoles
-              </CardTitle>
-              <CardDescription className="text-primary-700">
-                Tous les matchs à venir ont suffisamment de bénévoles inscrits
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
+      <Card className="flex items-center gap-3 px-5 py-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+          <CircleCheck className="size-5" />
+        </span>
+        <div>
+          <p className="text-sm font-medium">Aucun manque de bénévoles</p>
+          <p className="text-sm text-muted-foreground">
+            Tous les matchs à venir ont suffisamment de bénévoles inscrits
+          </p>
+        </div>
       </Card>
     );
   }
@@ -72,184 +149,24 @@ export function ManquesResume({ matchs }: ManquesResumeProps) {
   const totalManques = matchs.reduce((sum, m) => sum + m.totalManques, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Aperçu rapide par match */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3 text-primary-700">
-          Aperçu rapide - Matchs avec manques
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {matchs.map((match) => {
-            const manquesList = [];
-            if (match.manques.tableDeMarque > 0)
-              manquesList.push(
-                `${match.manques.tableDeMarque} table${
-                  match.manques.tableDeMarque > 1 ? "s" : ""
-                } de marque`
-              );
-            if (match.manques.arbitre > 0)
-              manquesList.push(
-                `${match.manques.arbitre} arbitre${match.manques.arbitre > 1 ? "s" : ""}`
-              );
-            if (match.manques.responsableSalle > 0)
-              manquesList.push(`${match.manques.responsableSalle} resp. salle`);
-
-            return (
-              <Card
-                key={match.id}
-                className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs font-semibold">
-                        {match.equipe.categorie}
-                      </Badge>
-                      <Badge variant="destructive" className="text-xs">
-                        {match.totalManques} manque{match.totalManques > 1 ? "s" : ""}
-                      </Badge>
-                    </div>
-                    <div className="font-semibold text-sm">
-                      {match.equipe.nom} vs {match.adversaire}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(match.date), "EEE d MMM 'à' HH:mm", {
-                        locale: fr,
-                      })}
-                    </div>
-                    <div className="text-xs text-orange-600 font-medium">
-                      Manque : {manquesList.join(", ")}
-                    </div>
-                    {(match.inscritsParRole.tableDeMarque.length > 0 ||
-                      match.inscritsParRole.arbitre.length > 0 ||
-                      match.inscritsParRole.responsableSalle.length > 0) && (
-                      <div className="pt-2 border-t space-y-1">
-                        {match.inscritsParRole.tableDeMarque.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Table :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.tableDeMarque.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        {match.inscritsParRole.arbitre.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Arbitre :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.arbitre.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        {match.inscritsParRole.responsableSalle.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Resp. salle :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.responsableSalle.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+    <Card className="overflow-hidden">
+      <div className="flex items-center gap-3 border-b px-4 py-3.5 sm:px-5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+          <TriangleAlert className="size-4" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-display text-base font-semibold">Besoins en bénévoles</h3>
+          <p className="text-xs text-muted-foreground">
+            {totalManques} poste{totalManques > 1 ? "s" : ""} à pourvoir sur {matchs.length} match
+            {matchs.length > 1 ? "s" : ""}
+          </p>
         </div>
       </div>
-
-      {/* Détails par match */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-orange-50 to-blue-50">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full">
-              <AlertTriangle className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-secondary-700">
-                Détail des besoins par match
-              </CardTitle>
-              <CardDescription className="text-primary-700">
-                {totalManques} poste{totalManques > 1 ? "s" : ""} à pourvoir au total
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      <CardContent className="space-y-4">
+      <ul className="divide-y">
         {matchs.map((match) => (
-          <div
-            key={match.id}
-            className="p-4 bg-gradient-to-r from-white to-orange-50 border-0 shadow-md rounded-lg space-y-3"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold">
-                    {match.equipe.nom} vs {match.adversaire}
-                  </h4>
-                  <Badge variant="outline">{match.equipe.categorie}</Badge>
-                  {match.domicile ? (
-                    <Badge variant="default" className="gap-1">
-                      <Home className="h-3 w-3" />
-                      Domicile
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="gap-1">
-                      <Plane className="h-3 w-3" />
-                      Extérieur
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  {format(new Date(match.date), "EEEE d MMMM yyyy 'à' HH:mm", {
-                    locale: fr,
-                  })}
-                </div>
-              </div>
-
-              <Badge variant="destructive" className="text-base">
-                {match.totalManques} manque{match.totalManques > 1 ? "s" : ""}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-sm pt-2 border-t">
-              {match.manques.tableDeMarque > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Table de marque</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.tableDeMarque}
-                  </Badge>
-                </div>
-              )}
-              {match.manques.arbitre > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Arbitre</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.arbitre}
-                  </Badge>
-                </div>
-              )}
-              {match.manques.responsableSalle > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Resp. salle</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.responsableSalle}
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
+          <MatchRow key={match.id} match={match} />
         ))}
-      </CardContent>
+      </ul>
     </Card>
-    </div>
   );
 }

@@ -1,16 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -19,20 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2, Calendar, Clipboard, Shield, Users, Coffee } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { toast } from "sonner";
+import { DeleteDialog } from "@/components/admin/DeleteDialog";
+import { formatParis } from "@/lib/match-format";
 import { deleteInscription } from "./actions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface Inscription {
   id: number;
@@ -62,24 +44,41 @@ const ROLE_CONFIG = {
   TABLE_DE_MARQUE: {
     label: "Table de marque",
     icon: Clipboard,
-    color: "bg-blue-500/10 text-blue-700 border-blue-200",
   },
   ARBITRE: {
     label: "Arbitre",
     icon: Shield,
-    color: "bg-green-500/10 text-green-700 border-green-200",
   },
   RESPONSABLE_SALLE: {
     label: "Responsable de salle",
     icon: Users,
-    color: "bg-purple-500/10 text-purple-700 border-purple-200",
   },
   BUVETTE: {
     label: "Buvette",
     icon: Coffee,
-    color: "bg-orange-500/10 text-orange-700 border-orange-200",
   },
 };
+
+const headCell = "h-10 px-4 text-left align-middle text-xs font-medium uppercase tracking-wide text-muted-foreground";
+
+function RolePill({ role }: { role: string }) {
+  const config = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG];
+  const Icon = config?.icon;
+
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
+      {Icon && <Icon className="size-3.5 text-primary-700" />}
+      {config?.label ?? role}
+    </span>
+  );
+}
+
+function matchDate(date: Date) {
+  return `${formatParis(date, { weekday: "short", day: "numeric", month: "short" })} · ${formatParis(date, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
 
 export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: InscriptionsTableProps) {
   const [filterEquipe, setFilterEquipe] = useState<string>("all");
@@ -115,9 +114,9 @@ export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: 
     const matchDate = new Date(inscription.match.date);
     // Trouver le début du weekend (vendredi)
     const dayOfWeek = matchDate.getDay();
-    const daysToFriday = dayOfWeek >= 5 ? 0 : (5 - dayOfWeek + 7) % 7;
     const friday = new Date(matchDate);
-    friday.setDate(matchDate.getDate() - (dayOfWeek - 5));
+    // Le dimanche appartient au week-end du vendredi précédent
+    friday.setDate(matchDate.getDate() - (dayOfWeek === 0 ? 2 : dayOfWeek - 5));
     friday.setHours(0, 0, 0, 0);
 
     const weekendKey = friday.toISOString().split('T')[0];
@@ -149,117 +148,126 @@ export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: 
 
   if (inscriptions.length === 0) {
     return (
-      <div className="text-center py-12 border rounded-lg bg-muted/20">
-        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Aucune inscription</h3>
-        <p className="text-muted-foreground">
-          Il n'y a pas encore d'inscriptions pour les matchs à venir
+      <Card className="flex flex-col items-center px-6 py-12 text-center">
+        <span className="flex size-11 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+          <Calendar className="size-5" />
+        </span>
+        <h3 className="mt-4 font-display text-base font-semibold">Aucune inscription</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Il n&apos;y a pas encore d&apos;inscriptions pour les matchs à venir
         </p>
-      </div>
+      </Card>
     );
   }
 
-  // Fonction pour rendre une ligne d'inscription
-  const renderInscriptionRow = (inscription: Inscription) => {
-    const config = ROLE_CONFIG[inscription.role as keyof typeof ROLE_CONFIG];
-    const Icon = config?.icon;
+  const deleteButton = (inscription: Inscription) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setDeleteId(inscription.id)}
+      title="Supprimer l'inscription"
+      className="size-9 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+    >
+      <Trash2 />
+      <span className="sr-only">
+        Supprimer l&apos;inscription de {inscription.prenom} {inscription.nom}
+      </span>
+    </Button>
+  );
 
-    return (
-      <TableRow key={inscription.id}>
-        <TableCell>
-          <div className="space-y-1">
-            <div className="font-medium">
-              {inscription.match.equipe.nom} vs {inscription.match.adversaire}
+  // Liste d'inscriptions : tableau sur grand écran, lignes empilées sur mobile
+  const renderList = (items: Inscription[]) => (
+    <>
+      <ul className="divide-y md:hidden">
+        {items.map((inscription) => (
+          <li key={inscription.id} className="flex items-start gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-sm font-medium">
+                {inscription.prenom} {inscription.nom}
+              </p>
+              <RolePill role={inscription.role} />
+              <p className="text-xs text-muted-foreground">
+                {inscription.match.equipe.nom} vs {inscription.match.adversaire} · {matchDate(inscription.match.date)}
+              </p>
             </div>
-            <Badge variant={inscription.match.domicile ? "default" : "secondary"}>
-              {inscription.match.domicile ? "Domicile" : "Extérieur"}
-            </Badge>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm">
-            {format(new Date(inscription.match.date), "d MMM yyyy", { locale: fr })}
-            <div className="text-xs text-muted-foreground">
-              {format(new Date(inscription.match.date), "HH:mm")}
-            </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="space-y-1">
-            <div className="font-medium">{inscription.match.equipe.nom}</div>
-            <Badge variant="outline" className="text-xs">
-              {inscription.match.equipe.categorie}
-            </Badge>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="font-medium">
-            {inscription.prenom} {inscription.nom}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="h-4 w-4" />}
-            {config?.label}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm text-muted-foreground">
-            {format(new Date(inscription.createdAt), "d MMM yyyy 'à' HH:mm", { locale: fr })}
-          </div>
-        </TableCell>
-        <TableCell className="text-right">
-          <Button variant="ghost" size="sm" onClick={() => setDeleteId(inscription.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  };
+            {deleteButton(inscription)}
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead className="border-b bg-muted/50">
+            <tr>
+              <th className={headCell}>Bénévole</th>
+              <th className={headCell}>Rôle</th>
+              <th className={headCell}>Match</th>
+              <th className={`${headCell} hidden lg:table-cell`}>Inscrit le</th>
+              <th className={`${headCell} text-right`}>
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {items.map((inscription) => (
+              <tr key={inscription.id} className="transition-colors hover:bg-muted/40">
+                <td className="px-4 py-3 align-middle font-medium">
+                  {inscription.prenom} {inscription.nom}
+                </td>
+                <td className="px-4 py-3 align-middle">
+                  <RolePill role={inscription.role} />
+                </td>
+                <td className="px-4 py-3 align-middle">
+                  <p>
+                    {inscription.match.equipe.nom} <span className="text-muted-foreground">vs</span>{" "}
+                    {inscription.match.adversaire}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {inscription.match.equipe.categorie} · {matchDate(inscription.match.date)}
+                  </p>
+                </td>
+                <td className="hidden px-4 py-3 align-middle text-xs text-muted-foreground lg:table-cell">
+                  {formatParis(inscription.createdAt, {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </td>
+                <td className="px-4 py-2 text-right align-middle">{deleteButton(inscription)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+
+  const deleteDialog = (
+    <DeleteDialog
+      open={deleteId !== null}
+      onOpenChange={(open) => !open && setDeleteId(null)}
+      onConfirm={handleDelete}
+      isLoading={deleting}
+      title="Supprimer cette inscription ?"
+      description="Le bénévole sera retiré de ce match. Cette action est irréversible."
+    />
+  );
 
   // Si hideWeekendHeaders est true, afficher une simple table
   if (hideWeekendHeaders) {
     return (
       <>
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Match</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Équipe</TableHead>
-                <TableHead>Bénévole</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Inscrit le</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInscriptions.map((inscription) => renderInscriptionRow(inscription))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-              <AlertDialogDescription>
-                Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action est irréversible.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deleting ? "Suppression..." : "Supprimer"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-5">
+            <h3 className="font-display text-base font-semibold">Inscriptions enregistrées</h3>
+            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium tabular-nums text-neutral-600">
+              {filteredInscriptions.length}
+            </span>
+          </div>
+          {renderList(filteredInscriptions)}
+        </Card>
+        {deleteDialog}
       </>
     );
   }
@@ -268,9 +276,9 @@ export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: 
   return (
     <>
       <div className="space-y-4">
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Select value={filterEquipe} onValueChange={setFilterEquipe}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="bg-card sm:w-56" aria-label="Filtrer par équipe">
               <SelectValue placeholder="Filtrer par équipe" />
             </SelectTrigger>
             <SelectContent>
@@ -284,7 +292,7 @@ export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: 
           </Select>
 
           <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="bg-card sm:w-56" aria-label="Filtrer par rôle">
               <SelectValue placeholder="Filtrer par rôle" />
             </SelectTrigger>
             <SelectContent>
@@ -302,79 +310,40 @@ export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: 
               })}
             </SelectContent>
           </Select>
+
+          <p className="text-sm text-muted-foreground sm:ml-auto">
+            {filteredInscriptions.length} inscription
+            {filteredInscriptions.length > 1 ? "s" : ""}
+          </p>
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          {filteredInscriptions.length} inscription
-          {filteredInscriptions.length > 1 ? "s" : ""}
-        </div>
+        {weekends.map((weekendKey) => {
+          const weekendInscriptions = inscriptionsByWeekend[weekendKey];
+          const friday = new Date(weekendKey);
+          const sunday = new Date(friday);
+          sunday.setDate(friday.getDate() + 2);
 
-        <div className="space-y-6">
-          {weekends.map((weekendKey) => {
-            const weekendInscriptions = inscriptionsByWeekend[weekendKey];
-            const friday = new Date(weekendKey);
-            const sunday = new Date(friday);
-            sunday.setDate(friday.getDate() + 2);
-
-            return (
-              <div key={weekendKey} className="space-y-2">
-                <div className="flex items-center gap-3 bg-gradient-to-r from-primary-100 to-secondary-100 p-3 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary-600" />
-                  <h3 className="font-semibold text-lg text-primary-700">
-                    Weekend du {format(friday, "d MMM", { locale: fr })} au{" "}
-                    {format(sunday, "d MMM yyyy", { locale: fr })}
+          return (
+            <Card key={weekendKey} className="overflow-hidden">
+              <div className="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-5">
+                <div className="flex items-center gap-2.5">
+                  <Calendar className="size-4 text-primary-700" />
+                  <h3 className="font-display text-base font-semibold">
+                    Week-end du {formatParis(friday, { day: "numeric", month: "short" })} au{" "}
+                    {formatParis(sunday, { day: "numeric", month: "short", year: "numeric" })}
                   </h3>
-                  <Badge variant="secondary" className="ml-auto">
-                    {weekendInscriptions.length} inscription
-                    {weekendInscriptions.length > 1 ? "s" : ""}
-                  </Badge>
                 </div>
-
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Match</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Équipe</TableHead>
-                        <TableHead>Bénévole</TableHead>
-                        <TableHead>Rôle</TableHead>
-                        <TableHead>Inscrit le</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {weekendInscriptions.map((inscription) => renderInscriptionRow(inscription))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium tabular-nums text-neutral-600">
+                  {weekendInscriptions.length}
+                </span>
               </div>
-            );
-          })}
-        </div>
+              {renderList(weekendInscriptions)}
+            </Card>
+          );
+        })}
       </div>
 
-      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action
-              est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Suppression..." : "Supprimer"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteDialog}
     </>
   );
 }

@@ -1,5 +1,8 @@
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowUpRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { StatusBadge } from '@/components/admin/StatusBadge'
 import { PartenaireForm } from '../PartenaireForm'
 import { getPartenaire, updatePartenaire } from '../actions'
 
@@ -18,25 +21,31 @@ export default async function EditPartenairePage({
   const updateWithId = updatePartenaire.bind(null, partenaire.id)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Modifier le partenaire</h1>
-        <p className="text-muted-foreground">
-          Modifiez les informations du partenaire
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        title={partenaire.nom}
+        description={
+          <span className="flex flex-wrap items-center gap-2">
+            Modifier la fiche partenaire
+            <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
+            {partenaire.partenaire_majeur && <StatusBadge status="featured" />}
+          </span>
+        }
+        backHref="/admin/partenaires"
+        backLabel="Partenaires"
+        actions={
+          partenaire.published && partenaire.slug ? (
+            <Button variant="outline" asChild>
+              <a href={`/partenaires/${partenaire.slug}`} target="_blank" rel="noopener noreferrer">
+                Voir la page
+                <ArrowUpRight />
+              </a>
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du partenaire</CardTitle>
-          <CardDescription>
-            Modifiez les informations du partenaire
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PartenaireForm action={updateWithId} initialData={partenaire} />
-        </CardContent>
-      </Card>
+      <PartenaireForm action={updateWithId} initialData={partenaire} />
     </div>
   )
 }

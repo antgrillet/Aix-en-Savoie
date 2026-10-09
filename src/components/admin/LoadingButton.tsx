@@ -6,6 +6,7 @@ interface LoadingButtonProps extends ButtonProps {
   isLoading?: boolean
 }
 
+/** Bouton qui affiche un indicateur de chargement et se désactive pendant l'envoi */
 export function LoadingButton({
   children,
   isLoading,
@@ -16,10 +17,11 @@ export function LoadingButton({
   return (
     <Button
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       className={cn(className)}
       {...props}
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading && <Loader2 className="animate-spin" />}
       {children}
     </Button>
   )

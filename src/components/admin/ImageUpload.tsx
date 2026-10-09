@@ -2,8 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import { X, Upload, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ImagePlus, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ImageUploadProps {
@@ -75,31 +74,36 @@ export function ImageUpload({
     if (file) handleUpload(file)
   }
 
+  const isBlocked = disabled || isUploading
+
   return (
     <div className={cn('space-y-4', className)}>
       {value ? (
-        <div className="relative group">
-          <div className="relative w-full h-64 rounded-lg overflow-hidden border">
-            <Image
-              src={value}
-              alt="Upload preview"
-              fill
-              className="object-cover"
-            />
-          </div>
-          <Button
+        // Aperçu : l'image entière est visible (logos compris) sur fond neutre
+        <div className="relative aspect-video max-h-80 w-full overflow-hidden rounded-lg border bg-neutral-100">
+          <Image
+            src={value}
+            alt="Aperçu de l'image"
+            fill
+            sizes="(min-width: 1024px) 640px, 100vw"
+            className="object-contain"
+          />
+          <button
             type="button"
             onClick={onRemove}
             disabled={disabled}
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Retirer l'image"
+            className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-md bg-white/95 text-neutral-700 shadow-sm ring-1 ring-black/10 transition-colors hover:bg-white hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
           >
-            <X className="w-4 h-4" />
-          </Button>
+            <X className="size-4" />
+            <span className="sr-only">Retirer l&apos;image</span>
+          </button>
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={isBlocked ? -1 : 0}
+          aria-disabled={isBlocked || undefined}
           onDrop={handleDrop}
           onDragOver={(e) => {
             e.preventDefault()
@@ -107,26 +111,35 @@ export function ImageUpload({
           }}
           onDragLeave={() => setIsDragging(false)}
           onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              inputRef.current?.click()
+            }
+          }}
           className={cn(
-            'border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors',
+            'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-10 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-muted hover:border-primary/50',
-            disabled && 'opacity-50 cursor-not-allowed'
+              ? 'border-primary-500 bg-primary-50'
+              : 'border-input bg-muted/40 hover:border-primary-500/60 hover:bg-primary-50/50',
+            disabled && 'cursor-not-allowed opacity-50'
           )}
         >
+          <span
+            aria-hidden
+            className="flex size-10 items-center justify-center rounded-full bg-card text-primary-700 shadow-xs ring-1 ring-border"
+          >
+            {isUploading ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-5" />}
+          </span>
           {isUploading ? (
-            <Loader2 className="w-12 h-12 mx-auto animate-spin text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">Envoi de l&apos;image…</p>
           ) : (
-            <>
-              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <div className="space-y-1">
               <p className="text-sm text-muted-foreground">
-                Cliquez ou glissez-déposez une image
+                <span className="font-medium text-foreground">Cliquez pour choisir</span> ou glissez-déposez une image
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                PNG, JPG, WebP jusqu'à 10MB
-              </p>
-            </>
+              <p className="text-xs text-muted-foreground">PNG, JPG ou WebP, 10 Mo maximum</p>
+            </div>
           )}
           <input
             ref={inputRef}

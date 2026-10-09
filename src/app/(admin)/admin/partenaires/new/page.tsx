@@ -1,28 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { PartenaireForm } from '../PartenaireForm'
 import { createPartenaire } from '../actions'
 
 export default function NewPartenairePage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Nouveau partenaire</h1>
-        <p className="text-muted-foreground">
-          Ajoutez un nouveau partenaire du club
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        title="Nouveau partenaire"
+        description="Créez la fiche d'un partenaire du club"
+        backHref="/admin/partenaires"
+        backLabel="Partenaires"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du partenaire</CardTitle>
-          <CardDescription>
-            Remplissez les informations du partenaire
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PartenaireForm action={createPartenaire} />
-        </CardContent>
-      </Card>
+      <PartenaireForm action={createPartenaire} />
     </div>
   )
 }

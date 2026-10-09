@@ -1,28 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { ArticleForm } from '../ArticleForm'
 import { createArticle } from '../actions'
 
 export default function NewArticlePage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Nouvel article</h1>
-        <p className="text-muted-foreground">
-          Créez un nouvel article ou actualité
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        backHref="/admin/articles"
+        backLabel="Articles"
+        title="Nouvel article"
+        description="Rédigez une actualité pour le site du club"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations de l'article</CardTitle>
-          <CardDescription>
-            Remplissez les informations de l'article
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ArticleForm action={createArticle} />
-        </CardContent>
-      </Card>
+      <ArticleForm action={createArticle} />
     </div>
   )
 }

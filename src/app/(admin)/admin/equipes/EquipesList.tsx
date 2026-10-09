@@ -3,8 +3,20 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Edit, Trash2, Eye, EyeOff, GripVertical, Search, X } from 'lucide-react'
+import {
+  Edit,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  GripVertical,
+  MoreHorizontal,
+  Search,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
@@ -36,23 +48,29 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 import type { Equipe, Entrainement } from '@/generated/prisma/client'
 
 interface EquipesListProps {
   initialEquipes: (Equipe & { entrainements: Entrainement[] })[]
+}
+
+/** Pastille « Accueil » : équipe dont les matchs sont mis en avant sur la page d'accueil */
+function FeaturedPill() {
+  return (
+    <span
+      className="inline-flex items-center whitespace-nowrap rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-800 ring-1 ring-inset ring-primary-600/25"
+      title="Matchs affichés sur la page d'accueil"
+    >
+      Accueil
+    </span>
+  )
 }
 
 function SortableRow({ equipe, onDelete, onTogglePublished, onToggleSelect, isSelected }: {
@@ -77,77 +95,117 @@ function SortableRow({ equipe, onDelete, onTogglePublished, onToggleSelect, isSe
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const genre = equipe.genre === 'FEMININ' ? 'Féminin' : 'Masculin'
+  const creneaux = equipe.entrainements.length
+
   return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell>
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'bg-card transition-colors hover:bg-muted/40',
+        isSelected && 'bg-muted/60',
+        isDragging && 'relative z-10'
+      )}
+    >
+      <td className="w-10 py-3 pl-4 pr-1">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onToggleSelect}
+          aria-label={`Sélectionner ${equipe.nom}`}
+          className="translate-y-0.5 rounded-[4px]"
         />
-      </TableCell>
-      <TableCell>
-        <div {...attributes} {...listeners} className="cursor-move">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </td>
+      <td className="w-10 px-1 py-3">
+        <div
+          {...attributes}
+          {...listeners}
+          aria-label={`Déplacer ${equipe.nom}`}
+          className="flex size-8 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+        >
+          <GripVertical className="size-4" />
         </div>
-      </TableCell>
-      <TableCell>
-        <div className="relative w-16 h-16 rounded overflow-hidden bg-muted">
-          <Image
-            src={equipe.photo}
-            alt={equipe.nom}
-            fill
-            className="object-cover"
-          />
+      </td>
+      <td className="px-2 py-3 sm:px-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="relative h-10 w-12 shrink-0 overflow-hidden rounded-md bg-muted sm:h-12 sm:w-16">
+            <Image src={equipe.photo} alt="" fill sizes="64px" className="object-cover" />
+          </div>
+          <div className="min-w-0">
+            <Link
+              href={`/admin/equipes/${equipe.id}`}
+              className="line-clamp-1 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {equipe.nom}
+            </Link>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {equipe.categorie} · {genre}
+              <span className="lg:hidden"> · {equipe.entraineur}</span>
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+              <StatusBadge status={equipe.published ? 'published' : 'draft'} />
+              {equipe.featured && <FeaturedPill />}
+            </div>
+          </div>
         </div>
-      </TableCell>
-      <TableCell className="font-medium">{equipe.nom}</TableCell>
-      <TableCell>{equipe.categorie}</TableCell>
-      <TableCell>{equipe.entraineur}</TableCell>
-      <TableCell>{equipe.entrainements.length}</TableCell>
-      <TableCell>
-        <StatusBadge
-          status={equipe.published ? 'published' : 'draft'}
-        />
-      </TableCell>
-      <TableCell>{equipe.ordre}</TableCell>
-      <TableCell className="text-right">
+      </td>
+      <td className="hidden px-3 py-3 text-muted-foreground lg:table-cell">{equipe.entraineur}</td>
+      <td className="hidden whitespace-nowrap px-3 py-3 text-muted-foreground xl:table-cell">
+        {creneaux} créneau{creneaux > 1 ? 'x' : ''}
+      </td>
+      <td className="hidden px-3 py-3 md:table-cell">
+        <div className="flex flex-wrap gap-1.5">
+          <StatusBadge status={equipe.published ? 'published' : 'draft'} />
+          {equipe.featured && <FeaturedPill />}
+        </div>
+      </td>
+      <td className="px-2 py-3 text-right sm:px-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              Actions
+            <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+              <MoreHorizontal />
+              <span className="sr-only">Actions pour {equipe.nom}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <Link href={`/admin/equipes/${equipe.id}`}>
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit />
                 Modifier
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/equipes/${equipe.slug}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink />
+                Voir sur le site
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onTogglePublished}>
               {equipe.published ? (
                 <>
-                  <EyeOff className="w-4 h-4 mr-2" />
+                  <EyeOff />
                   Dépublier
                 </>
               ) : (
                 <>
-                  <Eye className="w-4 h-4 mr-2" />
+                  <Eye />
                   Publier
                 </>
               )}
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
-              className="text-destructive"
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 />
               Supprimer
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </td>
+    </tr>
   )
 }
 
@@ -201,7 +259,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
       setEquipes(equipes.filter((e) => e.id !== deleteId))
       toast.success('Équipe supprimée')
       setDeleteId(null)
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(false)
@@ -217,7 +275,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
         )
       )
       toast.success('Statut modifié')
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la modification')
     }
   }
@@ -232,7 +290,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
       toast.success(`${selectedIds.length} équipe${selectedIds.length > 1 ? 's' : ''} supprimée${selectedIds.length > 1 ? 's' : ''}`)
       setSelectedIds([])
       setShowBulkDelete(false)
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(false)
@@ -279,7 +337,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
     try {
       await updateOrdre(updates)
       toast.success('Ordre mis à jour')
-    } catch (error) {
+    } catch {
       // Restaurer l'ancien ordre en cas d'erreur
       setEquipes(equipes)
       toast.error('Erreur lors de la mise à jour de l\'ordre')
@@ -288,127 +346,150 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
 
   return (
     <>
-      {/* Filtres */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher une équipe..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <Card className="overflow-hidden">
+        {/* Recherche et filtres */}
+        <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une équipe…"
+              aria-label="Rechercher une équipe ou un entraîneur"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 pl-9 md:h-9"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
+            <Select value={genreFilter} onValueChange={setGenreFilter}>
+              <SelectTrigger aria-label="Filtrer par genre" className="h-10 md:h-9 md:w-40">
+                <SelectValue placeholder="Genre" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les genres</SelectItem>
+                <SelectItem value="MASCULIN">Masculin</SelectItem>
+                <SelectItem value="FEMININ">Féminin</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger aria-label="Filtrer par statut" className="h-10 md:h-9 md:w-40">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="published">Publiées</SelectItem>
+                <SelectItem value="draft">Brouillons</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" onClick={clearFilters} className="col-span-2 h-10 text-muted-foreground md:h-9">
+                <X />
+                Effacer
+              </Button>
+            )}
+          </div>
         </div>
 
-        <Select value={genreFilter} onValueChange={setGenreFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="MASCULIN">Masculin</SelectItem>
-            <SelectItem value="FEMININ">Féminin</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="published">Publiées</SelectItem>
-            <SelectItem value="draft">Brouillons</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="w-4 h-4 mr-2" />
-            Effacer
-          </Button>
+        {/* Actions groupées */}
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b bg-muted/50 px-4 py-2.5">
+            <span className="mr-auto text-sm font-medium">
+              {selectedIds.length} équipe{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+              Annuler
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDelete(true)}>
+              <Trash2 />
+              Supprimer la sélection
+            </Button>
+          </div>
         )}
 
-        <div className="ml-auto text-sm text-muted-foreground self-center">
-          {filteredEquipes.length} équipe{filteredEquipes.length > 1 ? 's' : ''}
-        </div>
-      </div>
-
-      {selectedIds.length > 0 && (
-        <div className="mb-4 flex items-center gap-4 p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedIds.length} équipe{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
-          </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowBulkDelete(true)}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Supprimer la sélection
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedIds([])}
-          >
-            Annuler
-          </Button>
-        </div>
-      )}
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedIds.length === filteredEquipes.length && filteredEquipes.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Photo</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Entraîneur</TableHead>
-              <TableHead>Entraînements</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Ordre</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredEquipes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                  {hasActiveFilters ? 'Aucune équipe trouvée' : 'Aucune équipe'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              <SortableContext
-                items={filteredEquipes.map((e) => e.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {filteredEquipes.map((equipe) => (
-                  <SortableRow
-                    key={equipe.id}
-                    equipe={equipe}
-                    onDelete={() => setDeleteId(equipe.id)}
-                    onTogglePublished={() => handleTogglePublished(equipe.id)}
-                    onToggleSelect={() => toggleSelectOne(equipe.id)}
-                    isSelected={selectedIds.includes(equipe.id)}
-                  />
-                ))}
-              </SortableContext>
+        {filteredEquipes.length === 0 ? (
+          <div className="flex flex-col items-center px-6 py-14 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+              <Users className="size-5" />
+            </span>
+            <p className="mt-3 text-sm font-medium">
+              {hasActiveFilters ? 'Aucune équipe trouvée' : 'Aucune équipe'}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hasActiveFilters
+                ? 'Modifiez la recherche ou les filtres.'
+                : 'Les équipes créées apparaîtront ici.'}
+            </p>
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                Effacer les filtres
+              </Button>
             )}
-          </TableBody>
-        </Table>
-      </DndContext>
+          </div>
+        ) : (
+          <DndContext
+            id="admin-equipes-ordre"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <table className="w-full text-sm">
+              <thead className="hidden border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground md:table-header-group">
+                <tr>
+                  <th scope="col" className="w-10 py-3 pl-4 pr-1">
+                    <Checkbox
+                      checked={selectedIds.length === filteredEquipes.length && filteredEquipes.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Tout sélectionner"
+                      className="translate-y-0.5 rounded-[4px]"
+                    />
+                  </th>
+                  <th scope="col" className="w-10 px-1 py-3">
+                    <span className="sr-only">Ordre</span>
+                  </th>
+                  <th scope="col" className="px-3 py-3 font-medium">Équipe</th>
+                  <th scope="col" className="hidden px-3 py-3 font-medium lg:table-cell">Entraîneur</th>
+                  <th scope="col" className="hidden px-3 py-3 font-medium xl:table-cell">Entraînements</th>
+                  <th scope="col" className="hidden px-3 py-3 font-medium md:table-cell">Statut</th>
+                  <th scope="col" className="w-14 px-4 py-3">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                <SortableContext
+                  items={filteredEquipes.map((e) => e.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {filteredEquipes.map((equipe) => (
+                    <SortableRow
+                      key={equipe.id}
+                      equipe={equipe}
+                      onDelete={() => setDeleteId(equipe.id)}
+                      onTogglePublished={() => handleTogglePublished(equipe.id)}
+                      onToggleSelect={() => toggleSelectOne(equipe.id)}
+                      isSelected={selectedIds.includes(equipe.id)}
+                    />
+                  ))}
+                </SortableContext>
+              </tbody>
+            </table>
+          </DndContext>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          <span>
+            {hasActiveFilters
+              ? `${filteredEquipes.length} sur ${equipes.length} équipe${equipes.length > 1 ? 's' : ''}`
+              : `${equipes.length} équipe${equipes.length > 1 ? 's' : ''}`}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <GripVertical className="size-3.5" />
+            Glissez les lignes pour changer l'ordre d'affichage sur le site
+          </span>
+        </div>
+      </Card>
 
       <DeleteDialog
         open={deleteId !== null}

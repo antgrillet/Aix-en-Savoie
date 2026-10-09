@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,7 +18,18 @@ import {
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { LoadingButton } from '@/components/admin/LoadingButton'
 import { toast } from 'sonner'
-import { Plus, X, Ticket } from 'lucide-react'
+import {
+  AtSign,
+  Building2,
+  CircleAlert,
+  Eye,
+  ImageIcon,
+  Plus,
+  Sparkles,
+  Ticket,
+  X,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Partenaire } from '@/generated/prisma/client'
 
 // Catégories prédéfinies pour les partenaires
@@ -45,18 +57,180 @@ const TYPE_PARTENARIAT = [
   'Média',
 ] as const
 
+// Sections du formulaire (navigation interne)
+const SECTIONS = [
+  { id: 'identite', label: 'Identité', icon: Building2 },
+  { id: 'visuels', label: 'Logo & visuels', icon: ImageIcon },
+  { id: 'contact', label: 'Contact & réseaux', icon: AtSign },
+  { id: 'storytelling', label: 'Storytelling', icon: Sparkles },
+  { id: 'offre', label: 'Offre promo', icon: Ticket },
+  { id: 'publication', label: 'Publication', icon: Eye },
+] as const
+
+type SectionId = (typeof SECTIONS)[number]['id']
+
 interface PartenaireFormProps {
   action: (formData: FormData) => Promise<void>
   initialData?: Partenaire
 }
 
+/* ---------- Éléments de mise en page ---------- */
+
+function FormSection({
+  id,
+  title,
+  description,
+  action,
+  children,
+}: {
+  id: SectionId
+  title: string
+  description: string
+  action?: React.ReactNode
+  children: React.ReactNode
+}) {
+  const Icon = SECTIONS.find((s) => s.id === id)!.icon
+
+  return (
+    <Card id={id} className="scroll-mt-32 lg:scroll-mt-8">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 border-b px-5 py-4 sm:px-6">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+            <Icon className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-display text-base font-semibold">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        {action}
+      </div>
+      <div className="space-y-6 p-5 sm:p-6">{children}</div>
+    </Card>
+  )
+}
+
+function Field({
+  label,
+  htmlFor,
+  required,
+  hint,
+  className,
+  children,
+}: {
+  label: string
+  htmlFor?: string
+  required?: boolean
+  hint?: React.ReactNode
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className={cn('space-y-2', className)}>
+      <Label htmlFor={htmlFor}>
+        {label}
+        {required && <span className="ml-0.5 text-primary-700">*</span>}
+      </Label>
+      {children}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  )
+}
+
+/** Sous-bloc avec titre, aide et bouton « Ajouter » (listes de valeurs, galerie…) */
+function SubBlock({
+  title,
+  hint,
+  onAdd,
+  addLabel = 'Ajouter',
+  children,
+}: {
+  title: string
+  hint?: string
+  onAdd?: () => void
+  addLabel?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-3 border-t pt-6 first:border-t-0 first:pt-0">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-normal">{title}</h3>
+          {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+        </div>
+        {onAdd && (
+          <Button type="button" variant="outline" size="sm" onClick={onAdd}>
+            <Plus />
+            {addLabel}
+          </Button>
+        )}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function EmptyHint({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-lg border border-dashed px-4 py-5 text-center text-sm text-muted-foreground">{children}</p>
+  )
+}
+
+function RemoveButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      title={label}
+      className="shrink-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+    >
+      <X />
+      <span className="sr-only">{label}</span>
+    </Button>
+  )
+}
+
+function SwitchRow({
+  id,
+  label,
+  description,
+  children,
+}: {
+  id: string
+  label: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3.5">
+      <div className="min-w-0">
+        <Label htmlFor={id} className="cursor-pointer">
+          {label}
+        </Label>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/* ---------- Formulaire ---------- */
+
 export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<SectionId>('identite')
   const [logo, setLogo] = useState(initialData?.logo || '')
   const [photoCouverture, setPhotoCouverture] = useState(initialData?.photoCouverture || '')
   const [categorie, setCategorie] = useState(initialData?.categorie || '')
   const [typePartenariat, setTypePartenariat] = useState(initialData?.typePartenariat || 'Partenaire')
+
+  // Couleur de marque (sélecteur + saisie hexadécimale synchronisés)
+  const [couleur, setCouleur] = useState(initialData?.couleurPrincipale || '#FF6B35')
+  const [couleurTexte, setCouleurTexte] = useState(initialData?.couleurPrincipale || '#FF6B35')
 
   // Réseaux sociaux
   const initialReseaux = initialData?.reseauxSociaux as any || {}
@@ -87,6 +261,38 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
   const [promoExpiration, setPromoExpiration] = useState(initialData?.promoExpiration ? new Date(initialData.promoExpiration).toISOString().split('T')[0] : '')
   const [promoConditions, setPromoConditions] = useState(initialData?.promoConditions || '')
 
+  // Une valeur existante hors liste (données anciennes) reste visible et sélectionnable
+  const categoryOptions: string[] = [...PARTNER_CATEGORIES]
+  if (initialData?.categorie && !categoryOptions.includes(initialData.categorie)) {
+    categoryOptions.push(initialData.categorie)
+  }
+  const typeOptions: string[] = [...TYPE_PARTENARIAT]
+  if (initialData?.typePartenariat && !typeOptions.includes(initialData.typePartenariat)) {
+    typeOptions.push(initialData.typePartenariat)
+  }
+
+  // Section visible à l'écran, pour la navigation interne
+  useEffect(() => {
+    const onScroll = () => {
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
+      let current: SectionId = SECTIONS[0].id
+      if (atBottom) {
+        current = SECTIONS[SECTIONS.length - 1].id
+      } else {
+        for (const section of SECTIONS) {
+          const el = document.getElementById(section.id)
+          if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.3) {
+            current = section.id
+          }
+        }
+      }
+      setActiveSection(current)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
@@ -112,9 +318,11 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
 
     if (errors.length > 0) {
       toast.error(errors[0])
+      setFormError(errors[0])
       return
     }
 
+    setFormError(null)
     setIsSubmitting(true)
 
     try {
@@ -174,6 +382,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       }
       console.error(error)
       toast.error('Une erreur est survenue')
+      setFormError('Une erreur est survenue lors de l\'enregistrement')
       setIsSubmitting(false)
     }
   }
@@ -195,601 +404,553 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
     setter((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const reseaux = [
+    { id: 'facebook', label: 'Facebook', value: facebook, setter: setFacebook, placeholder: 'https://facebook.com/...' },
+    { id: 'instagram', label: 'Instagram', value: instagram, setter: setInstagram, placeholder: 'https://instagram.com/...' },
+    { id: 'linkedin', label: 'LinkedIn', value: linkedin, setter: setLinkedin, placeholder: 'https://linkedin.com/...' },
+    { id: 'twitter', label: 'X (Twitter)', value: twitter, setter: setTwitter, placeholder: 'https://twitter.com/...' },
+    { id: 'youtube', label: 'YouTube', value: youtube, setter: setYoutube, placeholder: 'https://youtube.com/...' },
+  ]
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* INFORMATIONS GÉNÉRALES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Informations générales</h3>
+    <form onSubmit={handleSubmit} className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-8 xl:gap-10">
+      {/* Navigation interne (bureau) */}
+      <nav aria-label="Sections du formulaire" className="hidden lg:block">
+        <ul className="sticky top-8 space-y-0.5">
+          {SECTIONS.map((section) => {
+            const Icon = section.icon
+            const active = activeSection === section.id
+            return (
+              <li key={section.id}>
+                <a
+                  href={`#${section.id}`}
+                  onClick={() => setActiveSection(section.id)}
+                  aria-current={active ? 'true' : undefined}
+                  className={cn(
+                    'relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    active ? 'bg-card text-foreground shadow-xs ring-1 ring-border' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <Icon className={cn('size-4', active ? 'text-primary-700' : 'text-muted-foreground')} />
+                  <span className="flex-1">{section.label}</span>
+                  {section.id === 'offre' && promoActive && (
+                    <span className="size-1.5 rounded-full bg-primary-500" aria-label="Offre active" />
+                  )}
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="nom">Nom *</Label>
-            <Input
-              id="nom"
-              name="nom"
-              defaultValue={initialData?.nom}
-              placeholder="Nom du partenaire"
-            />
-          </div>
+      <div className="min-w-0 space-y-6">
+        {/* Navigation interne (mobile / tablette) */}
+        <nav
+          aria-label="Sections du formulaire"
+          className="sticky top-14 z-30 -mx-4 overflow-x-auto border-b bg-background/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden"
+        >
+          <ul className="flex w-max gap-1.5">
+            {SECTIONS.map((section) => {
+              const active = activeSection === section.id
+              return (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    onClick={() => setActiveSection(section.id)}
+                    className={cn(
+                      'inline-flex h-9 items-center rounded-full border px-3.5 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      active ? 'border-neutral-900 bg-neutral-900 text-white' : 'bg-card text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {section.label}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
 
-          <div className="space-y-2">
-            <Label htmlFor="categorie">Catégorie *</Label>
-            <Select
-              value={categorie}
-              onValueChange={setCategorie}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez une catégorie" />
-              </SelectTrigger>
-              <SelectContent>
-                {PARTNER_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="categorie" value={categorie} />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="typePartenariat">Type de partenariat</Label>
-          <Select
-            value={typePartenariat}
-            onValueChange={setTypePartenariat}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TYPE_PARTENARIAT.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <input type="hidden" name="typePartenariat" value={typePartenariat} />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Logo *</Label>
-          <ImageUpload
-            value={logo}
-            onChange={setLogo}
-            onRemove={() => setLogo('')}
-            disabled={isSubmitting}
-            folder="partenaires"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description *</Label>
-          <Textarea
-            id="description"
-            name="description"
-            defaultValue={initialData?.description}
-            placeholder="Description du partenaire"
-            rows={6}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="anneeDemarrage">Année de démarrage du partenariat</Label>
-          <Input
-            id="anneeDemarrage"
-            name="anneeDemarrage"
-            type="number"
-            min="1900"
-            max="2100"
-            defaultValue={initialData?.anneeDemarrage || ''}
-            placeholder="2024"
-          />
-        </div>
-      </div>
-
-      {/* STORYTELLING HERO */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Storytelling - Hero section</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="accroche">Phrase d'accroche</Label>
-          <Input
-            id="accroche"
-            name="accroche"
-            defaultValue={initialData?.accroche || ''}
-            placeholder="L'innovation au service des coachs de handball"
-          />
-          <p className="text-sm text-muted-foreground">
-            Phrase mise en avant sur la page du partenaire
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="couleurPrincipale">Couleur de marque</Label>
-          <div className="flex gap-2">
-            <Input
-              id="couleurPrincipale"
-              name="couleurPrincipale"
-              type="color"
-              defaultValue={initialData?.couleurPrincipale || '#FF6B35'}
-              className="w-20 h-10"
-            />
-            <Input
-              type="text"
-              defaultValue={initialData?.couleurPrincipale || '#FF6B35'}
-              placeholder="#FF6B35"
-              pattern="^#[0-9A-Fa-f]{6}$"
-              onChange={(e) => {
-                const colorInput = document.getElementById('couleurPrincipale') as HTMLInputElement
-                if (colorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                  colorInput.value = e.target.value
-                }
-              }}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Couleur utilisée pour les accents sur la page du partenaire
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Photo de couverture</Label>
-          <ImageUpload
-            value={photoCouverture}
-            onChange={setPhotoCouverture}
-            onRemove={() => setPhotoCouverture('')}
-            disabled={isSubmitting}
-            folder="partenaires"
-          />
-          <p className="text-sm text-muted-foreground">
-            Image de fond pour la section hero
-          </p>
-        </div>
-      </div>
-
-      {/* CONTACT */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Informations de contact</h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="site">Site web</Label>
-            <Input
-              id="site"
-              name="site"
-              type="url"
-              defaultValue={initialData?.site || ''}
-              placeholder="https://example.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              defaultValue={initialData?.email || ''}
-              placeholder="contact@partenaire.fr"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="telephone">Téléphone</Label>
-          <Input
-            id="telephone"
-            name="telephone"
-            type="tel"
-            defaultValue={initialData?.telephone || ''}
-            placeholder="01 23 45 67 89"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <Label>Réseaux sociaux</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="facebook" className="text-sm">Facebook</Label>
+        {/* IDENTITÉ */}
+        <FormSection id="identite" title="Identité" description="Nom, catégorie et présentation du partenaire.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Nom" htmlFor="nom" required>
               <Input
-                id="facebook"
-                type="url"
-                value={facebook}
-                onChange={(e) => setFacebook(e.target.value)}
-                placeholder="https://facebook.com/..."
+                id="nom"
+                name="nom"
+                defaultValue={initialData?.nom}
+                placeholder="Nom du partenaire"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagram" className="text-sm">Instagram</Label>
-              <Input
-                id="instagram"
-                type="url"
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-                placeholder="https://instagram.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="twitter" className="text-sm">Twitter</Label>
-              <Input
-                id="twitter"
-                type="url"
-                value={twitter}
-                onChange={(e) => setTwitter(e.target.value)}
-                placeholder="https://twitter.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="linkedin" className="text-sm">LinkedIn</Label>
-              <Input
-                id="linkedin"
-                type="url"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                placeholder="https://linkedin.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="youtube" className="text-sm">YouTube</Label>
-              <Input
-                id="youtube"
-                type="url"
-                value={youtube}
-                onChange={(e) => setYoutube(e.target.value)}
-                placeholder="https://youtube.com/..."
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+            </Field>
 
-      {/* VALEURS PARTAGÉES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Valeurs partagées</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setValeurs)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {valeurs.map((valeur, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                value={valeur}
-                onChange={(e) => updateArrayItem(setValeurs, index, e.target.value)}
-                placeholder="Innovation, Local, Jeunesse..."
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setValeurs, index)}
+            <Field label="Catégorie" htmlFor="categorie" required>
+              <Select
+                value={categorie}
+                onValueChange={setCategorie}
               >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {valeurs.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucune valeur ajoutée. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
+                <SelectTrigger id="categorie">
+                  <SelectValue placeholder="Sélectionnez une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input type="hidden" name="categorie" value={categorie} />
+            </Field>
 
-      {/* GALERIE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Galerie photos</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setGalerie)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une image
-          </Button>
-        </div>
+            <Field label="Type de partenariat" htmlFor="typePartenariat">
+              <Select
+                value={typePartenariat}
+                onValueChange={setTypePartenariat}
+              >
+                <SelectTrigger id="typePartenariat">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {typeOptions.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input type="hidden" name="typePartenariat" value={typePartenariat} />
+            </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {galerie.map((image, index) => (
-            <div key={index} className="space-y-2">
+            <Field label="Partenaire depuis" htmlFor="anneeDemarrage" hint="Année de démarrage du partenariat">
+              <Input
+                id="anneeDemarrage"
+                name="anneeDemarrage"
+                type="number"
+                min="1900"
+                max="2100"
+                defaultValue={initialData?.anneeDemarrage || ''}
+                placeholder="2024"
+              />
+            </Field>
+          </div>
+
+          <Field label="Description" htmlFor="description" required hint="Présentation affichée sur la fiche publique du partenaire.">
+            <Textarea
+              id="description"
+              name="description"
+              defaultValue={initialData?.description}
+              placeholder="Description du partenaire"
+              rows={6}
+            />
+          </Field>
+        </FormSection>
+
+        {/* LOGO & VISUELS */}
+        <FormSection id="visuels" title="Logo & visuels" description="Logo, image d'en-tête, couleur de marque et galerie photos.">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field label="Logo" required hint="PNG à fond transparent ou blanc de préférence.">
               <ImageUpload
-                value={image}
-                onChange={(url) => updateArrayItem(setGalerie, index, url)}
-                onRemove={() => removeFromArray(setGalerie, index)}
+                value={logo}
+                onChange={setLogo}
+                onRemove={() => setLogo('')}
                 disabled={isSubmitting}
-                folder="partenaires/galerie"
+                folder="partenaires"
               />
-            </div>
-          ))}
-        </div>
-        {galerie.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Aucune image dans la galerie. Cliquez sur "Ajouter une image" pour commencer.
-          </p>
-        )}
-      </div>
+            </Field>
 
-      {/* APPORTS AU CLUB */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Ce qu'ils apportent au club</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setApports)}
+            <Field label="Photo de couverture" hint="Image de fond de l'en-tête de la fiche partenaire.">
+              <ImageUpload
+                value={photoCouverture}
+                onChange={setPhotoCouverture}
+                onRemove={() => setPhotoCouverture('')}
+                disabled={isSubmitting}
+                folder="partenaires"
+              />
+            </Field>
+          </div>
+
+          <Field
+            label="Couleur de marque"
+            htmlFor="couleurPrincipale"
+            hint="Couleur utilisée pour les accents sur la page du partenaire."
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {apports.map((apport, index) => (
-            <div key={index} className="flex gap-2">
-              <Textarea
-                value={apport}
-                onChange={(e) => updateArrayItem(setApports, index, e.target.value)}
-                placeholder="Équipement des joueurs, Formation des coachs..."
-                rows={2}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setApports, index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {apports.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucun apport ajouté. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* TÉMOIGNAGE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Témoignage</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="temoignageCitation">Citation</Label>
-          <Textarea
-            id="temoignageCitation"
-            value={temoignageCitation}
-            onChange={(e) => setTemoignageCitation(e.target.value)}
-            placeholder="Ce partenaire nous accompagne depuis le début et..."
-            rows={4}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="temoignageAuteur">Auteur</Label>
-            <Input
-              id="temoignageAuteur"
-              value={temoignageAuteur}
-              onChange={(e) => setTemoignageAuteur(e.target.value)}
-              placeholder="Jean Dupont"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="temoignageRole">Rôle</Label>
-            <Input
-              id="temoignageRole"
-              value={temoignageRole}
-              onChange={(e) => setTemoignageRole(e.target.value)}
-              placeholder="Président du club"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Photo de l'auteur (optionnel)</Label>
-          <ImageUpload
-            value={temoignagePhoto}
-            onChange={setTemoignagePhoto}
-            onRemove={() => setTemoignagePhoto('')}
-            disabled={isSubmitting}
-            folder="partenaires/temoignages"
-          />
-        </div>
-      </div>
-
-      {/* PROJETS COMMUNS */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Nos projets communs</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setProjetsCommuns)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {projetsCommuns.map((projet, index) => (
-            <div key={index} className="flex gap-2">
-              <Textarea
-                value={projet}
-                onChange={(e) => updateArrayItem(setProjetsCommuns, index, e.target.value)}
-                placeholder="Formation des jeunes joueurs, Tournoi annuel..."
-                rows={2}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setProjetsCommuns, index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {projetsCommuns.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucun projet ajouté. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* OFFRE PARTENAIRE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Ticket className="w-5 h-5 text-primary" />
-            Offre Partenaire
-          </h3>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="promoActive" className="text-sm">Activer l'offre</Label>
-            <Switch
-              id="promoActive"
-              checked={promoActive}
-              onCheckedChange={setPromoActive}
-            />
-          </div>
-        </div>
-
-        {promoActive && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="space-y-2">
-              <Label htmlFor="promoTitre">Titre de l'offre *</Label>
+            <div className="flex max-w-xs gap-2">
               <Input
-                id="promoTitre"
-                value={promoTitre}
-                onChange={(e) => setPromoTitre(e.target.value)}
-                placeholder="-10% sur votre première commande"
+                id="couleurPrincipale"
+                name="couleurPrincipale"
+                type="color"
+                value={couleur}
+                onChange={(e) => {
+                  setCouleur(e.target.value)
+                  setCouleurTexte(e.target.value)
+                }}
+                className="w-14 shrink-0 cursor-pointer p-1"
+              />
+              <Input
+                type="text"
+                aria-label="Code hexadécimal de la couleur"
+                value={couleurTexte}
+                placeholder="#FF6B35"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                onChange={(e) => {
+                  setCouleurTexte(e.target.value)
+                  if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                    setCouleur(e.target.value)
+                  }
+                }}
+                className="font-mono uppercase"
               />
             </div>
+          </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="promoDescription">Description</Label>
-              <Textarea
-                id="promoDescription"
-                value={promoDescription}
-                onChange={(e) => setPromoDescription(e.target.value)}
-                placeholder="Bénéficiez d'une réduction exclusive en tant que membre du HBC Aix-en-Savoie..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="promoCode">Code promo (optionnel)</Label>
-                <Input
-                  id="promoCode"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="HBCAIX10"
-                  className="font-mono uppercase"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Si vide, le client devra mentionner le club en magasin
-                </p>
+          <SubBlock
+            title="Galerie photos"
+            hint="Photos affichées sur la fiche du partenaire."
+            onAdd={() => addToArray(setGalerie)}
+            addLabel="Ajouter une image"
+          >
+            {galerie.length === 0 ? (
+              <EmptyHint>Aucune image dans la galerie.</EmptyHint>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {galerie.map((image, index) => (
+                  <ImageUpload
+                    key={index}
+                    value={image}
+                    onChange={(url) => updateArrayItem(setGalerie, index, url)}
+                    onRemove={() => removeFromArray(setGalerie, index)}
+                    disabled={isSubmitting}
+                    folder="partenaires/galerie"
+                  />
+                ))}
               </div>
+            )}
+          </SubBlock>
+        </FormSection>
 
-              <div className="space-y-2">
-                <Label htmlFor="promoExpiration">Date d'expiration (optionnelle)</Label>
-                <Input
-                  id="promoExpiration"
-                  type="date"
-                  value={promoExpiration}
-                  onChange={(e) => setPromoExpiration(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="promoConditions">Conditions d'utilisation</Label>
-              <Textarea
-                id="promoConditions"
-                value={promoConditions}
-                onChange={(e) => setPromoConditions(e.target.value)}
-                placeholder="Non cumulable avec d'autres offres. Valable en magasin uniquement."
-                rows={2}
+        {/* CONTACT & RÉSEAUX */}
+        <FormSection id="contact" title="Contact & réseaux" description="Coordonnées et liens vers les réseaux sociaux.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Site web" htmlFor="site">
+              <Input
+                id="site"
+                name="site"
+                type="url"
+                defaultValue={initialData?.site || ''}
+                placeholder="https://example.com"
               />
-            </div>
+            </Field>
+
+            <Field label="Email" htmlFor="email">
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={initialData?.email || ''}
+                placeholder="contact@partenaire.fr"
+              />
+            </Field>
+
+            <Field label="Téléphone" htmlFor="telephone">
+              <Input
+                id="telephone"
+                name="telephone"
+                type="tel"
+                defaultValue={initialData?.telephone || ''}
+                placeholder="01 23 45 67 89"
+              />
+            </Field>
           </div>
-        )}
-      </div>
 
-      {/* PARAMÈTRES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Paramètres</h3>
+          <SubBlock title="Réseaux sociaux" hint="Adresses complètes des pages du partenaire. Laissez vide si non concerné.">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {reseaux.map((reseau) => (
+                <Field key={reseau.id} label={reseau.label} htmlFor={reseau.id}>
+                  <Input
+                    id={reseau.id}
+                    type="url"
+                    value={reseau.value}
+                    onChange={(e) => reseau.setter(e.target.value)}
+                    placeholder={reseau.placeholder}
+                  />
+                </Field>
+              ))}
+            </div>
+          </SubBlock>
+        </FormSection>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="ordre">Ordre d'affichage</Label>
+        {/* STORYTELLING */}
+        <FormSection id="storytelling" title="Storytelling" description="Contenus qui racontent le partenariat sur la fiche publique.">
+          <Field label="Phrase d'accroche" htmlFor="accroche" hint="Phrase mise en avant en haut de la page du partenaire.">
+            <Input
+              id="accroche"
+              name="accroche"
+              defaultValue={initialData?.accroche || ''}
+              placeholder="L'innovation au service des coachs de handball"
+            />
+          </Field>
+
+          <SubBlock title="Valeurs partagées" hint="Quelques mots-clés : Innovation, Local, Jeunesse…" onAdd={() => addToArray(setValeurs)}>
+            {valeurs.length === 0 ? (
+              <EmptyHint>Aucune valeur ajoutée.</EmptyHint>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {valeurs.map((valeur, index) => (
+                  <div key={index} className="flex gap-1.5">
+                    <Input
+                      value={valeur}
+                      aria-label={`Valeur ${index + 1}`}
+                      onChange={(e) => updateArrayItem(setValeurs, index, e.target.value)}
+                      placeholder="Innovation, Local, Jeunesse..."
+                    />
+                    <RemoveButton onClick={() => removeFromArray(setValeurs, index)} label="Retirer cette valeur" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </SubBlock>
+
+          <SubBlock title="Ce qu'ils apportent au club" hint="Équipements, formations, soutien financier…" onAdd={() => addToArray(setApports)}>
+            {apports.length === 0 ? (
+              <EmptyHint>Aucun apport ajouté.</EmptyHint>
+            ) : (
+              <div className="space-y-2">
+                {apports.map((apport, index) => (
+                  <div key={index} className="flex gap-1.5">
+                    <Textarea
+                      value={apport}
+                      aria-label={`Apport ${index + 1}`}
+                      onChange={(e) => updateArrayItem(setApports, index, e.target.value)}
+                      placeholder="Équipement des joueurs, Formation des coachs..."
+                      rows={2}
+                    />
+                    <RemoveButton onClick={() => removeFromArray(setApports, index)} label="Retirer cet apport" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </SubBlock>
+
+          <SubBlock title="Nos projets communs" hint="Actions menées ensemble avec le club." onAdd={() => addToArray(setProjetsCommuns)}>
+            {projetsCommuns.length === 0 ? (
+              <EmptyHint>Aucun projet ajouté.</EmptyHint>
+            ) : (
+              <div className="space-y-2">
+                {projetsCommuns.map((projet, index) => (
+                  <div key={index} className="flex gap-1.5">
+                    <Textarea
+                      value={projet}
+                      aria-label={`Projet ${index + 1}`}
+                      onChange={(e) => updateArrayItem(setProjetsCommuns, index, e.target.value)}
+                      placeholder="Formation des jeunes joueurs, Tournoi annuel..."
+                      rows={2}
+                    />
+                    <RemoveButton onClick={() => removeFromArray(setProjetsCommuns, index)} label="Retirer ce projet" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </SubBlock>
+
+          <SubBlock title="Témoignage" hint="Affiché si la citation, l'auteur et le rôle sont renseignés.">
+            <div className="space-y-5">
+              <Field label="Citation" htmlFor="temoignageCitation">
+                <Textarea
+                  id="temoignageCitation"
+                  value={temoignageCitation}
+                  onChange={(e) => setTemoignageCitation(e.target.value)}
+                  placeholder="Ce partenaire nous accompagne depuis le début et..."
+                  rows={4}
+                />
+              </Field>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Auteur" htmlFor="temoignageAuteur">
+                  <Input
+                    id="temoignageAuteur"
+                    value={temoignageAuteur}
+                    onChange={(e) => setTemoignageAuteur(e.target.value)}
+                    placeholder="Jean Dupont"
+                  />
+                </Field>
+
+                <Field label="Rôle" htmlFor="temoignageRole">
+                  <Input
+                    id="temoignageRole"
+                    value={temoignageRole}
+                    onChange={(e) => setTemoignageRole(e.target.value)}
+                    placeholder="Président du club"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Photo de l'auteur" hint="Optionnelle." className="sm:max-w-xs">
+                <ImageUpload
+                  value={temoignagePhoto}
+                  onChange={setTemoignagePhoto}
+                  onRemove={() => setTemoignagePhoto('')}
+                  disabled={isSubmitting}
+                  folder="partenaires/temoignages"
+                />
+              </Field>
+            </div>
+          </SubBlock>
+        </FormSection>
+
+        {/* OFFRE PROMO */}
+        <FormSection
+          id="offre"
+          title="Offre partenaire"
+          description="Avantage réservé aux membres du club."
+          action={
+            <div className="flex items-center gap-2.5 rounded-md border bg-muted/40 px-3 py-1.5">
+              <Label htmlFor="promoActive" className="cursor-pointer text-sm">
+                {promoActive ? 'Offre active' : 'Offre désactivée'}
+              </Label>
+              <Switch
+                id="promoActive"
+                checked={promoActive}
+                onCheckedChange={setPromoActive}
+              />
+            </div>
+          }
+        >
+          {promoActive ? (
+            <>
+              <Field label="Titre de l'offre" htmlFor="promoTitre" required>
+                <Input
+                  id="promoTitre"
+                  value={promoTitre}
+                  onChange={(e) => setPromoTitre(e.target.value)}
+                  placeholder="-10% sur votre première commande"
+                />
+              </Field>
+
+              <Field label="Description" htmlFor="promoDescription">
+                <Textarea
+                  id="promoDescription"
+                  value={promoDescription}
+                  onChange={(e) => setPromoDescription(e.target.value)}
+                  placeholder="Bénéficiez d'une réduction exclusive en tant que membre du HBC Aix-en-Savoie..."
+                  rows={3}
+                />
+              </Field>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field
+                  label="Code promo"
+                  htmlFor="promoCode"
+                  hint="Optionnel. Si vide, le client devra mentionner le club en magasin."
+                >
+                  <Input
+                    id="promoCode"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="HBCAIX10"
+                    className="font-mono uppercase"
+                  />
+                </Field>
+
+                <Field label="Date d'expiration" htmlFor="promoExpiration" hint="Optionnelle.">
+                  <Input
+                    id="promoExpiration"
+                    type="date"
+                    value={promoExpiration}
+                    onChange={(e) => setPromoExpiration(e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Conditions d'utilisation" htmlFor="promoConditions">
+                <Textarea
+                  id="promoConditions"
+                  value={promoConditions}
+                  onChange={(e) => setPromoConditions(e.target.value)}
+                  placeholder="Non cumulable avec d'autres offres. Valable en magasin uniquement."
+                  rows={2}
+                />
+              </Field>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Activez l&apos;offre pour proposer une réduction ou un avantage aux licenciés et à leurs familles.
+            </p>
+          )}
+        </FormSection>
+
+        {/* PUBLICATION */}
+        <FormSection id="publication" title="Publication" description="Visibilité et position sur le site.">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SwitchRow id="published" label="Publié" description="Visible sur la page Partenaires du site.">
+              <Switch
+                id="published"
+                name="published"
+                value="true"
+                defaultChecked={initialData?.published ?? true}
+              />
+            </SwitchRow>
+
+            <SwitchRow id="partenaire_majeur" label="Partenaire majeur" description="Mis en avant parmi les partenaires.">
+              <Switch
+                id="partenaire_majeur"
+                name="partenaire_majeur"
+                value="true"
+                defaultChecked={initialData?.partenaire_majeur}
+              />
+            </SwitchRow>
+          </div>
+
+          <Field
+            label="Ordre d'affichage"
+            htmlFor="ordre"
+            hint="Les plus petits nombres s'affichent en premier. Modifiable aussi par glisser-déposer dans la liste."
+          >
             <Input
               id="ordre"
               name="ordre"
               type="number"
               min="0"
               defaultValue={initialData?.ordre || 0}
+              className="w-32"
             />
-          </div>
+          </Field>
+        </FormSection>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Label htmlFor="partenaire_majeur">Partenaire majeur</Label>
-              <Switch
-                id="partenaire_majeur"
-                name="partenaire_majeur"
-                defaultChecked={initialData?.partenaire_majeur}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Label htmlFor="published">Publié</Label>
-              <Switch
-                id="published"
-                name="published"
-                defaultChecked={initialData?.published ?? true}
-              />
-            </div>
+        {/* ACTIONS */}
+        <div className="sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t bg-card/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:bottom-4 lg:mx-0 lg:rounded-xl lg:border lg:shadow-sm">
+          <p
+            role={formError ? 'alert' : undefined}
+            className={cn('items-center gap-2 text-sm', formError ? 'flex font-medium text-red-600' : 'hidden text-muted-foreground sm:flex')}
+          >
+            {formError ? (
+              <>
+                <CircleAlert className="size-4 shrink-0" />
+                {formError}
+              </>
+            ) : (
+              <span>
+                Champs obligatoires marqués d&apos;un <span className="text-primary-700">*</span>
+              </span>
+            )}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none"
+            >
+              Annuler
+            </Button>
+            <LoadingButton
+              type="submit"
+              isLoading={isSubmitting}
+              className="flex-1 sm:flex-none"
+            >
+              {initialData ? 'Enregistrer' : 'Créer le partenaire'}
+            </LoadingButton>
           </div>
         </div>
-      </div>
-
-      {/* ACTIONS */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <LoadingButton
-          type="submit"
-          isLoading={isSubmitting}
-          className="w-full sm:w-auto"
-        >
-          {initialData ? 'Modifier' : 'Créer'}
-        </LoadingButton>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-          className="w-full sm:w-auto"
-        >
-          Annuler
-        </Button>
       </div>
     </form>
   )

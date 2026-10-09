@@ -1,4 +1,7 @@
 import { notFound } from 'next/navigation'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { formatMatchTime, formatParis } from '@/lib/match-format'
 import { getMatch, getEquipesForSelect, updateMatch } from '../actions'
 import { MatchForm } from '../MatchForm'
 
@@ -22,13 +25,25 @@ export default async function EditMatchPage({ params }: EditMatchPageProps) {
   const updateMatchWithId = updateMatch.bind(null, matchId)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Modifier le match</h1>
-        <p className="text-muted-foreground">
-          {match.equipe.nom} vs {match.adversaire}
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        backHref="/admin/matchs"
+        backLabel="Matchs"
+        title={
+          <>
+            {match.equipe.nom} <span className="font-normal text-muted-foreground">vs</span> {match.adversaire}
+          </>
+        }
+        description={
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <StatusBadge status={match.published ? 'published' : 'draft'} />
+            <span>
+              {formatParis(match.date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} à{' '}
+              {formatMatchTime(match.date)}
+            </span>
+          </span>
+        }
+      />
 
       <MatchForm match={match} equipes={equipes} action={updateMatchWithId} />
     </div>

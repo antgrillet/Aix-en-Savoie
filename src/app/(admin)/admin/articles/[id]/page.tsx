@@ -1,5 +1,10 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowUpRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { formatParis } from '@/lib/match-format'
 import { ArticleForm } from '../ArticleForm'
 import { getArticle, updateArticle } from '../actions'
 
@@ -18,25 +23,31 @@ export default async function EditArticlePage({
   const updateWithId = updateArticle.bind(null, article.id)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Modifier l'article</h1>
-        <p className="text-muted-foreground">
-          Modifiez les informations de l'article
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        backHref="/admin/articles"
+        backLabel="Articles"
+        title="Modifier l'article"
+        description={
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <StatusBadge status={article.published ? 'published' : 'draft'} />
+            {article.vedette && <StatusBadge status="featured" />}
+            <span>
+              Mis à jour le {formatParis(article.updatedAt, { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </span>
+        }
+        actions={
+          <Button variant="outline" asChild>
+            <Link href={`/actus/${article.slug}`} target="_blank" rel="noopener noreferrer">
+              Voir sur le site
+              <ArrowUpRight />
+            </Link>
+          </Button>
+        }
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations de l'article</CardTitle>
-          <CardDescription>
-            Modifiez les informations de l'article
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ArticleForm action={updateWithId} initialData={article} />
-        </CardContent>
-      </Card>
+      <ArticleForm action={updateWithId} initialData={article} />
     </div>
   )
 }

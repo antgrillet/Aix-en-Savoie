@@ -1,28 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { EquipeForm } from '../EquipeForm'
 import { createEquipe } from '../actions'
 
 export default function NewEquipePage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Nouvelle équipe</h1>
-        <p className="text-muted-foreground">
-          Ajoutez une nouvelle équipe du club
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        backHref="/admin/equipes"
+        backLabel="Équipes"
+        title="Nouvelle équipe"
+        description="Ajoutez une équipe du club et ses créneaux d'entraînement"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations de l'équipe</CardTitle>
-          <CardDescription>
-            Remplissez les informations de l'équipe
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EquipeForm action={createEquipe} />
-        </CardContent>
-      </Card>
+      <EquipeForm action={createEquipe} />
     </div>
   )
 }

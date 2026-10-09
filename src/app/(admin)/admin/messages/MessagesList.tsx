@@ -2,30 +2,22 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { Eye, EyeOff, Archive, ArchiveRestore, Trash2, Mail, MoreVertical } from 'lucide-react'
+import { Eye, EyeOff, Archive, ArchiveRestore, Trash2, MailOpen, MoreHorizontal, Inbox } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { deleteMessage, toggleRead, toggleArchived, bulkMarkAsRead } from './actions'
 import { toast } from 'sonner'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { formatParis } from '@/lib/match-format'
+import { cn } from '@/lib/utils'
 import type { ContactMessage } from '@/generated/prisma/client'
 
 interface MessagesListProps {
@@ -106,27 +98,27 @@ export function MessagesList({ initialMessages }: MessagesListProps) {
   const MessageActions = ({ message }: { message: ContactMessage }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreVertical className="w-4 h-4" />
+        <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground hover:text-foreground">
+          <MoreHorizontal />
           <span className="sr-only">Actions</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
           <Link href={`/admin/messages/${message.id}`}>
-            <Eye className="w-4 h-4 mr-2" />
+            <Eye className="mr-2 size-4" />
             Voir
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleToggleRead(message.id)}>
           {message.read ? (
             <>
-              <EyeOff className="w-4 h-4 mr-2" />
+              <EyeOff className="mr-2 size-4" />
               Marquer non lu
             </>
           ) : (
             <>
-              <Eye className="w-4 h-4 mr-2" />
+              <MailOpen className="mr-2 size-4" />
               Marquer lu
             </>
           )}
@@ -134,152 +126,158 @@ export function MessagesList({ initialMessages }: MessagesListProps) {
         <DropdownMenuItem onClick={() => handleToggleArchived(message.id)}>
           {message.archived ? (
             <>
-              <ArchiveRestore className="w-4 h-4 mr-2" />
+              <ArchiveRestore className="mr-2 size-4" />
               Désarchiver
             </>
           ) : (
             <>
-              <Archive className="w-4 h-4 mr-2" />
+              <Archive className="mr-2 size-4" />
               Archiver
             </>
           )}
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => setDeleteId(message.id)}
-          className="text-destructive"
+          className="text-red-600 focus:bg-red-50 focus:text-red-700"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
+          <Trash2 className="mr-2 size-4" />
           Supprimer
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-col items-center px-6 py-16 text-center">
+        <span className="flex size-11 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+          <Inbox className="size-5" />
+        </span>
+        <p className="mt-4 font-display text-base font-semibold">Aucun message</p>
+        <p className="mt-1 text-sm text-muted-foreground">Les messages envoyés depuis le formulaire de contact apparaîtront ici.</p>
+      </div>
+    )
+  }
+
+  const allSelected = selectedIds.length === messages.length && messages.length > 0
+
   return (
     <>
-      {selectedIds.length > 0 && (
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <Button onClick={handleBulkMarkAsRead} size="sm" className="w-full sm:w-auto">
-            <Mail className="w-4 h-4 mr-2" />
-            Marquer comme lu ({selectedIds.length})
-          </Button>
-          <Button
-            onClick={() => setSelectedIds([])}
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Annuler
-          </Button>
-        </div>
-      )}
-
-      {/* Vue Mobile - Cartes */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {messages.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            Aucun message
-          </div>
+      {/* Barre d'outils : sélection groupée */}
+      <div className="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 border-b bg-muted/30 px-4 py-2">
+        <Checkbox
+          checked={allSelected}
+          onCheckedChange={toggleSelectAll}
+          aria-label="Tout sélectionner"
+          className="hidden rounded-[4px] sm:flex"
+        />
+        {selectedIds.length > 0 ? (
+          <>
+            <span className="text-sm font-medium">
+              {selectedIds.length} sélectionné{selectedIds.length > 1 ? 's' : ''}
+            </span>
+            <div className="ml-auto flex gap-2">
+              <Button onClick={() => setSelectedIds([])} variant="ghost" size="sm">
+                Annuler
+              </Button>
+              <Button onClick={handleBulkMarkAsRead} variant="outline" size="sm">
+                <MailOpen />
+                Marquer comme lu
+              </Button>
+            </div>
+          </>
         ) : (
-          messages.map((message) => (
-            <Card key={message.id} className={`overflow-hidden ${!message.read ? 'border-l-4 border-l-primary-500' : ''}`}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-sm truncate">
-                      {message.prenom} {message.nom}
-                    </h3>
-                    <p className="text-xs text-muted-foreground truncate">{message.email}</p>
-                  </div>
-                  <MessageActions message={message} />
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                  {message.message}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1 flex-wrap">
-                    <StatusBadge status={message.read ? 'read' : 'unread'} />
-                    {message.archived && <StatusBadge status="archived" />}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(message.createdAt), 'dd/MM/yy', { locale: fr })}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          <span className="text-sm text-muted-foreground">
+            {messages.length} message{messages.length > 1 ? 's' : ''}
+          </span>
         )}
       </div>
 
-      {/* Vue Desktop - Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedIds.length === messages.length && messages.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead>De</TableHead>
-              <TableHead className="hidden lg:table-cell">Email</TableHead>
-              <TableHead>Message</TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {messages.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  Aucun message
-                </TableCell>
-              </TableRow>
-            ) : (
-              messages.map((message) => (
-                <TableRow key={message.id} className={!message.read ? 'bg-muted/30' : ''}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.includes(message.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedIds([...selectedIds, message.id])
-                        } else {
-                          setSelectedIds(selectedIds.filter((id) => id !== message.id))
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">
-                      {message.prenom} {message.nom}
-                    </div>
-                    <div className="text-xs text-muted-foreground lg:hidden">{message.email}</div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{message.email}</TableCell>
-                  <TableCell className="max-w-[200px] lg:max-w-xs truncate">
-                    {message.message}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {format(new Date(message.createdAt), 'dd MMM yyyy', { locale: fr })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <StatusBadge status={message.read ? 'read' : 'unread'} />
-                      {message.archived && <StatusBadge status="archived" />}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <MessageActions message={message} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Boîte de réception */}
+      <ul className="divide-y">
+        {messages.map((message) => {
+          const unread = !message.read
+          const selected = selectedIds.includes(message.id)
+
+          return (
+            <li
+              key={message.id}
+              className={cn(
+                'group relative flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40',
+                selected && 'bg-primary-50/50 hover:bg-primary-50/70'
+              )}
+            >
+              <Checkbox
+                checked={selected}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedIds([...selectedIds, message.id])
+                  } else {
+                    setSelectedIds(selectedIds.filter((id) => id !== message.id))
+                  }
+                }}
+                aria-label={`Sélectionner le message de ${message.prenom} ${message.nom}`}
+                className="relative z-10 mt-1 hidden rounded-[4px] sm:flex"
+              />
+
+              {/* Indicateur non lu */}
+              <span
+                aria-hidden
+                className={cn('mt-2 size-2 shrink-0 rounded-full', unread ? 'bg-primary-500' : 'bg-transparent')}
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-3">
+                  <Link
+                    href={`/admin/messages/${message.id}`}
+                    className={cn(
+                      'truncate text-sm after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring',
+                      unread ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'
+                    )}
+                  >
+                    {message.prenom} {message.nom}
+                    {unread && <span className="sr-only"> (non lu)</span>}
+                  </Link>
+                  <time
+                    dateTime={new Date(message.createdAt).toISOString()}
+                    title={formatParis(message.createdAt, { dateStyle: 'full', timeStyle: 'short' })}
+                    className={cn(
+                      'shrink-0 text-xs tabular-nums',
+                      unread ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
+                    {formatParis(message.createdAt, { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </time>
+                </div>
+                <p className="truncate text-xs text-muted-foreground">{message.email}</p>
+                <p
+                  className={cn(
+                    'mt-1 line-clamp-2 text-sm sm:line-clamp-1',
+                    unread ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  {message.message}
+                </p>
+                {(message.archived || message.experience) && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {message.archived && <StatusBadge status="archived" />}
+                    {message.experience && (
+                      <span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-800 ring-1 ring-inset ring-primary-600/25">
+                        Souhaite rejoindre le club
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative z-10 -my-1 -mr-2">
+                <MessageActions message={message} />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
 
       <DeleteDialog
         open={deleteId !== null}

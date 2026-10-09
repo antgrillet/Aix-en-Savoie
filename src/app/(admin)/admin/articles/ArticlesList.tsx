@@ -3,28 +3,30 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink, Search, X, MoreVertical } from 'lucide-react'
+import {
+  Edit,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Newspaper,
+  Search,
+  Star,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { DeleteDialog } from '@/components/admin/DeleteDialog'
 import { deleteArticle, togglePublished, toggleVedette } from './actions'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -34,10 +36,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { formatParis } from '@/lib/match-format'
 import type { Article } from '@/generated/prisma/client'
 
 interface ArticlesListProps {
   initialArticles: Article[]
+}
+
+// Date courte, toujours à l'heure de Paris (identique côté serveur et navigateur)
+function formatArticleDate(date: Date) {
+  return formatParis(date, { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function ArticleActions({
+  article,
+  onTogglePublished,
+  onToggleVedette,
+  onDelete,
+}: {
+  article: Article
+  onTogglePublished: () => void
+  onToggleVedette: () => void
+  onDelete: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+          <MoreHorizontal />
+          <span className="sr-only">Actions pour « {article.titre} »</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/articles/${article.id}`}>
+            <Edit />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={`/actus/${article.slug}`} target="_blank" rel="noopener noreferrer">
+            <ExternalLink />
+            Voir sur le site
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onTogglePublished}>
+          {article.published ? (
+            <>
+              <EyeOff />
+              Dépublier
+            </>
+          ) : (
+            <>
+              <Eye />
+              Publier
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onToggleVedette}>
+          <Star className={article.vedette ? 'fill-current' : undefined} />
+          {article.vedette ? 'Retirer de la vedette' : 'Mettre en vedette'}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={onDelete}
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+        >
+          <Trash2 />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 export function ArticlesList({ initialArticles }: ArticlesListProps) {
@@ -88,7 +159,7 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
       setArticles(articles.filter((a) => a.id !== deleteId))
       toast.success('Article supprimé')
       setDeleteId(null)
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(false)
@@ -104,7 +175,7 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
         )
       )
       toast.success('Statut modifié')
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la modification')
     }
   }
@@ -118,225 +189,156 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
         )
       )
       toast.success('Statut vedette modifié')
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la modification')
     }
   }
 
-  const ArticleActions = ({ article }: { article: Article }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreVertical className="w-4 h-4" />
-          <span className="sr-only">Actions</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/admin/articles/${article.id}`}>
-            <Edit className="w-4 h-4 mr-2" />
-            Modifier
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            href={`/actus/${article.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Prévisualiser
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleTogglePublished(article.id)}
-        >
-          {article.published ? (
-            <>
-              <EyeOff className="w-4 h-4 mr-2" />
-              Dépublier
-            </>
-          ) : (
-            <>
-              <Eye className="w-4 h-4 mr-2" />
-              Publier
-            </>
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleToggleVedette(article.id)}
-        >
-          <Star className={`w-4 h-4 mr-2 ${article.vedette ? 'fill-current' : ''}`} />
-          {article.vedette ? 'Retirer vedette' : 'Mettre en vedette'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setDeleteId(article.id)}
-          className="text-destructive"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Supprimer
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-
   return (
     <>
-      {/* Filtres - responsive */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un article..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <Card className="overflow-hidden">
+        {/* Recherche et filtres */}
+        <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un article…"
+              aria-label="Rechercher un article"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 pl-9 md:h-9"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger aria-label="Filtrer par catégorie" className="h-10 md:h-9 md:w-48">
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes catégories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger aria-label="Filtrer par statut" className="h-10 md:h-9 md:w-40">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="published">Publiés</SelectItem>
+                <SelectItem value="draft">Brouillons</SelectItem>
+                <SelectItem value="featured">En vedette</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" onClick={clearFilters} className="col-span-2 h-10 text-muted-foreground md:h-9">
+                <X />
+                Effacer
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[130px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="published">Publiés</SelectItem>
-              <SelectItem value="draft">Brouillons</SelectItem>
-              <SelectItem value="featured">En vedette</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10">
-              <X className="w-4 h-4 mr-1" />
-              Effacer
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="text-sm text-muted-foreground mb-4">
-        {filteredArticles.length} article{filteredArticles.length > 1 ? 's' : ''}
-      </div>
-
-      {/* Vue Mobile - Cartes */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
         {filteredArticles.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
+          <div className="flex flex-col items-center px-6 py-14 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+              <Newspaper className="size-5" />
+            </span>
+            <p className="mt-3 text-sm font-medium">
+              {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hasActiveFilters
+                ? 'Modifiez la recherche ou les filtres.'
+                : 'Les articles créés apparaîtront ici.'}
+            </p>
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                Effacer les filtres
+              </Button>
+            )}
           </div>
         ) : (
-          filteredArticles.map((article) => (
-            <Card key={article.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="flex gap-3 p-4">
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <Image
-                      src={article.image}
-                      alt={article.titre}
-                      fill
-                      className="object-cover"
+          <table className="w-full text-sm">
+            <thead className="hidden border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground md:table-header-group">
+              <tr>
+                <th scope="col" className="px-4 py-3 font-medium">Article</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Catégorie</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">Date</th>
+                <th scope="col" className="hidden px-4 py-3 text-right font-medium xl:table-cell">Vues</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Statut</th>
+                <th scope="col" className="w-14 px-4 py-3">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filteredArticles.map((article) => (
+                <tr key={article.id} className="transition-colors hover:bg-muted/40">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                        <Image src={article.image} alt="" fill sizes="64px" className="object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <Link
+                          href={`/admin/articles/${article.id}`}
+                          className="line-clamp-2 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:line-clamp-1"
+                        >
+                          {article.titre}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-muted-foreground lg:hidden">
+                          {article.categorie} · {formatArticleDate(article.date)}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                          <StatusBadge status={article.published ? 'published' : 'draft'} />
+                          {article.vedette && <StatusBadge status="featured" />}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {article.categorie}
+                    </span>
+                  </td>
+                  <td className="hidden whitespace-nowrap px-4 py-3 text-muted-foreground lg:table-cell">
+                    {formatArticleDate(article.date)}
+                  </td>
+                  <td className="hidden px-4 py-3 text-right tabular-nums text-muted-foreground xl:table-cell">
+                    {article.views}
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
+                    <div className="flex flex-wrap gap-1.5">
+                      <StatusBadge status={article.published ? 'published' : 'draft'} />
+                      {article.vedette && <StatusBadge status="featured" />}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-right sm:px-4">
+                    <ArticleActions
+                      article={article}
+                      onTogglePublished={() => handleTogglePublished(article.id)}
+                      onToggleVedette={() => handleToggleVedette(article.id)}
+                      onDelete={() => setDeleteId(article.id)}
                     />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-sm line-clamp-2">{article.titre}</h3>
-                      <ArticleActions article={article} />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {article.categorie} • {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <StatusBadge status={article.published ? 'published' : 'draft'} />
-                      {article.vedette && <StatusBadge status="featured" />}
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {article.views}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-      </div>
 
-      {/* Vue Desktop - Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Titre</TableHead>
-              <TableHead className="hidden lg:table-cell">Catégorie</TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="hidden lg:table-cell">Vues</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredArticles.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredArticles.map((article) => (
-                <TableRow key={article.id}>
-                  <TableCell>
-                    <div className="relative w-14 h-14 rounded overflow-hidden bg-muted">
-                      <Image
-                        src={article.image}
-                        alt={article.titre}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium line-clamp-1 max-w-[200px] lg:max-w-[300px]">
-                      {article.titre}
-                    </div>
-                    <div className="text-xs text-muted-foreground lg:hidden mt-1">
-                      {article.categorie} • {format(new Date(article.date), 'dd/MM/yy', { locale: fr })}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{article.categorie}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <StatusBadge status={article.published ? 'published' : 'draft'} />
-                      {article.vedette && <StatusBadge status="featured" />}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{article.views}</TableCell>
-                  <TableCell className="text-right">
-                    <ArticleActions article={article} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+        <div className="border-t bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          {hasActiveFilters
+            ? `${filteredArticles.length} sur ${articles.length} article${articles.length > 1 ? 's' : ''}`
+            : `${articles.length} article${articles.length > 1 ? 's' : ''}`}
+        </div>
+      </Card>
 
       <DeleteDialog
         open={deleteId !== null}
