@@ -1,102 +1,93 @@
-# Système de Synchronisation des Matchs
+# Synchronisation des matchs
 
-Ce système synchronise automatiquement les matchs depuis le site FFHB vers la base de données.
+Les matchs, les salles et les classements sont lus sur le site FFHandball et enregistrés en base.
 
 ## Fonctionnement
 
-Le système utilise :
-- **Playwright** pour scraper les pages FFHB
-- **Node-cron** pour les tâches planifiées
-- **Prisma** pour la base de données
+Le site fédéral embarque les données de chaque page en JSON dans le HTML (balises
+`<smartfire-component>`). Un simple `fetch` suffit : **aucun navigateur, aucun Playwright**.
 
-## Calendrier de Synchronisation
+Pour chaque équipe publiée qui a un lien FFHandball :
 
-Les matchs sont synchronisés automatiquement :
-- **Quotidien** : Tous les jours à 7h00
-- **Vendredi** : À 18h00 (avant le weekend)
-- **Dimanche** : À 20h00 (après le weekend)
+1. la page « équipe » de la compétition donne tout le calendrier de la saison, les scores et le classement ;
+2. la salle est lue sur la page détail d'un match, une seule fois par salle (cache dans le réglage `ffhb_salles`) ;
+3. chaque rencontre est rapprochée d'un match en base (même adversaire, à moins d'un jour) puis créée ou mise à jour.
 
-Le système ne synchronise que les matchs de **cette semaine et de la semaine prochaine**.
+Règles métier :
 
-## Synchronisation Manuelle
+- **Domicile / extérieur** : l'équipe citée en premier reçoit. En plateau (moins de 11, moins de 9),
+  l'ordre ne veut rien dire : on est à domicile quand la salle est à Aix-les-Bains (73100).
+- **Plateaux** : la fédération affiche « 1 - 1 » pour un match joué dont le score n'est pas compté.
+  Le match est alors marqué joué, sans score.
+- **Forfait** (« FO ») : zéro but pour l'équipe forfait.
+- **Match sans date réelle** (pas de date, ou minuit) : ignoré jusqu'à ce qu'il soit programmé.
+- **Matchs absents de FFHandball** (reportés, anciens doublons) : signalés dans le journal, jamais supprimés.
 
-### Via la ligne de commande
+## Planification
+
+GitHub Actions (`.github/workflows/sync-matches.yml`) :
+
+- tous les jours à 7h00 ;
+- vendredi à 18h00 ;
+- samedi à 22h30 ;
+- dimanche à 20h00.
+
+Le job échoue si une équipe est en erreur, pour que le problème soit visible.
+
+## Lancer à la main
 
 ```bash
-bun run sync:matches
+bun run sync:matches     # toutes les équipes
+bun run test:sync        # tests de la lecture FFHandball et de la page résultats
 ```
 
-### Via l'interface admin
+Dans l'admin : bouton « Synchroniser les matchs » sur une équipe (appel direct à FFHandball),
+ou déclenchement du workflow complet via `POST /api/sync/matches` (`GITHUB_TOKEN`, `GITHUB_REPO`).
 
-Accédez à `/admin` et cliquez sur le bouton de synchronisation.
+## Lien d'une équipe
 
-### Via l'API
+Champ « Lien calendrier matches » de l'équipe. Le lien d'équipe est le plus sûr :
 
-**GET** `/api/sync/matches` (nécessite authentification admin)
-
-**POST** `/api/sync/matches` (pour les cron jobs externes, nécessite le token CRON_SECRET)
-
-## Configuration
-
-### Variables d'environnement
-
-```env
-# Pour activer les cron jobs en développement (optionnel)
-ENABLE_CRON=true
-
-# Pour les cron jobs externes (Vercel Cron, etc.)
-CRON_SECRET=your_secret_token_here
+```
+https://www.ffhandball.fr/competitions/saison-2026-2027-22/regional/excellence-masculin-aura-30497/equipe-2117212/
 ```
 
-### Ajout d'une équipe
+Un lien de poule est accepté tant qu'une seule équipe du club y joue.
 
-1. Dans Prisma Studio ou l'interface admin, ajouter une équipe
-2. Renseigner le champ `matches` avec l'URL de la poule sur FFHB
-3. La synchronisation se fera automatiquement
+**À chaque nouvelle saison ou nouvelle phase**, les liens changent. Pour les retrouver :
 
-Exemple d'URL :
-```
-https://www.ffhandball.fr/competitions/saison-2025-2026-21/regional/prenationale-feminine-aura-27880/poule-168418/
+```bash
+bun run ffhb:equipes                       # saison en cours
+bun run ffhb:equipes saison-2027-2028-23   # autre saison
 ```
 
-## Logs de Synchronisation
+La commande parcourt les compétitions du Comité de Savoie et de la ligue AURA et affiche, pour chaque
+équipe du club, le lien à coller dans l'admin. Les championnats nationaux sont à copier à la main.
 
-Les logs de synchronisation sont stockés dans la table `SyncLog` :
-- Status : success / error / warning
-- Message : détail de la synchronisation
-- Statistiques : matchs créés, mis à jour, ignorés
+## Journal
+
+Table `SyncLog` : statut (`success` / `error`), message, matchs créés, mis à jour, inchangés.
+La page admin « Résultats » affiche la date de la dernière synchronisation réussie.
 
 ## Architecture
 
 ```
-src/
-├── lib/
-│   ├── scraping/
-│   │   └── ffhandball.ts        # Scraper FFHB
-│   ├── sync-matches.ts          # Logique de synchronisation
-│   └── cron.ts                  # Configuration des cron jobs
-├── app/api/sync/matches/
-│   └── route.ts                 # Route API de synchronisation
-└── instrumentation.ts           # Démarrage des cron jobs
+src/lib/
+├── ffhandball/
+│   ├── donnees.ts          # Lecture et conversion des pages (pur, testé)
+│   └── client.ts           # Appels réseau à www.ffhandball.fr
+├── sync-matches.ts         # Rapprochement avec la base, cache des salles
+├── resultats-weekend.ts    # Calculs de la page admin « Résultats »
+└── cron.ts                 # Planification locale optionnelle (ENABLE_CRON)
 
 scripts/
-└── sync-matches.ts              # Script CLI pour test manuel
+├── sync-matches.ts         # Synchronisation complète
+└── ffhb-equipes.ts         # Retrouver les liens des équipes du club
 ```
 
 ## Dépannage
 
-### Les matchs ne se synchronisent pas
-
-1. Vérifier que le champ `matches` de l'équipe contient une URL valide
-2. Vérifier les logs dans la table `SyncLog`
-3. Tester manuellement avec `bun run sync:matches`
-
-### Le scraper échoue
-
-Le scraper gère automatiquement :
-- Les différents formats de scores (U15 avec 5 chiffres, Seniors avec 4 chiffres)
-- Les matchs à venir (format `--`) et terminés
-- La détection automatique domicile/extérieur
-- La popup de cookies FFHB
-
-Si le scraper échoue, vérifier que la structure HTML du site FFHB n'a pas changé.
+- **Une équipe n'a plus de matchs** : son lien date d'une autre saison ou phase. Relancer `bun run ffhb:equipes`.
+- **« Aucune équipe du club dans cette poule »** : même cause.
+- **Plus rien ne remonte pour personne** : la structure des pages FFHandball a changé ; voir `donnees.ts`
+  (noms des blocs `competitions---…`).

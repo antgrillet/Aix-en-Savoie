@@ -1,240 +1,343 @@
-import { prisma } from './prisma';
-import { scrapeFFHandballMatches, scrapeFFHandballPlateauMatches, scrapeFFHandballClassement, isPlateauCategory } from './scraping/ffhandball';
+import { prisma } from './prisma'
+import { chargerCalendrierEquipe, chargerSalle, pause } from './ffhandball/client'
+import {
+  LIEU_INCONNU,
+  cleEquipe,
+  trouverExistant,
+  validerSalle,
+  versMatch,
+  type RencontreFfhb,
+  type SalleFfhb,
+} from './ffhandball/donnees'
+import { estCategoriePlateau } from './resultats-weekend'
 
-interface SyncResult {
-  equipeId: number;
-  equipeNom: string;
-  status: 'success' | 'error' | 'warning';
-  message: string;
-  matchesCreated: number;
-  matchesUpdated: number;
-  matchesSkipped: number;
-  classementUpdated: number;
+export interface SyncResult {
+  equipeId: number
+  equipeNom: string
+  status: 'success' | 'error'
+  message: string
+  matchesCreated: number
+  matchesUpdated: number
+  matchesSkipped: number
+  classementUpdated: number
+  /** Matchs en base, sur la période couverte, que la fédération ne liste plus. */
+  orphelins: string[]
 }
 
+// ============================================
+// Salles : la fédération ne donne la salle que sur la page détail d'un match.
+// On garde donc en base ce qu'on a déjà lu, par identifiant de salle.
+// ============================================
+
+const CLE_SALLES = 'ffhb_salles'
+
+export type CacheSalles = {
+  salles: Map<string, SalleFfhb>
+  modifie: boolean
+}
+
+export async function chargerCacheSalles(): Promise<CacheSalles> {
+  const salles = new Map<string, SalleFfhb>()
+  const reglage = await prisma.setting.findUnique({ where: { key: CLE_SALLES } })
+  if (reglage) {
+    try {
+      const contenu: unknown = JSON.parse(reglage.value)
+      if (contenu && typeof contenu === 'object') {
+        for (const [id, brute] of Object.entries(contenu as Record<string, unknown>)) {
+          const salle = validerSalle(brute)
+          if (salle && salle.id === id) salles.set(id, salle)
+        }
+      }
+    } catch {
+      // Cache illisible : il sera reconstruit
+    }
+  }
+  return { salles, modifie: false }
+}
+
+export async function enregistrerCacheSalles(cache: CacheSalles): Promise<void> {
+  if (!cache.modifie) return
+  const value = JSON.stringify(Object.fromEntries(cache.salles))
+  await prisma.setting.upsert({
+    where: { key: CLE_SALLES },
+    update: { value },
+    create: {
+      key: CLE_SALLES,
+      value,
+      type: 'json',
+      description: 'Salles FFHandball déjà lues (cache de la synchronisation des matchs)',
+    },
+  })
+  cache.modifie = false
+}
+
+async function trouverSalle(
+  rencontre: RencontreFfhb,
+  racine: string,
+  cache: CacheSalles
+): Promise<SalleFfhb | null> {
+  if (!rencontre.equipementId) return null
+  const connue = cache.salles.get(rencontre.equipementId)
+  if (connue) return connue
+  if (!rencontre.extPouleId) return null
+
+  try {
+    await pause()
+    const salle = await chargerSalle(racine, rencontre.extPouleId, rencontre.extRencontreId)
+    // On ne mémorise que si la page détail confirme l'identifiant de la liste
+    if (salle && salle.id === rencontre.equipementId) {
+      cache.salles.set(rencontre.equipementId, salle)
+      cache.modifie = true
+    }
+    return salle
+  } catch (erreur) {
+    console.warn(`  ⚠️  Salle introuvable pour ${rencontre.adversaire}:`, erreur)
+    return null
+  }
+}
+
+// ============================================
+// Synchronisation d'une équipe
+// ============================================
+
+const UN_JOUR = 24 * 60 * 60 * 1000
+
 /**
- * Synchronise les matchs d'une équipe
+ * Synchronise les matchs et le classement d'une équipe depuis FFHandball.
+ * Sans `cache`, les salles sont chargées et enregistrées par l'appel lui-même.
  */
 export async function syncTeamMatches(
   equipeId: number,
   equipeNom: string,
   calendrierUrl: string,
-  categorie?: string
+  categorie?: string,
+  cache?: CacheSalles
 ): Promise<SyncResult> {
-  let matchesCreated = 0;
-  let matchesUpdated = 0;
-  let matchesSkipped = 0;
+  let matchesCreated = 0
+  let matchesUpdated = 0
+  let matchesSkipped = 0
+  const cacheSalles = cache ?? (await chargerCacheSalles())
 
   try {
-    console.log(`🔄 Synchronisation de ${equipeNom}...`);
+    console.log(`🔄 Synchronisation de ${equipeNom}...`)
 
-    // Utiliser le scraper plateau pour les catégories -11 et -9
-    const isPlateau = categorie ? isPlateauCategory(categorie) : false
-    const scrapedMatches = isPlateau
-      ? await scrapeFFHandballPlateauMatches(calendrierUrl, equipeNom)
-      : await scrapeFFHandballMatches(calendrierUrl, equipeNom);
+    const plateau = categorie ? estCategoriePlateau(categorie) : false
+    const calendrier = await chargerCalendrierEquipe(calendrierUrl)
+    const datees = calendrier.rencontres.filter(
+      (rencontre): rencontre is RencontreFfhb & { date: Date } => rencontre.date !== null
+    )
+    console.log(
+      `  ℹ️  ${calendrier.equipe.libelle} — ${datees.length} matchs datés sur ${calendrier.rencontres.length}`
+    )
 
-    console.log(`  ℹ️  ${scrapedMatches.length} matchs trouvés`);
+    const orphelins: string[] = []
 
-    // Synchroniser chaque match (passés et futurs)
-    for (const matchData of scrapedMatches) {
-      // Vérifier si le match existe déjà (même adversaire et date proche)
-      const existingMatch = await prisma.match.findFirst({
+    if (datees.length > 0) {
+      const debut = Math.min(...datees.map((rencontre) => rencontre.date.getTime()))
+      const fin = Math.max(...datees.map((rencontre) => rencontre.date.getTime()))
+      const existants = await prisma.match.findMany({
         where: {
           equipeId,
-          adversaire: matchData.adversaire,
-          date: {
-            gte: new Date(matchData.date.getTime() - 24 * 60 * 60 * 1000),
-            lte: new Date(matchData.date.getTime() + 24 * 60 * 60 * 1000),
-          },
+          date: { gte: new Date(debut - UN_JOUR), lte: new Date(fin + UN_JOUR) },
         },
-      });
+      })
+      const associes = new Set<number>()
 
-      if (existingMatch) {
-        const dateChanged = existingMatch.date.getTime() !== matchData.date.getTime();
-        const domicileChanged = existingMatch.domicile !== matchData.domicile;
-        const logoChanged = matchData.logoAdversaire !== existingMatch.logoAdversaire;
-        const scoreChanged =
-          existingMatch.scoreEquipe !== matchData.scoreEquipe ||
-          existingMatch.scoreAdversaire !== matchData.scoreAdversaire ||
-          existingMatch.termine !== matchData.termine;
-        const lieuChanged = existingMatch.lieu !== matchData.lieu && matchData.lieu !== 'À déterminer';
-        const competitionChanged = existingMatch.competition !== matchData.competition && matchData.competition;
+      for (const rencontre of datees) {
+        const salle = await trouverSalle(rencontre, calendrier.racine, cacheSalles)
+        const match = versMatch(rencontre, salle, calendrier.competition, plateau)
+        const existant = trouverExistant(existants, match, associes)
 
-        const updateData: Parameters<typeof prisma.match.update>[0]['data'] = {};
-        if (dateChanged) updateData.date = matchData.date;
-        if (domicileChanged) updateData.domicile = matchData.domicile;
-        if (scoreChanged) {
-          updateData.scoreEquipe = matchData.scoreEquipe;
-          updateData.scoreAdversaire = matchData.scoreAdversaire;
-          updateData.termine = matchData.termine;
+        const { domicileFiable, competition, ...champs } = match
+
+        if (!existant) {
+          await prisma.match.create({
+            data: { equipeId, ...champs, competition: competition ?? 'Championnat', published: true },
+          })
+          matchesCreated++
+          console.log(`  ➕ Match créé: ${match.adversaire}`)
+          continue
         }
-        if (logoChanged) updateData.logoAdversaire = matchData.logoAdversaire;
-        if (lieuChanged) updateData.lieu = matchData.lieu;
-        if (competitionChanged) updateData.competition = matchData.competition;
 
-        if (Object.keys(updateData).length > 0) {
-          await prisma.match.update({
-            where: { id: existingMatch.id },
-            data: {
-              ...updateData,
-            },
-          });
-          matchesUpdated++;
-          console.log(`  ✅ Match mis à jour: ${matchData.adversaire}`);
+        associes.add(existant.id)
+        const data: Parameters<typeof prisma.match.update>[0]['data'] = {}
+        if (existant.adversaire !== match.adversaire) data.adversaire = match.adversaire
+        if (existant.date.getTime() !== match.date.getTime()) data.date = match.date
+        // Un domicile de repli (plateau sans salle connue) n'écrase pas l'existant
+        if (domicileFiable && existant.domicile !== match.domicile) data.domicile = match.domicile
+        // Un résultat ne recule jamais : un score vide côté fédération n'efface
+        // ni un score déjà connu ni un match déjà marqué comme joué.
+        if (match.termine) {
+          if (match.scoreEquipe !== null && match.scoreAdversaire !== null) {
+            if (
+              existant.scoreEquipe !== match.scoreEquipe ||
+              existant.scoreAdversaire !== match.scoreAdversaire ||
+              !existant.termine
+            ) {
+              data.scoreEquipe = match.scoreEquipe
+              data.scoreAdversaire = match.scoreAdversaire
+              data.termine = true
+            }
+          } else if (!existant.termine) {
+            data.termine = true
+          }
+        }
+        if (existant.logoAdversaire !== match.logoAdversaire && match.logoAdversaire) {
+          data.logoAdversaire = match.logoAdversaire
+        }
+        // Une salle saisie à la main n'est pas écrasée par « À déterminer »
+        if (existant.lieu !== match.lieu && match.lieu !== LIEU_INCONNU) data.lieu = match.lieu
+        if (competition && existant.competition !== competition) data.competition = competition
+
+        if (Object.keys(data).length > 0) {
+          await prisma.match.update({ where: { id: existant.id }, data })
+          matchesUpdated++
+          console.log(`  ✅ Match mis à jour: ${match.adversaire}`)
         } else {
-          matchesSkipped++;
+          matchesSkipped++
         }
-      } else {
-        // Créer le nouveau match
-        await prisma.match.create({
-          data: {
-            equipeId,
-            adversaire: matchData.adversaire,
-            date: matchData.date,
-            lieu: matchData.lieu,
-            domicile: matchData.domicile,
-            competition: matchData.competition,
-            scoreEquipe: matchData.scoreEquipe,
-            scoreAdversaire: matchData.scoreAdversaire,
-            logoAdversaire: matchData.logoAdversaire,
-            termine: matchData.termine,
-            published: true,
-          },
-        });
-        matchesCreated++;
-        console.log(`  ➕ Match créé: ${matchData.adversaire}`);
+      }
+
+      // Matchs en base que la fédération ne liste plus (reportés, doublons d'une
+      // ancienne synchronisation). Ils sont signalés, jamais supprimés : des
+      // inscriptions de bénévoles peuvent y être rattachées.
+      const adversairesConnus = new Set(datees.map((rencontre) => cleEquipe(rencontre.adversaire)))
+      for (const existant of existants) {
+        if (associes.has(existant.id)) continue
+        const date = existant.date.toISOString().slice(0, 10)
+        const motif = adversairesConnus.has(cleEquipe(existant.adversaire))
+          ? 'date différente'
+          : 'adversaire absent du calendrier'
+        orphelins.push(`${existant.adversaire} (${date}, ${motif})`)
+      }
+      if (orphelins.length > 0) {
+        console.log(`  ⚠️  ${orphelins.length} match(s) en base absents de FFHandball:`)
+        orphelins.forEach((orphelin) => console.log(`       - ${orphelin}`))
       }
     }
 
-    // Synchroniser le classement
-    let classementUpdated = 0;
-    try {
-      console.log(`🏆 Synchronisation du classement pour ${equipeNom}...`);
-      const scrapedClassement = await scrapeFFHandballClassement(calendrierUrl);
-      console.log(`📊 ${scrapedClassement.length} équipes récupérées dans le classement`);
-
-      await prisma.classement.deleteMany({ where: { equipeId } });
-      for (const team of scrapedClassement) {
-        await prisma.classement.create({
-          data: {
-            equipeId,
-            position: team.position,
-            club: team.club,
-            points: team.points,
-          },
-        });
-      }
-      classementUpdated = scrapedClassement.length;
-      console.log(`✅ Classement mis à jour: ${classementUpdated} équipes`);
-    } catch (classementError) {
-      console.error(`⚠️  Erreur classement pour ${equipeNom}:`, classementError);
+    // Classement : remplacé d'un bloc, et seulement s'il a été lu en entier.
+    // Un bloc absent ou partiel laisse le classement en base tel quel.
+    const classement = calendrier.classement
+    if (classement) {
+      await prisma.$transaction([
+        prisma.classement.deleteMany({ where: { equipeId } }),
+        prisma.classement.createMany({
+          data: classement.map((ligne) => ({ equipeId, ...ligne })),
+        }),
+      ])
+    } else {
+      console.log('  ⚠️  Classement illisible sur FFHandball : classement en base conservé')
     }
+    const classementUpdated = classement?.length ?? 0
 
-    // Logger la synchronisation
+    const resume = `${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} inchangés. Classement: ${classementUpdated} équipes`
     await prisma.syncLog.create({
       data: {
         equipeId,
         type: 'matches',
         status: 'success',
-        message: `Synchronisation réussie: ${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} ignorés. Classement: ${classementUpdated} équipes`,
+        message:
+          orphelins.length > 0
+            ? `${resume}. ${orphelins.length} match(s) en base absents de FFHandball: ${orphelins.join(' ; ')}`
+            : resume,
         matchesCreated,
         matchesUpdated,
         matchesSkipped,
       },
-    });
+    })
+
+    if (!cache) await enregistrerCacheSalles(cacheSalles)
 
     return {
       equipeId,
       equipeNom,
       status: 'success',
-      message: `✅ ${matchesCreated} créés, ${matchesUpdated} mis à jour. Classement: ${classementUpdated}`,
+      message: resume,
       matchesCreated,
       matchesUpdated,
       matchesSkipped,
       classementUpdated,
-    };
+      orphelins,
+    }
   } catch (error) {
-    console.error(`  ❌ Erreur pour ${equipeNom}:`, error);
+    const message = error instanceof Error ? error.message : 'Erreur inconnue'
+    console.error(`  ❌ Erreur pour ${equipeNom}:`, message)
 
-    // Logger l'erreur
-    await prisma.syncLog.create({
-      data: {
-        equipeId,
-        type: 'matches',
-        status: 'error',
-        message: error instanceof Error ? error.message : 'Erreur inconnue',
-        matchesCreated: 0,
-        matchesUpdated: 0,
-        matchesSkipped: 0,
-      },
-    });
+    // Si la base elle-même est en cause, l'équipe suivante doit quand même être traitée
+    try {
+      await prisma.syncLog.create({
+        data: {
+          equipeId,
+          type: 'matches',
+          status: 'error',
+          message,
+          matchesCreated,
+          matchesUpdated,
+          matchesSkipped,
+        },
+      })
+      if (!cache) await enregistrerCacheSalles(cacheSalles)
+    } catch (erreurJournal) {
+      console.error('  ❌ Journal de synchronisation non enregistré:', erreurJournal)
+    }
 
     return {
       equipeId,
       equipeNom,
       status: 'error',
-      message: error instanceof Error ? error.message : 'Erreur inconnue',
-      matchesCreated: 0,
-      matchesUpdated: 0,
-      matchesSkipped: 0,
+      message,
+      matchesCreated,
+      matchesUpdated,
+      matchesSkipped,
       classementUpdated: 0,
-    };
+      orphelins: [],
+    }
   }
 }
 
 /**
- * Synchronise les matchs et classements de toutes les équipes
+ * Synchronise les matchs et classements de toutes les équipes publiées
+ * qui ont un lien FFHandball.
  */
 export async function syncAllMatches(): Promise<SyncResult[]> {
-  const results: SyncResult[] = [];
+  const results: SyncResult[] = []
 
-  // Récupérer toutes les équipes publiées avec leur lien calendrier
   const equipes = await prisma.equipe.findMany({
-    where: {
-      published: true,
-      matches: { not: null },
-    },
-    select: {
-      id: true,
-      nom: true,
-      categorie: true,
-      matches: true,
-    },
-  });
+    where: { published: true, matches: { not: null } },
+    orderBy: { ordre: 'asc' },
+    select: { id: true, nom: true, categorie: true, matches: true },
+  })
 
-  console.log(`📅 Synchronisation de ${equipes.length} équipes`);
+  console.log(`📅 Synchronisation de ${equipes.length} équipes`)
+  const cache = await chargerCacheSalles()
 
   for (const equipe of equipes) {
-    if (!equipe.matches) continue;
+    if (!equipe.matches?.trim()) continue
 
-    const result = await syncTeamMatches(equipe.id, equipe.nom, equipe.matches, equipe.categorie);
-    results.push(result);
-
-    // Attendre un peu entre chaque équipe pour ne pas surcharger le serveur
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    results.push(
+      await syncTeamMatches(equipe.id, equipe.nom, equipe.matches, equipe.categorie, cache)
+    )
+    // Les salles déjà lues sont gardées même si une équipe suivante échoue
+    await enregistrerCacheSalles(cache)
+    await pause()
   }
 
-  // Afficher le résumé
-  console.log('\n📊 Résultats de la synchronisation:');
-  console.log('=====================================');
+  const total = (champ: 'matchesCreated' | 'matchesUpdated' | 'matchesSkipped') =>
+    results.reduce((somme, resultat) => somme + resultat[champ], 0)
+  const erreurs = results.filter((resultat) => resultat.status === 'error')
 
-  const totalCreated = results.reduce((sum, r) => sum + r.matchesCreated, 0);
-  const totalUpdated = results.reduce((sum, r) => sum + r.matchesUpdated, 0);
-  const totalSkipped = results.reduce((sum, r) => sum + r.matchesSkipped, 0);
-  const errors = results.filter((r) => r.status === 'error');
+  console.log('\n📊 Résultats de la synchronisation:')
+  console.log('=====================================')
+  console.log(`✅ Matchs créés: ${total('matchesCreated')}`)
+  console.log(`🔄 Matchs mis à jour: ${total('matchesUpdated')}`)
+  console.log(`⏭️  Matchs inchangés: ${total('matchesSkipped')}`)
+  console.log(`❌ Erreurs: ${erreurs.length}`)
 
-  console.log(`✅ Matchs créés: ${totalCreated}`);
-  console.log(`🔄 Matchs mis à jour: ${totalUpdated}`);
-  console.log(`⏭️  Matchs ignorés: ${totalSkipped}`);
-  console.log(`❌ Erreurs: ${errors.length}`);
-
-  if (errors.length > 0) {
-    console.log('\nDétail des erreurs:');
-    errors.forEach((error) => {
-      console.log(`  - ${error.equipeNom}: ${error.message}`);
-    });
+  if (erreurs.length > 0) {
+    console.log('\nDétail des erreurs:')
+    erreurs.forEach((erreur) => console.log(`  - ${erreur.equipeNom}: ${erreur.message}`))
   }
 
-  return results;
+  return results
 }

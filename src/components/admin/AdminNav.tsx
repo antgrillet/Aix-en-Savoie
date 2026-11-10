@@ -22,6 +22,7 @@ import {
   LogOut,
   Trophy,
   ClipboardList,
+  Medal,
   Menu,
 } from 'lucide-react'
 
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Articles', href: '/admin/articles', icon: Newspaper },
   { name: 'Équipes', href: '/admin/equipes', icon: Users },
   { name: 'Matchs', href: '/admin/matchs', icon: Trophy },
+  { name: 'Résultats', href: '/admin/resultats', icon: Medal },
   { name: 'Inscriptions', href: '/admin/inscriptions', icon: ClipboardList },
   { name: 'Partenaires', href: '/admin/partenaires', icon: Handshake },
   { name: 'Messages', href: '/admin/messages', icon: MessageSquare },

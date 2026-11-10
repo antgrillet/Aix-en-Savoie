@@ -1,42 +1,49 @@
 /**
- * Script pour tester la synchronisation des matchs manuellement
+ * Synchronise les matchs et classements de toutes les équipes depuis FFHandball.
  *
  * Usage:
  *   bun run sync:matches
  */
 
-import { syncAllMatches } from '../src/lib/sync-matches';
+import { prisma } from '../src/lib/prisma'
+import { syncAllMatches } from '../src/lib/sync-matches'
 
 async function main() {
-  console.log('🚀 Démarrage de la synchronisation manuelle des matchs...\n');
+  console.log('🚀 Démarrage de la synchronisation des matchs...\n')
 
-  try {
-    const results = await syncAllMatches();
+  const results = await syncAllMatches()
 
-    console.log('\n' + '='.repeat(50));
-    console.log('✅ Synchronisation terminée avec succès !');
-    console.log('='.repeat(50));
-
-    // Afficher un résumé détaillé
-    console.log('\n📋 Résumé par équipe:');
-    results.forEach((result) => {
-      const icon = result.status === 'success' ? '✅' : '❌';
-      console.log(`\n${icon} ${result.equipeNom}`);
-      if (result.status === 'success') {
-        console.log(`   Créés: ${result.matchesCreated}`);
-        console.log(`   Mis à jour: ${result.matchesUpdated}`);
-        console.log(`   Ignorés: ${result.matchesSkipped}`);
-        console.log(`   Classement: ${result.classementUpdated} équipes`);
-      } else {
-        console.log(`   Erreur: ${result.message}`);
+  console.log('\n📋 Résumé par équipe:')
+  for (const result of results) {
+    if (result.status === 'success') {
+      console.log(`\n✅ ${result.equipeNom}`)
+      console.log(`   ${result.message}`)
+      if (result.orphelins.length > 0) {
+        console.log(`   À vérifier (absents de FFHandball): ${result.orphelins.join(' ; ')}`)
       }
-    });
-
-    process.exit(0);
-  } catch (error) {
-    console.error('\n❌ Erreur fatale:', error);
-    process.exit(1);
+    } else {
+      console.log(`\n❌ ${result.equipeNom}`)
+      console.log(`   Erreur: ${result.message}`)
+    }
   }
+
+  const erreurs = results.filter((result) => result.status === 'error').length
+  await prisma.$disconnect()
+
+  // Une équipe en erreur ne doit pas passer inaperçue dans GitHub Actions
+  if (results.length > 0 && erreurs === results.length) {
+    console.error('\n❌ Toutes les équipes ont échoué')
+    process.exit(1)
+  }
+  if (erreurs > 0) {
+    console.error(`\n⚠️  ${erreurs} équipe(s) en erreur sur ${results.length}`)
+    process.exit(2)
+  }
+  console.log('\n✅ Synchronisation terminée')
 }
 
-main();
+main().catch(async (error) => {
+  console.error('\n❌ Erreur fatale:', error)
+  await prisma.$disconnect().catch(() => {})
+  process.exit(1)
+})

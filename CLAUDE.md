@@ -24,6 +24,8 @@ bun prisma:reset     # Reset database
 
 # Match sync from FFHANDBALL
 bun sync:matches     # Sync match data (scripts/sync-matches.ts)
+bun ffhb:equipes     # List the club's teams on FFHANDBALL with the link to set in the admin
+bun test:sync        # Tests for the FFHANDBALL reader and the admin results page
 
 # Auth schema
 bun auth:generate    # Generate the Better Auth Prisma schema
@@ -37,11 +39,11 @@ bun auth:generate    # Generate the Better Auth Prisma schema
 - `src/app/api/` - API routes (auth, admin, calendrier, contact, sync, upload)
 
 ### Key Directories
-- `src/lib/` - Core utilities: auth (better-auth), prisma client, email, animations, match sync
+- `src/lib/` - Core utilities: auth (better-auth), prisma client, email, animations, match sync (`sync-matches.ts`, `ffhandball/`)
 - `src/components/ui/` - shadcn/ui components (New York style)
 - `src/components/` - Feature components organized by domain (admin, home, teams, calendrier, etc.)
 - `src/lib/validations/` - Zod schemas for forms (article, equipe, partenaire, setting)
-- `scripts/` - Admin/maintenance scripts (managed by Bun; Playwright sync runs on Node via `tsx`)
+- `scripts/` - Admin/maintenance scripts and `bun test` files (run with Bun)
 
 ### Authentication
 Uses `better-auth` with Prisma adapter. Protected routes checked in `middleware.ts` via session cookie. Admin login at `/login`, dashboard at `/admin`.
@@ -52,10 +54,11 @@ Main entities: Article, Equipe (team), Match, Partenaire (partner), ContactMessa
 ### External Integrations
 - **Vercel Blob** - Image uploads (`@vercel/blob`)
 - **Resend** - Email sending
-- **FFHANDBALL** - Match data scraping via Playwright (`src/lib/scraping/`)
+- **FFHANDBALL** - Matches, venues and standings read with plain `fetch` from the JSON embedded in ffhandball.fr pages (`src/lib/ffhandball/`), no browser. See `README_SYNC.md`
   - Sync runs via GitHub Actions (`.github/workflows/sync-matches.yml`)
-  - Schedule: daily 7h, Friday 18h, Sunday 20h
+  - Schedule: daily 7h, Friday 18h, Saturday 22h30, Sunday 20h
   - Can trigger manually from GitHub Actions tab
+  - Team links change every season/phase: `bun ffhb:equipes` finds them again
 
 ## Conventions
 
@@ -64,3 +67,13 @@ Main entities: Article, Equipe (team), Match, Partenaire (partner), ContactMessa
 - Server Actions in `actions.ts` files within admin routes
 - shadcn/ui components with Tailwind CSS v4
 - Framer Motion for animations (`src/lib/animations.ts`)
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
