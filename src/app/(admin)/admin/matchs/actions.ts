@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-utils'
 
 async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[]) {
   revalidatePath('/')
@@ -23,6 +24,7 @@ async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[
 }
 
 export async function getMatchs() {
+  await requireAdmin()
   const matchs = await prisma.match.findMany({
     include: {
       equipe: {
@@ -42,6 +44,7 @@ export async function getMatchs() {
 }
 
 export async function getMatch(id: number) {
+  await requireAdmin()
   const match = await prisma.match.findUnique({
     where: { id },
     include: {
@@ -59,6 +62,7 @@ export async function getMatch(id: number) {
 }
 
 export async function getEquipesForSelect() {
+  await requireAdmin()
   const equipes = await prisma.equipe.findMany({
     where: {
       published: true,
@@ -77,6 +81,7 @@ export async function getEquipesForSelect() {
 }
 
 export async function createMatch(formData: FormData) {
+  await requireAdmin()
   const equipeId = parseInt(formData.get('equipeId') as string)
   const adversaire = formData.get('adversaire') as string
   const dateStr = formData.get('date') as string
@@ -117,6 +122,7 @@ export async function createMatch(formData: FormData) {
 }
 
 export async function updateMatch(id: number, formData: FormData) {
+  await requireAdmin()
   const equipeId = parseInt(formData.get('equipeId') as string)
   const adversaire = formData.get('adversaire') as string
   const dateStr = formData.get('date') as string
@@ -163,6 +169,7 @@ export async function updateMatch(id: number, formData: FormData) {
 }
 
 export async function deleteMatch(id: number) {
+  await requireAdmin()
   const existing = await prisma.match.findUnique({
     where: { id },
     select: { equipeId: true },
