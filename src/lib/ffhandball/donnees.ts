@@ -533,6 +533,8 @@ export function estSalleDuClub(salle: SalleFfhb): boolean {
 }
 
 export interface MatchSynchronise {
+  /** Identifiant fédéral de la rencontre : c'est lui qui relie le match à la base. */
+  extRencontreId: string
   adversaire: string
   date: Date
   lieu: string
@@ -570,6 +572,7 @@ export function versMatch(
     (rencontre.scoreEquipe ?? 0) <= 1
 
   return {
+    extRencontreId: rencontre.extRencontreId,
     adversaire: rencontre.adversaire,
     date: rencontre.date,
     lieu: salle ? libelleSalle(salle) : LIEU_INCONNU,
@@ -586,19 +589,32 @@ export function versMatch(
 const UN_JOUR = 24 * 60 * 60 * 1000
 
 /**
- * Retrouve le match déjà en base : même adversaire, à moins d'un jour d'écart.
- * Le plus proche l'emporte ; `dejaPris` évite d'associer deux fois le même.
+ * Retrouve le match déjà en base.
+ *
+ * 1. Le match déjà relié à cette rencontre fédérale, quels que soient sa date
+ *    et son adversaire : un report ou un changement de nom ne crée pas de doublon.
+ * 2. Sinon, un match pas encore relié (saisi à la main, ou d'avant l'identifiant) :
+ *    même adversaire, à moins d'un jour d'écart, le plus proche l'emporte.
+ *
+ * `dejaPris` évite d'associer deux fois le même match.
  */
-export function trouverExistant<T extends { id: number; adversaire: string; date: Date }>(
+export function trouverExistant<
+  T extends { id: number; adversaire: string; date: Date; extRencontreId: string | null },
+>(
   existants: T[],
-  match: Pick<MatchSynchronise, 'adversaire' | 'date'>,
+  match: Pick<MatchSynchronise, 'adversaire' | 'date' | 'extRencontreId'>,
   dejaPris: Set<number>
 ): T | null {
+  const relie = existants.find((existant) => existant.extRencontreId === match.extRencontreId)
+  if (relie) return dejaPris.has(relie.id) ? null : relie
+
   const cle = cleEquipe(match.adversaire)
   let meilleur: T | null = null
   let meilleurEcart = Infinity
 
   for (const existant of existants) {
+    // Un match relié à une autre rencontre fédérale n'est jamais réattribué
+    if (existant.extRencontreId !== null) continue
     if (dejaPris.has(existant.id) || cleEquipe(existant.adversaire) !== cle) continue
     const ecart = Math.abs(existant.date.getTime() - match.date.getTime())
     if (ecart <= UN_JOUR && ecart < meilleurEcart) {

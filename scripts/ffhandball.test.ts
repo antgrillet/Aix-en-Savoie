@@ -303,21 +303,39 @@ describe('conversion en match', () => {
 
 describe('rapprochement avec la base', () => {
   const existants = [
-    { id: 1, adversaire: 'US ALBENS HANDBALL  2', date: new Date('2026-11-08T09:00:00Z') },
-    { id: 2, adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-12-06T09:00:00Z') },
-    { id: 3, adversaire: 'HBC SALLANCHES SÉNIORS FÉMININES', date: new Date('2026-10-10T19:00:00Z') },
+    { id: 1, adversaire: 'US ALBENS HANDBALL  2', date: new Date('2026-11-08T09:00:00Z'), extRencontreId: null },
+    { id: 2, adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-12-06T09:00:00Z'), extRencontreId: null },
+    { id: 3, adversaire: 'HBC SALLANCHES SÉNIORS FÉMININES', date: new Date('2026-10-10T19:00:00Z'), extRencontreId: null },
+    { id: 4, adversaire: 'CHEYENNE HB', date: new Date('2026-11-14T20:00:00Z'), extRencontreId: 'R4' },
   ]
 
   test('ignore casse, accents et espaces dans le nom', () => {
     expect(cleEquipe('HBC SALLANCHES SÉNIORS FÉMININES')).toBe(cleEquipe('hbc sallanches  seniors feminines'))
-    const trouve = trouverExistant(existants, { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-11-08T10:00:00Z') }, new Set())
+    const trouve = trouverExistant(
+      existants,
+      { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-11-08T10:00:00Z'), extRencontreId: 'R1' },
+      new Set()
+    )
     expect(trouve?.id).toBe(1)
   })
 
   test('ne rapproche pas au-delà d’un jour ni deux fois le même match', () => {
-    const cible = { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-11-20T10:00:00Z') }
+    const cible = { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-11-20T10:00:00Z'), extRencontreId: 'R1' }
     expect(trouverExistant(existants, cible, new Set())).toBeNull()
-    const proche = { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-12-06T10:00:00Z') }
+    const proche = { adversaire: 'US ALBENS HANDBALL 2', date: new Date('2026-12-06T10:00:00Z'), extRencontreId: 'R2' }
     expect(trouverExistant(existants, proche, new Set([2]))).toBeNull()
+  })
+
+  test('un match relié suit sa rencontre : report de plusieurs semaines ou adversaire renommé', () => {
+    const reporte = { adversaire: 'CHEYENNE HB', date: new Date('2026-12-19T19:30:00Z'), extRencontreId: 'R4' }
+    expect(trouverExistant(existants, reporte, new Set())?.id).toBe(4)
+    const renomme = { adversaire: 'ENTENTE CHEYENNE / YENNE', date: new Date('2026-11-14T20:00:00Z'), extRencontreId: 'R4' }
+    expect(trouverExistant(existants, renomme, new Set())?.id).toBe(4)
+  })
+
+  test('un match relié à une autre rencontre n’est jamais réattribué', () => {
+    // Match retour contre le même adversaire, programmé le lendemain du match aller déjà relié
+    const retour = { adversaire: 'CHEYENNE HB', date: new Date('2026-11-15T10:00:00Z'), extRencontreId: 'R11' }
+    expect(trouverExistant(existants, retour, new Set())).toBeNull()
   })
 })

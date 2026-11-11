@@ -11,7 +11,10 @@ Pour chaque équipe publiée qui a un lien FFHandball :
 
 1. la page « équipe » de la compétition donne tout le calendrier de la saison, les scores et le classement ;
 2. la salle est lue sur la page détail d'un match, une seule fois par salle (cache dans le réglage `ffhb_salles`) ;
-3. chaque rencontre est rapprochée d'un match en base (même adversaire, à moins d'un jour) puis créée ou mise à jour.
+3. chaque rencontre est rapprochée d'un match en base puis créée ou mise à jour. Le lien se fait par
+   l'identifiant fédéral de la rencontre (`Match.extRencontreId`) : un report ou un adversaire renommé
+   met à jour le match existant au lieu d'en créer un second. Un match pas encore relié (saisi à la main)
+   est adopté s'il a le même adversaire à moins d'un jour.
 
 Règles métier :
 

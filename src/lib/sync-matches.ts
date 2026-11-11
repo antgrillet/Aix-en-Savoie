@@ -102,6 +102,13 @@ async function trouverSalle(
 
 const UN_JOUR = 24 * 60 * 60 * 1000
 
+/** Erreur Prisma P2002 : violation d'une contrainte d'unicité. */
+function estConflitUnicite(erreur: unknown): boolean {
+  return (
+    typeof erreur === 'object' && erreur !== null && (erreur as { code?: unknown }).code === 'P2002'
+  )
+}
+
 /**
  * Synchronise les matchs et le classement d'une équipe depuis FFHandball.
  * Sans `cache`, les salles sont chargées et enregistrées par l'appel lui-même.
@@ -132,13 +139,26 @@ export async function syncTeamMatches(
 
     const orphelins: string[] = []
 
-    if (datees.length > 0) {
-      const debut = Math.min(...datees.map((rencontre) => rencontre.date.getTime()))
-      const fin = Math.max(...datees.map((rencontre) => rencontre.date.getTime()))
+    if (calendrier.rencontres.length > 0) {
+      // Matchs déjà reliés à une rencontre du calendrier, plus ceux de la période
+      // couverte, parmi lesquels on cherche les matchs pas encore reliés.
+      const temps = datees.map((rencontre) => rencontre.date.getTime())
       const existants = await prisma.match.findMany({
         where: {
           equipeId,
-          date: { gte: new Date(debut - UN_JOUR), lte: new Date(fin + UN_JOUR) },
+          OR: [
+            { extRencontreId: { in: calendrier.rencontres.map((r) => r.extRencontreId) } },
+            ...(temps.length > 0
+              ? [
+                  {
+                    date: {
+                      gte: new Date(Math.min(...temps) - UN_JOUR),
+                      lte: new Date(Math.max(...temps) + UN_JOUR),
+                    },
+                  },
+                ]
+              : []),
+          ],
         },
       })
       const associes = new Set<number>()
@@ -151,16 +171,27 @@ export async function syncTeamMatches(
         const { domicileFiable, competition, ...champs } = match
 
         if (!existant) {
-          await prisma.match.create({
-            data: { equipeId, ...champs, competition: competition ?? 'Championnat', published: true },
-          })
-          matchesCreated++
-          console.log(`  ➕ Match créé: ${match.adversaire}`)
+          try {
+            await prisma.match.create({
+              data: { equipeId, ...champs, competition: competition ?? 'Championnat', published: true },
+            })
+            matchesCreated++
+            console.log(`  ➕ Match créé: ${match.adversaire}`)
+          } catch (erreur) {
+            // Une autre synchronisation vient de créer ce match : l'unicité
+            // (équipe, rencontre fédérale) empêche le doublon.
+            if (!estConflitUnicite(erreur)) throw erreur
+            matchesSkipped++
+            console.log(`  ⏭️  Match déjà créé par une autre synchronisation: ${match.adversaire}`)
+          }
           continue
         }
 
         associes.add(existant.id)
         const data: Parameters<typeof prisma.match.update>[0]['data'] = {}
+        if (existant.extRencontreId !== match.extRencontreId) {
+          data.extRencontreId = match.extRencontreId
+        }
         if (existant.adversaire !== match.adversaire) data.adversaire = match.adversaire
         if (existant.date.getTime() !== match.date.getTime()) data.date = match.date
         // Un domicile de repli (plateau sans salle connue) n'écrase pas l'existant
@@ -202,12 +233,18 @@ export async function syncTeamMatches(
       // ancienne synchronisation). Ils sont signalés, jamais supprimés : des
       // inscriptions de bénévoles peuvent y être rattachées.
       const adversairesConnus = new Set(datees.map((rencontre) => cleEquipe(rencontre.adversaire)))
+      const sansDate = new Set(
+        calendrier.rencontres.filter((r) => r.date === null).map((r) => r.extRencontreId)
+      )
       for (const existant of existants) {
         if (associes.has(existant.id)) continue
         const date = existant.date.toISOString().slice(0, 10)
-        const motif = adversairesConnus.has(cleEquipe(existant.adversaire))
-          ? 'date différente'
-          : 'adversaire absent du calendrier'
+        const motif =
+          existant.extRencontreId && sansDate.has(existant.extRencontreId)
+            ? 'date retirée par la fédération, à reprogrammer'
+            : adversairesConnus.has(cleEquipe(existant.adversaire))
+              ? 'date différente'
+              : 'adversaire absent du calendrier'
         orphelins.push(`${existant.adversaire} (${date}, ${motif})`)
       }
       if (orphelins.length > 0) {

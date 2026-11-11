@@ -260,6 +260,10 @@ model Match {
   // Logo de l'équipe adverse (URL depuis FFHANDBALL)
   logoAdversaire  String?
 
+  // Identifiant de la rencontre sur FFHANDBALL (null pour un match saisi à la main).
+  // Il relie le match à sa rencontre fédérale même si la date ou l'adversaire changent.
+  extRencontreId  String?
+
   // Statut
   termine     Boolean  @default(false) // Match joué ou à venir
   published   Boolean  @default(true)
@@ -272,6 +276,7 @@ model Match {
   updatedAt   DateTime @updatedAt
   createdBy   String?
 
+  @@unique([equipeId, extRencontreId])
   @@index([equipeId])
   @@index([date(sort: Desc)])
   @@index([termine])
