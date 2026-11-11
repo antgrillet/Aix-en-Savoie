@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/auth-utils'
-import { AdminNav } from '@/components/admin/AdminNav'
+import { AdminShell } from '@/components/admin/AdminShell'
+import { compteursParSection, getATraiter } from '@/components/admin/a-traiter'
 import { buildMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
@@ -18,12 +19,17 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   // Vérifier l'authentification
-  await requireAdmin()
+  const session = await requireAdmin()
+
+  // Les compteurs sont un confort : s'ils échouent, le rail s'affiche sans eux
+  // et la page garde la main sur ses propres erreurs.
+  const counts = await getATraiter()
+    .then(compteursParSection)
+    .catch(() => ({}))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-orange-50 to-orange-200">
-      <AdminNav />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
-    </div>
+    <AdminShell counts={counts} user={{ name: session.user.name, email: session.user.email }}>
+      {children}
+    </AdminShell>
   )
 }

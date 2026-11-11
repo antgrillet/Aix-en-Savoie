@@ -2,23 +2,31 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ImageUpload } from '@/components/admin/ImageUpload'
-import { LoadingButton } from '@/components/admin/LoadingButton'
 import { toast } from 'sonner'
-import { Plus, X, Ticket } from 'lucide-react'
+import { Button } from '@/components/admin/Button'
+import { Field, Input, SwitchField, Textarea } from '@/components/admin/Field'
+import { FormSection, SaveBar } from '@/components/admin/FormSection'
+import { ImageUpload } from '@/components/admin/ImageUpload'
+import { SimpleSelect } from '@/components/admin/Select'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { StatusMark } from '@/components/admin/StatusMark'
 import type { Partenaire } from '@/generated/prisma/client'
+import { CouleurField } from './CouleurField'
+import { GalerieField } from './GalerieField'
+import { ListeDeTextes } from './ListeDeTextes'
+import {
+  ACCROCHE_MAX,
+  CHAMPS_PROMO,
+  NOM_MAX,
+  PROMO_CODE_MAX,
+  PROMO_CONDITIONS_MAX,
+  PROMO_DESCRIPTION_MAX,
+  PROMO_TITRE_MAX,
+  RESEAUX,
+  validerPartenaire,
+  type ErreursPartenaire,
+  type Reseau,
+} from './validation'
 
 // Catégories prédéfinies pour les partenaires
 const PARTNER_CATEGORIES = [
@@ -34,7 +42,7 @@ const PARTNER_CATEGORIES = [
   'Transport',
   'Industrie',
   'Autre',
-] as const
+]
 
 const TYPE_PARTENARIAT = [
   'Partenaire',
@@ -43,7 +51,40 @@ const TYPE_PARTENARIAT = [
   'Institutionnel',
   'Technique',
   'Média',
-] as const
+]
+
+// Couleur d'accent de la page d'un partenaire tant qu'il n'a pas la sienne
+const COULEUR_PAR_DEFAUT = '#FF6B35'
+
+const formatModification = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: 'Europe/Paris',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+/** Liste d'options, avec la valeur enregistrée si elle n'en fait plus partie */
+function optionsAvec(liste: string[], actuelle: string) {
+  const valeurs = actuelle && !liste.includes(actuelle) ? [...liste, actuelle] : liste
+  return valeurs.map((valeur) => ({ value: valeur, label: valeur }))
+}
+
+/** `redirect()` dans une Server Action rejette la promesse côté client : ce n'est pas un échec */
+function estUneRedirection(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'digest' in error &&
+    typeof error.digest === 'string' &&
+    error.digest.startsWith('NEXT_REDIRECT')
+  )
+}
+
+/** « la citation », « la citation et le rôle », « la citation, l'auteur et le rôle » */
+function enumerer(mots: string[]) {
+  if (mots.length <= 1) return mots.join('')
+  return `${mots.slice(0, -1).join(', ')} et ${mots[mots.length - 1]}`
+}
 
 interface PartenaireFormProps {
   action: (formData: FormData) => Promise<void>
@@ -53,75 +94,134 @@ interface PartenaireFormProps {
 export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState<ErreursPartenaire>({})
+
+  // Identité
+  const [nom, setNom] = useState(initialData?.nom || '')
   const [logo, setLogo] = useState(initialData?.logo || '')
-  const [photoCouverture, setPhotoCouverture] = useState(initialData?.photoCouverture || '')
   const [categorie, setCategorie] = useState(initialData?.categorie || '')
   const [typePartenariat, setTypePartenariat] = useState(initialData?.typePartenariat || 'Partenaire')
 
-  // Réseaux sociaux
-  const initialReseaux = initialData?.reseauxSociaux as any || {}
-  const [facebook, setFacebook] = useState(initialReseaux.facebook || '')
-  const [instagram, setInstagram] = useState(initialReseaux.instagram || '')
-  const [twitter, setTwitter] = useState(initialReseaux.twitter || '')
-  const [linkedin, setLinkedin] = useState(initialReseaux.linkedin || '')
-  const [youtube, setYoutube] = useState(initialReseaux.youtube || '')
+  // Page du partenaire
+  const [accroche, setAccroche] = useState(initialData?.accroche || '')
+  const [photoCouverture, setPhotoCouverture] = useState(initialData?.photoCouverture || '')
 
-  // Arrays
+  // Réseaux sociaux
+  const initialReseaux = (initialData?.reseauxSociaux ?? {}) as Partial<Record<Reseau, string>>
+  const [reseaux, setReseaux] = useState<Record<Reseau, string>>({
+    facebook: initialReseaux.facebook || '',
+    instagram: initialReseaux.instagram || '',
+    twitter: initialReseaux.twitter || '',
+    linkedin: initialReseaux.linkedin || '',
+    youtube: initialReseaux.youtube || '',
+  })
+
+  // Listes
   const [valeurs, setValeurs] = useState<string[]>(initialData?.valeurs || [])
   const [galerie, setGalerie] = useState<string[]>(initialData?.galerie || [])
   const [apports, setApports] = useState<string[]>(initialData?.apports || [])
   const [projetsCommuns, setProjetsCommuns] = useState<string[]>(initialData?.projetsCommuns || [])
 
   // Témoignage
-  const initialTemoignage = initialData?.temoignage as any || {}
+  const initialTemoignage = (initialData?.temoignage ?? {}) as Partial<
+    Record<'citation' | 'auteur' | 'role' | 'photo', string>
+  >
   const [temoignageCitation, setTemoignageCitation] = useState(initialTemoignage.citation || '')
   const [temoignageAuteur, setTemoignageAuteur] = useState(initialTemoignage.auteur || '')
   const [temoignageRole, setTemoignageRole] = useState(initialTemoignage.role || '')
   const [temoignagePhoto, setTemoignagePhoto] = useState(initialTemoignage.photo || '')
 
-  // Offre promotionnelle
+  // Offre partenaire
   const [promoActive, setPromoActive] = useState(initialData?.promoActive || false)
   const [promoTitre, setPromoTitre] = useState(initialData?.promoTitre || '')
   const [promoDescription, setPromoDescription] = useState(initialData?.promoDescription || '')
   const [promoCode, setPromoCode] = useState(initialData?.promoCode || '')
-  const [promoExpiration, setPromoExpiration] = useState(initialData?.promoExpiration ? new Date(initialData.promoExpiration).toISOString().split('T')[0] : '')
+  const [promoExpiration, setPromoExpiration] = useState(
+    initialData?.promoExpiration ? new Date(initialData.promoExpiration).toISOString().split('T')[0] : ''
+  )
   const [promoConditions, setPromoConditions] = useState(initialData?.promoConditions || '')
+
+  // Publication
+  const [published, setPublished] = useState(initialData?.published ?? true)
+  const [majeur, setMajeur] = useState(initialData?.partenaire_majeur ?? false)
+
+  const clearError = (champ: string) => {
+    if (errors[champ]) {
+      setErrors((current) => {
+        const next = { ...current }
+        delete next[champ]
+        return next
+      })
+    }
+  }
+
+  // Le témoignage n'est envoyé que si ses trois textes sont remplis
+  const temoignageManquants = [
+    !temoignageCitation && 'la citation',
+    !temoignageAuteur && "l'auteur",
+    !temoignageRole && 'le rôle',
+  ].filter((mot): mot is string => Boolean(mot))
+  const temoignageCommence = Boolean(
+    temoignageCitation || temoignageAuteur || temoignageRole || temoignagePhoto
+  )
+  const temoignageIncomplet = temoignageCommence && temoignageManquants.length > 0
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     const formData = new FormData(e.currentTarget)
-    const nom = formData.get('nom') as string
-    const description = formData.get('description') as string
+    const lire = (name: string) => (formData.get(name) as string | null) ?? ''
 
     // Validation avec messages utilisateur
-    const errors: string[] = []
+    const found = validerPartenaire({
+      nom,
+      categorie,
+      logo,
+      description: lire('description'),
+      anneeDemarrage: lire('anneeDemarrage'),
+      accroche,
+      photoCouverture,
+      site: lire('site'),
+      email: lire('email'),
+      reseaux,
+      galerie,
+      temoignage: {
+        citation: temoignageCitation,
+        auteur: temoignageAuteur,
+        role: temoignageRole,
+        photo: temoignagePhoto,
+      },
+      promoTitre,
+      promoDescription,
+      promoCode,
+      promoConditions,
+      ordre: lire('ordre'),
+    })
 
-    if (!nom?.trim()) {
-      errors.push('Le nom du partenaire est requis')
-    }
-    if (!categorie) {
-      errors.push('La catégorie est requise')
-    }
-    if (!logo) {
-      errors.push('Le logo est requis')
-    }
-    if (!description?.trim()) {
-      errors.push('La description est requise')
-    }
+    setErrors(found)
 
-    if (errors.length > 0) {
-      toast.error(errors[0])
+    // Les erreurs sont rangées dans l'ordre des champs : la première est celle du haut
+    const premierChamp = Object.keys(found)[0]
+    if (premierChamp) {
+      const champMasque = !promoActive && CHAMPS_PROMO.includes(premierChamp)
+      toast.error(
+        found[premierChamp],
+        champMasque
+          ? { description: "Ce champ fait partie de l'offre partenaire : activez-la pour le corriger." }
+          : undefined
+      )
+      document.getElementById(premierChamp)?.focus()
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const formData = new FormData(e.currentTarget)
+      formData.set('nom', nom)
       formData.set('logo', logo)
       formData.set('categorie', categorie)
       formData.set('typePartenariat', typePartenariat)
+      formData.set('accroche', accroche)
 
       // Photo de couverture
       if (photoCouverture) {
@@ -129,18 +229,14 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       }
 
       // Réseaux sociaux (JSON)
-      const reseauxSociaux = {
-        ...(facebook && { facebook }),
-        ...(instagram && { instagram }),
-        ...(twitter && { twitter }),
-        ...(linkedin && { linkedin }),
-        ...(youtube && { youtube }),
-      }
+      const reseauxSociaux = Object.fromEntries(
+        RESEAUX.filter(({ cle }) => reseaux[cle]).map(({ cle }) => [cle, reseaux[cle]])
+      )
       if (Object.keys(reseauxSociaux).length > 0) {
         formData.set('reseauxSociaux', JSON.stringify(reseauxSociaux))
       }
 
-      // Arrays
+      // Listes
       formData.set('valeurs', JSON.stringify(valeurs))
       formData.set('galerie', JSON.stringify(galerie))
       formData.set('apports', JSON.stringify(apports))
@@ -157,7 +253,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
         formData.set('temoignage', JSON.stringify(temoignage))
       }
 
-      // Offre promotionnelle
+      // Offre partenaire
       formData.set('promoActive', promoActive.toString())
       if (promoTitre) formData.set('promoTitre', promoTitre)
       if (promoDescription) formData.set('promoDescription', promoDescription)
@@ -165,632 +261,538 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
       if (promoExpiration) formData.set('promoExpiration', promoExpiration)
       if (promoConditions) formData.set('promoConditions', promoConditions)
 
+      // Publication : une bascule envoie « on », l'action attend « true »
+      formData.set('published', published.toString())
+      formData.set('partenaire_majeur', majeur.toString())
+
       await action(formData)
-      // Le redirect se fait automatiquement, pas besoin de toast ici
-    } catch (error: any) {
-      // Next.js redirect lance une erreur NEXT_REDIRECT, ce n'est pas une vraie erreur
-      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+      toast.success(initialData ? 'Partenaire modifié' : 'Partenaire ajouté')
+    } catch (error) {
+      // L'action se termine par un retour à la liste : l'enregistrement a réussi
+      if (estUneRedirection(error)) {
+        toast.success(initialData ? 'Partenaire modifié' : 'Partenaire ajouté')
         return
       }
       console.error(error)
-      toast.error('Une erreur est survenue')
+      toast.error("Le partenaire n'a pas pu être enregistré.", {
+        description: 'Vérifiez votre connexion, puis réessayez.',
+      })
       setIsSubmitting(false)
     }
   }
 
-  // Helper functions pour les arrays
-  const addToArray = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((prev) => [...prev, ''])
-  }
-
-  const updateArrayItem = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number, value: string) => {
-    setter((prev) => {
-      const newArray = [...prev]
-      newArray[index] = value
-      return newArray
-    })
-  }
-
-  const removeFromArray = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number) => {
-    setter((prev) => prev.filter((_, i) => i !== index))
-  }
+  const submitLabel = initialData
+    ? 'Enregistrer'
+    : published
+      ? 'Publier le partenaire'
+      : 'Enregistrer le brouillon'
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* INFORMATIONS GÉNÉRALES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Informations générales</h3>
+    <form onSubmit={handleSubmit} noValidate>
+      <FormSection
+        title="Identité"
+        description="Le nom, le logo et la présentation du partenaire, tels que les visiteurs les voient."
+      >
+        <Field
+          id="nom"
+          label="Nom"
+          required
+          error={errors.nom}
+          counter={{ value: nom.length, max: NOM_MAX }}
+        >
+          <Input
+            name="nom"
+            value={nom}
+            onChange={(e) => {
+              setNom(e.target.value)
+              clearError('nom')
+            }}
+            placeholder="Boulangerie du Lac"
+          />
+        </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="nom">Nom *</Label>
-            <Input
-              id="nom"
-              name="nom"
-              defaultValue={initialData?.nom}
-              placeholder="Nom du partenaire"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="categorie">Catégorie *</Label>
-            <Select
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="categorie" label="Catégorie" required error={errors.categorie}>
+            <SimpleSelect
               value={categorie}
-              onValueChange={setCategorie}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez une catégorie" />
-              </SelectTrigger>
-              <SelectContent>
-                {PARTNER_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="categorie" value={categorie} />
-          </div>
+              onValueChange={(value) => {
+                setCategorie(value)
+                clearError('categorie')
+              }}
+              options={optionsAvec(PARTNER_CATEGORIES, initialData?.categorie || '')}
+              placeholder="Choisir une catégorie"
+            />
+          </Field>
+
+          <Field id="typePartenariat" label="Type de partenariat">
+            <SimpleSelect
+              value={typePartenariat}
+              onValueChange={setTypePartenariat}
+              options={optionsAvec(TYPE_PARTENARIAT, initialData?.typePartenariat || '')}
+            />
+          </Field>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="typePartenariat">Type de partenariat</Label>
-          <Select
-            value={typePartenariat}
-            onValueChange={setTypePartenariat}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TYPE_PARTENARIAT.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <input type="hidden" name="typePartenariat" value={typePartenariat} />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Logo *</Label>
+        <Field
+          id="logo"
+          label="Logo"
+          required
+          error={errors.logo}
+          hint="Affiché en entier sur la page Partenaires, et sur l'accueil pour un partenaire majeur."
+        >
           <ImageUpload
             value={logo}
-            onChange={setLogo}
+            onChange={(url) => {
+              setLogo(url)
+              clearError('logo')
+            }}
             onRemove={() => setLogo('')}
             disabled={isSubmitting}
             folder="partenaires"
+            previewAlt="Aperçu du logo"
+            // Un logo se montre en entier : l'aperçu du kit recadre, on le corrige ici
+            className="[&_img]:object-contain [&_img]:p-6"
           />
-        </div>
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description *</Label>
+        <Field
+          id="description"
+          label="Description"
+          required
+          error={errors.description}
+          hint="Qui est ce partenaire et ce qui le lie au club."
+        >
           <Textarea
-            id="description"
             name="description"
             defaultValue={initialData?.description}
-            placeholder="Description du partenaire"
+            onChange={() => clearError('description')}
             rows={6}
           />
-        </div>
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="anneeDemarrage">Année de démarrage du partenariat</Label>
+        <Field
+          id="anneeDemarrage"
+          label="Année de démarrage du partenariat"
+          optional
+          error={errors.anneeDemarrage}
+          hint="Affichée sur sa page : « Partenaire depuis 2019 »."
+        >
           <Input
-            id="anneeDemarrage"
             name="anneeDemarrage"
             type="number"
-            min="1900"
-            max="2100"
+            inputMode="numeric"
             defaultValue={initialData?.anneeDemarrage || ''}
+            onChange={() => clearError('anneeDemarrage')}
             placeholder="2024"
+            className="sm:max-w-32"
           />
-        </div>
-      </div>
+        </Field>
+      </FormSection>
 
-      {/* STORYTELLING HERO */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Storytelling - Hero section</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="accroche">Phrase d'accroche</Label>
+      <FormSection
+        title="Page du partenaire"
+        description="La phrase, la couleur et la photo du haut de sa page sur le site."
+        optional
+      >
+        <Field
+          id="accroche"
+          label="Phrase d'accroche"
+          error={errors.accroche}
+          counter={{ value: accroche.length, max: ACCROCHE_MAX }}
+          hint="Mise en avant en haut de sa page."
+        >
           <Input
-            id="accroche"
             name="accroche"
-            defaultValue={initialData?.accroche || ''}
+            value={accroche}
+            onChange={(e) => {
+              setAccroche(e.target.value)
+              clearError('accroche')
+            }}
             placeholder="L'innovation au service des coachs de handball"
           />
-          <p className="text-sm text-muted-foreground">
-            Phrase mise en avant sur la page du partenaire
-          </p>
-        </div>
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="couleurPrincipale">Couleur de marque</Label>
-          <div className="flex gap-2">
-            <Input
-              id="couleurPrincipale"
-              name="couleurPrincipale"
-              type="color"
-              defaultValue={initialData?.couleurPrincipale || '#FF6B35'}
-              className="w-20 h-10"
-            />
-            <Input
-              type="text"
-              defaultValue={initialData?.couleurPrincipale || '#FF6B35'}
-              placeholder="#FF6B35"
-              pattern="^#[0-9A-Fa-f]{6}$"
-              onChange={(e) => {
-                const colorInput = document.getElementById('couleurPrincipale') as HTMLInputElement
-                if (colorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                  colorInput.value = e.target.value
-                }
-              }}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Couleur utilisée pour les accents sur la page du partenaire
-          </p>
-        </div>
+        <CouleurField initialValue={initialData?.couleurPrincipale || COULEUR_PAR_DEFAUT} />
 
-        <div className="space-y-2">
-          <Label>Photo de couverture</Label>
+        <Field
+          id="photoCouverture"
+          label="Photo de couverture"
+          error={errors.photoCouverture}
+          hint="Image de fond du haut de sa page."
+        >
           <ImageUpload
             value={photoCouverture}
-            onChange={setPhotoCouverture}
+            onChange={(url) => {
+              setPhotoCouverture(url)
+              clearError('photoCouverture')
+            }}
             onRemove={() => setPhotoCouverture('')}
             disabled={isSubmitting}
             folder="partenaires"
+            previewAlt="Aperçu de la photo de couverture"
           />
-          <p className="text-sm text-muted-foreground">
-            Image de fond pour la section hero
-          </p>
-        </div>
-      </div>
+        </Field>
+      </FormSection>
 
-      {/* CONTACT */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Informations de contact</h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="site">Site web</Label>
+      <FormSection
+        title="Contact"
+        description="Les moyens de joindre le partenaire, affichés sur sa page."
+        optional
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="site" label="Site web" error={errors.site}>
             <Input
-              id="site"
               name="site"
               type="url"
+              inputMode="url"
               defaultValue={initialData?.site || ''}
-              placeholder="https://example.com"
+              onChange={() => clearError('site')}
+              placeholder="https://exemple.fr"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <Field id="email" label="E-mail" error={errors.email}>
             <Input
-              id="email"
               name="email"
               type="email"
               defaultValue={initialData?.email || ''}
+              onChange={() => clearError('email')}
               placeholder="contact@partenaire.fr"
             />
-          </div>
+          </Field>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="telephone">Téléphone</Label>
+        <Field id="telephone" label="Téléphone">
           <Input
-            id="telephone"
             name="telephone"
             type="tel"
             defaultValue={initialData?.telephone || ''}
-            placeholder="01 23 45 67 89"
+            placeholder="04 79 00 00 00"
+            className="sm:max-w-56"
           />
-        </div>
+        </Field>
+      </FormSection>
 
-        <div className="space-y-4">
-          <Label>Réseaux sociaux</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="facebook" className="text-sm">Facebook</Label>
+      <FormSection
+        title="Réseaux sociaux"
+        description="L'adresse complète de chaque page, en commençant par https://."
+        optional
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          {RESEAUX.map(({ cle, label, placeholder }) => (
+            <Field key={cle} id={cle} label={label} error={errors[cle]}>
               <Input
-                id="facebook"
                 type="url"
-                value={facebook}
-                onChange={(e) => setFacebook(e.target.value)}
-                placeholder="https://facebook.com/..."
+                inputMode="url"
+                value={reseaux[cle]}
+                onChange={(e) => {
+                  setReseaux({ ...reseaux, [cle]: e.target.value })
+                  clearError(cle)
+                }}
+                placeholder={placeholder}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagram" className="text-sm">Instagram</Label>
-              <Input
-                id="instagram"
-                type="url"
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-                placeholder="https://instagram.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="twitter" className="text-sm">Twitter</Label>
-              <Input
-                id="twitter"
-                type="url"
-                value={twitter}
-                onChange={(e) => setTwitter(e.target.value)}
-                placeholder="https://twitter.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="linkedin" className="text-sm">LinkedIn</Label>
-              <Input
-                id="linkedin"
-                type="url"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                placeholder="https://linkedin.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="youtube" className="text-sm">YouTube</Label>
-              <Input
-                id="youtube"
-                type="url"
-                value={youtube}
-                onChange={(e) => setYoutube(e.target.value)}
-                placeholder="https://youtube.com/..."
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* VALEURS PARTAGÉES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Valeurs partagées</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setValeurs)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {valeurs.map((valeur, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                value={valeur}
-                onChange={(e) => updateArrayItem(setValeurs, index, e.target.value)}
-                placeholder="Innovation, Local, Jeunesse..."
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setValeurs, index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {valeurs.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucune valeur ajoutée. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* GALERIE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Galerie photos</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setGalerie)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une image
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {galerie.map((image, index) => (
-            <div key={index} className="space-y-2">
-              <ImageUpload
-                value={image}
-                onChange={(url) => updateArrayItem(setGalerie, index, url)}
-                onRemove={() => removeFromArray(setGalerie, index)}
-                disabled={isSubmitting}
-                folder="partenaires/galerie"
-              />
-            </div>
+            </Field>
           ))}
         </div>
-        {galerie.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Aucune image dans la galerie. Cliquez sur "Ajouter une image" pour commencer.
-          </p>
-        )}
-      </div>
+      </FormSection>
 
-      {/* APPORTS AU CLUB */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Ce qu'ils apportent au club</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setApports)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
+      <FormSection
+        title="Valeurs partagées"
+        description="Quelques mots qui rapprochent le partenaire et le club."
+        optional
+      >
+        <ListeDeTextes
+          id="valeur"
+          label="Valeurs partagées"
+          items={valeurs}
+          onChange={setValeurs}
+          itemLabel={(numero) => `Valeur ${numero}`}
+          removeLabel={(numero) => `Retirer la valeur ${numero}`}
+          addLabel="Ajouter une valeur"
+          emptyText="Aucune valeur pour l'instant : Innovation, Local, Jeunesse…"
+          placeholder="Jeunesse"
+          disabled={isSubmitting}
+        />
+      </FormSection>
 
-        <div className="space-y-3">
-          {apports.map((apport, index) => (
-            <div key={index} className="flex gap-2">
-              <Textarea
-                value={apport}
-                onChange={(e) => updateArrayItem(setApports, index, e.target.value)}
-                placeholder="Équipement des joueurs, Formation des coachs..."
-                rows={2}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setApports, index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {apports.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucun apport ajouté. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
+      <FormSection
+        title="Galerie photos"
+        description="Des photos du partenaire ou de ce qu'il fait avec le club."
+        optional
+      >
+        <GalerieField
+          images={galerie}
+          onChange={setGalerie}
+          errors={errors}
+          onClearError={clearError}
+          disabled={isSubmitting}
+        />
+      </FormSection>
 
-      {/* TÉMOIGNAGE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Témoignage</h3>
+      <FormSection
+        title="Apports au club"
+        description="Ce que le partenaire apporte au club, une ligne par apport."
+        optional
+      >
+        <ListeDeTextes
+          id="apport"
+          label="Apports au club"
+          items={apports}
+          onChange={setApports}
+          itemLabel={(numero) => `Apport ${numero}`}
+          removeLabel={(numero) => `Retirer l'apport ${numero}`}
+          addLabel="Ajouter un apport"
+          emptyText="Aucun apport pour l'instant : équipement des joueurs, formation des entraîneurs…"
+          placeholder="Équipement des joueurs"
+          multiline
+          disabled={isSubmitting}
+        />
+      </FormSection>
 
-        <div className="space-y-2">
-          <Label htmlFor="temoignageCitation">Citation</Label>
+      <FormSection
+        title="Témoignage"
+        description="Une citation affichée sur sa page. Elle n'est enregistrée que si la citation, l'auteur et le rôle sont tous les trois remplis."
+        optional
+      >
+        <Field id="temoignageCitation" label="Citation" error={errors.temoignageCitation}>
           <Textarea
-            id="temoignageCitation"
             value={temoignageCitation}
-            onChange={(e) => setTemoignageCitation(e.target.value)}
-            placeholder="Ce partenaire nous accompagne depuis le début et..."
+            onChange={(e) => {
+              setTemoignageCitation(e.target.value)
+              clearError('temoignageCitation')
+            }}
+            placeholder="Ce partenaire nous accompagne depuis le début et…"
             rows={4}
           />
-        </div>
+        </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="temoignageAuteur">Auteur</Label>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="temoignageAuteur" label="Auteur">
             <Input
-              id="temoignageAuteur"
               value={temoignageAuteur}
               onChange={(e) => setTemoignageAuteur(e.target.value)}
               placeholder="Jean Dupont"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="temoignageRole">Rôle</Label>
+          <Field id="temoignageRole" label="Rôle">
             <Input
-              id="temoignageRole"
               value={temoignageRole}
               onChange={(e) => setTemoignageRole(e.target.value)}
               placeholder="Président du club"
             />
-          </div>
+          </Field>
         </div>
 
-        <div className="space-y-2">
-          <Label>Photo de l'auteur (optionnel)</Label>
+        <Field id="temoignagePhoto" label="Photo de l'auteur" optional error={errors.temoignagePhoto}>
           <ImageUpload
             value={temoignagePhoto}
-            onChange={setTemoignagePhoto}
+            onChange={(url) => {
+              setTemoignagePhoto(url)
+              clearError('temoignagePhoto')
+            }}
             onRemove={() => setTemoignagePhoto('')}
             disabled={isSubmitting}
             folder="partenaires/temoignages"
+            previewAlt="Aperçu de la photo de l'auteur"
           />
-        </div>
-      </div>
+        </Field>
 
-      {/* PROJETS COMMUNS */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Nos projets communs</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addToArray(setProjetsCommuns)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
+        {temoignageIncomplet && (
+          <p role="status" className="flex items-start gap-2.5">
+            <StatusMark tone="action">À compléter</StatusMark>
+            <span className="adm-meta pt-0.5">
+              Il manque {enumerer(temoignageManquants)} : sans cela, le témoignage ne sera pas enregistré.
+            </span>
+          </p>
+        )}
+      </FormSection>
 
-        <div className="space-y-3">
-          {projetsCommuns.map((projet, index) => (
-            <div key={index} className="flex gap-2">
-              <Textarea
-                value={projet}
-                onChange={(e) => updateArrayItem(setProjetsCommuns, index, e.target.value)}
-                placeholder="Formation des jeunes joueurs, Tournoi annuel..."
-                rows={2}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeFromArray(setProjetsCommuns, index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {projetsCommuns.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aucun projet ajouté. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          )}
-        </div>
-      </div>
+      <FormSection
+        title="Projets communs"
+        description="Ce que le club et le partenaire font ensemble, une ligne par projet."
+        optional
+      >
+        <ListeDeTextes
+          id="projet"
+          label="Projets communs"
+          items={projetsCommuns}
+          onChange={setProjetsCommuns}
+          itemLabel={(numero) => `Projet ${numero}`}
+          removeLabel={(numero) => `Retirer le projet ${numero}`}
+          addLabel="Ajouter un projet"
+          emptyText="Aucun projet pour l'instant : formation des jeunes, tournoi annuel…"
+          placeholder="Tournoi annuel"
+          multiline
+          disabled={isSubmitting}
+        />
+      </FormSection>
 
-      {/* OFFRE PARTENAIRE */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Ticket className="w-5 h-5 text-primary" />
-            Offre Partenaire
-          </h3>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="promoActive" className="text-sm">Activer l'offre</Label>
-            <Switch
-              id="promoActive"
-              checked={promoActive}
-              onCheckedChange={setPromoActive}
-            />
-          </div>
+      <FormSection
+        title="Offre partenaire"
+        description="Une réduction ou un avantage réservé aux membres du club."
+        optional
+      >
+        <div className="border-t border-border">
+          <SwitchField
+            id="promoActive"
+            label="Offre active"
+            description={
+              promoActive
+                ? "Affichée sur le site si elle a un titre et n'a pas expiré."
+                : "Aucune offre n'est affichée sur le site."
+            }
+            checked={promoActive}
+            onCheckedChange={setPromoActive}
+            aside={
+              <StatusMark tone={promoActive ? 'solid' : 'dashed'}>
+                {promoActive ? 'Active' : 'Inactive'}
+              </StatusMark>
+            }
+          />
         </div>
 
         {promoActive && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="space-y-2">
-              <Label htmlFor="promoTitre">Titre de l'offre *</Label>
+          <>
+            <Field
+              id="promoTitre"
+              label="Titre de l'offre"
+              error={errors.promoTitre}
+              counter={{ value: promoTitre.length, max: PROMO_TITRE_MAX }}
+              hint="Sans titre, l'offre n'est pas affichée."
+            >
               <Input
-                id="promoTitre"
                 value={promoTitre}
-                onChange={(e) => setPromoTitre(e.target.value)}
-                placeholder="-10% sur votre première commande"
+                onChange={(e) => {
+                  setPromoTitre(e.target.value)
+                  clearError('promoTitre')
+                }}
+                placeholder="-10 % sur votre première commande"
               />
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="promoDescription">Description</Label>
+            <Field
+              id="promoDescription"
+              label="Description"
+              error={errors.promoDescription}
+              counter={{ value: promoDescription.length, max: PROMO_DESCRIPTION_MAX }}
+            >
               <Textarea
-                id="promoDescription"
                 value={promoDescription}
-                onChange={(e) => setPromoDescription(e.target.value)}
-                placeholder="Bénéficiez d'une réduction exclusive en tant que membre du HBC Aix-en-Savoie..."
+                onChange={(e) => {
+                  setPromoDescription(e.target.value)
+                  clearError('promoDescription')
+                }}
+                placeholder="Une réduction réservée aux membres du HBC Aix-en-Savoie…"
                 rows={3}
               />
-            </div>
+            </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="promoCode">Code promo (optionnel)</Label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
+                id="promoCode"
+                label="Code promo"
+                optional
+                error={errors.promoCode}
+                counter={{ value: promoCode.length, max: PROMO_CODE_MAX }}
+                hint="Sans code, le membre cite le club en magasin."
+              >
                 <Input
-                  id="promoCode"
                   value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value.toUpperCase())
+                    clearError('promoCode')
+                  }}
                   placeholder="HBCAIX10"
-                  className="font-mono uppercase"
+                  autoCapitalize="characters"
+                  spellCheck={false}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Si vide, le client devra mentionner le club en magasin
-                </p>
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="promoExpiration">Date d'expiration (optionnelle)</Label>
+              <Field id="promoExpiration" label="Date d'expiration" optional>
                 <Input
-                  id="promoExpiration"
                   type="date"
                   value={promoExpiration}
                   onChange={(e) => setPromoExpiration(e.target.value)}
                 />
-              </div>
+              </Field>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="promoConditions">Conditions d'utilisation</Label>
+            <Field
+              id="promoConditions"
+              label="Conditions d'utilisation"
+              error={errors.promoConditions}
+              counter={{ value: promoConditions.length, max: PROMO_CONDITIONS_MAX }}
+            >
               <Textarea
-                id="promoConditions"
                 value={promoConditions}
-                onChange={(e) => setPromoConditions(e.target.value)}
+                onChange={(e) => {
+                  setPromoConditions(e.target.value)
+                  clearError('promoConditions')
+                }}
                 placeholder="Non cumulable avec d'autres offres. Valable en magasin uniquement."
                 rows={2}
+                className="min-h-0"
               />
-            </div>
-          </div>
+            </Field>
+          </>
         )}
-      </div>
+      </FormSection>
 
-      {/* PARAMÈTRES */}
-      <div className="bg-white rounded-lg border p-6 space-y-6">
-        <h3 className="text-lg font-semibold">Paramètres</h3>
+      <FormSection title="Publication" description="Ce que le site montre de ce partenaire.">
+        <Field
+          id="ordre"
+          label="Ordre d'affichage"
+          error={errors.ordre}
+          hint="Les plus petits nombres passent en premier. L'ordre se règle aussi dans la liste des partenaires, en déplaçant les lignes."
+        >
+          <Input
+            name="ordre"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            defaultValue={initialData?.ordre || 0}
+            onChange={() => clearError('ordre')}
+            className="sm:max-w-32"
+          />
+        </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="ordre">Ordre d'affichage</Label>
-            <Input
-              id="ordre"
-              name="ordre"
-              type="number"
-              min="0"
-              defaultValue={initialData?.ordre || 0}
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Label htmlFor="partenaire_majeur">Partenaire majeur</Label>
-              <Switch
-                id="partenaire_majeur"
-                name="partenaire_majeur"
-                defaultChecked={initialData?.partenaire_majeur}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Label htmlFor="published">Publié</Label>
-              <Switch
-                id="published"
-                name="published"
-                defaultChecked={initialData?.published ?? true}
-              />
-            </div>
-          </div>
+        <div className="border-t border-border">
+          <SwitchField
+            id="published"
+            label="Publié"
+            description={
+              published
+                ? "Visible sur le site dès l'enregistrement."
+                : 'Gardé en brouillon : invisible sur le site.'
+            }
+            checked={published}
+            onCheckedChange={setPublished}
+            aside={<StatusBadge status={published ? 'published' : 'draft'} />}
+          />
+          <SwitchField
+            id="partenaire_majeur"
+            label="Partenaire majeur"
+            description="Présenté en premier sur la page Partenaires et sur l'accueil du site."
+            checked={majeur}
+            onCheckedChange={setMajeur}
+          />
         </div>
-      </div>
+      </FormSection>
 
-      {/* ACTIONS */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <LoadingButton
-          type="submit"
-          isLoading={isSubmitting}
-          className="w-full sm:w-auto"
-        >
-          {initialData ? 'Modifier' : 'Créer'}
-        </LoadingButton>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-          className="w-full sm:w-auto"
-        >
+      <SaveBar
+        status={
+          initialData &&
+          `Dernière modification le ${formatModification.format(new Date(initialData.updatedAt))}`
+        }
+      >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
           Annuler
         </Button>
-      </div>
+        <Button type="submit" isLoading={isSubmitting}>
+          {submitLabel}
+        </Button>
+      </SaveBar>
     </form>
   )
 }

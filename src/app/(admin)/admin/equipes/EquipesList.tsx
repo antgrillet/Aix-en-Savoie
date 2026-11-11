@@ -1,155 +1,37 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
-import { Edit, Trash2, Eye, EyeOff, GripVertical, Search, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { StatusBadge } from '@/components/admin/StatusBadge'
-import { DeleteDialog } from '@/components/admin/DeleteDialog'
-import { deleteEquipe, togglePublished, deleteMultipleEquipes, updateOrdre } from './actions'
+import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import type { Equipe, Entrainement } from '@/generated/prisma/client'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
+import { Button } from '@/components/admin/Button'
+import { DeleteDialog } from '@/components/admin/DeleteDialog'
+import { EmptyState } from '@/components/admin/EmptyState'
+import { FilterBar, FilterGroup, SearchField } from '@/components/admin/FilterBar'
+import { RowActions } from '@/components/admin/RowActions'
+import { SimpleSelect } from '@/components/admin/Select'
+import { deleteEquipe, togglePublished, deleteMultipleEquipes, updateOrdre } from './actions'
+import { SortableEquipes, type EquipeRow } from './SortableEquipes'
 
 interface EquipesListProps {
-  initialEquipes: (Equipe & { entrainements: Entrainement[] })[]
+  initialEquipes: EquipeRow[]
 }
 
-function SortableRow({ equipe, onDelete, onTogglePublished, onToggleSelect, isSelected }: {
-  equipe: Equipe & { entrainements: Entrainement[] }
-  onDelete: () => void
-  onTogglePublished: () => void
-  onToggleSelect: () => void
-  isSelected: boolean
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: equipe.id })
+const GENRE_OPTIONS = [
+  { value: 'all', label: 'Tous genres' },
+  { value: 'MASCULIN', label: 'Masculin' },
+  { value: 'FEMININ', label: 'Féminin' },
+] as const
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tous statuts' },
+  { value: 'published', label: 'Publiées' },
+  { value: 'draft', label: 'Brouillons' },
+] as const
 
-  return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell>
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onToggleSelect}
-        />
-      </TableCell>
-      <TableCell>
-        <div {...attributes} {...listeners} className="cursor-move">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="relative w-16 h-16 rounded overflow-hidden bg-muted">
-          <Image
-            src={equipe.photo}
-            alt={equipe.nom}
-            fill
-            className="object-cover"
-          />
-        </div>
-      </TableCell>
-      <TableCell className="font-medium">{equipe.nom}</TableCell>
-      <TableCell>{equipe.categorie}</TableCell>
-      <TableCell>{equipe.entraineur}</TableCell>
-      <TableCell>{equipe.entrainements.length}</TableCell>
-      <TableCell>
-        <StatusBadge
-          status={equipe.published ? 'published' : 'draft'}
-        />
-      </TableCell>
-      <TableCell>{equipe.ordre}</TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              Actions
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/equipes/${equipe.id}`}>
-                <Edit className="w-4 h-4 mr-2" />
-                Modifier
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onTogglePublished}>
-              {equipe.published ? (
-                <>
-                  <EyeOff className="w-4 h-4 mr-2" />
-                  Dépublier
-                </>
-              ) : (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Publier
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
-  )
-}
+const pluriel = (count: number) => (count > 1 ? 's' : '')
 
 export function EquipesList({ initialEquipes }: EquipesListProps) {
   const [equipes, setEquipes] = useState(initialEquipes)
@@ -165,12 +47,14 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
 
   // Filtrer les équipes
   const filteredEquipes = useMemo(() => {
-    return equipes.filter(equipe => {
-      const matchesSearch = search === '' ||
+    return equipes.filter((equipe) => {
+      const matchesSearch =
+        search === '' ||
         equipe.nom.toLowerCase().includes(search.toLowerCase()) ||
         equipe.entraineur.toLowerCase().includes(search.toLowerCase())
       const matchesGenre = genreFilter === 'all' || equipe.genre === genreFilter
-      const matchesStatus = statusFilter === 'all' ||
+      const matchesStatus =
+        statusFilter === 'all' ||
         (statusFilter === 'published' && equipe.published) ||
         (statusFilter === 'draft' && !equipe.published)
       return matchesSearch && matchesGenre && matchesStatus
@@ -185,12 +69,13 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
 
   const hasActiveFilters = search !== '' || genreFilter !== 'all' || statusFilter !== 'all'
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+  // Équipes sélectionnées que les filtres en cours n'affichent pas : la barre
+  // de sélection et la confirmation le disent avant une suppression
+  const hiddenSelectedCount = selectedIds.filter(
+    (id) =>
+      equipes.some((equipe) => equipe.id === id) &&
+      !filteredEquipes.some((equipe) => equipe.id === id)
+  ).length
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -201,24 +86,20 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
       setEquipes(equipes.filter((e) => e.id !== deleteId))
       toast.success('Équipe supprimée')
       setDeleteId(null)
-    } catch (error) {
-      toast.error('Erreur lors de la suppression')
+    } catch {
+      toast.error("L'équipe n'a pas pu être supprimée. Réessayez dans un instant.")
     } finally {
       setIsDeleting(false)
     }
   }
 
-  const handleTogglePublished = async (id: number) => {
+  const handleTogglePublished = async (equipe: EquipeRow) => {
     try {
-      await togglePublished(id)
-      setEquipes(
-        equipes.map((e) =>
-          e.id === id ? { ...e, published: !e.published } : e
-        )
-      )
-      toast.success('Statut modifié')
-    } catch (error) {
-      toast.error('Erreur lors de la modification')
+      await togglePublished(equipe.id)
+      setEquipes(equipes.map((e) => (e.id === equipe.id ? { ...e, published: !e.published } : e)))
+      toast.success(equipe.published ? 'Équipe repassée en brouillon' : 'Équipe publiée')
+    } catch {
+      toast.error("Le statut n'a pas pu être modifié. Réessayez dans un instant.")
     }
   }
 
@@ -229,11 +110,13 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
     try {
       await deleteMultipleEquipes(selectedIds)
       setEquipes(equipes.filter((e) => !selectedIds.includes(e.id)))
-      toast.success(`${selectedIds.length} équipe${selectedIds.length > 1 ? 's' : ''} supprimée${selectedIds.length > 1 ? 's' : ''}`)
+      toast.success(
+        `${selectedIds.length} équipe${pluriel(selectedIds.length)} supprimée${pluriel(selectedIds.length)}`
+      )
       setSelectedIds([])
       setShowBulkDelete(false)
-    } catch (error) {
-      toast.error('Erreur lors de la suppression')
+    } catch {
+      toast.error("Les équipes n'ont pas pu être supprimées. Réessayez dans un instant.")
     } finally {
       setIsDeleting(false)
     }
@@ -249,9 +132,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
 
   const toggleSelectOne = (id: number) => {
     setSelectedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((selectedId) => selectedId !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
     )
   }
 
@@ -279,136 +160,143 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
     try {
       await updateOrdre(updates)
       toast.success('Ordre mis à jour')
-    } catch (error) {
+    } catch {
       // Restaurer l'ancien ordre en cas d'erreur
       setEquipes(equipes)
-      toast.error('Erreur lors de la mise à jour de l\'ordre')
+      toast.error("L'ordre n'a pas pu être enregistré. Réessayez dans un instant.")
     }
   }
 
+  const selectionCount = selectedIds.length
+
   return (
     <>
-      {/* Filtres */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher une équipe..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+      <FilterBar
+        label="Filtrer les équipes"
+        onReset={hasActiveFilters ? clearFilters : undefined}
+        count={{
+          shown: filteredEquipes.length,
+          total: equipes.length,
+          singular: 'équipe',
+          plural: 'équipes',
+        }}
+      >
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          label="Rechercher une équipe par son nom ou son entraîneur"
+          placeholder="Rechercher une équipe"
+        />
+        <FilterGroup>
+          <SimpleSelect
+            value={genreFilter}
+            onValueChange={setGenreFilter}
+            options={GENRE_OPTIONS}
+            aria-label="Genre"
+            className="md:w-40"
           />
-        </div>
+          <SimpleSelect
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+            aria-label="Statut"
+            className="md:w-44"
+          />
+        </FilterGroup>
+      </FilterBar>
 
-        <Select value={genreFilter} onValueChange={setGenreFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="MASCULIN">Masculin</SelectItem>
-            <SelectItem value="FEMININ">Féminin</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="published">Publiées</SelectItem>
-            <SelectItem value="draft">Brouillons</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="w-4 h-4 mr-2" />
-            Effacer
+      {selectionCount > 0 && (
+        <div
+          role="group"
+          aria-label="Équipes sélectionnées"
+          className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-foreground py-2"
+        >
+          <p className="mr-auto py-1 pr-2 font-semibold">
+            <span className="adm-num-sm">{selectionCount}</span> équipe{pluriel(selectionCount)}{' '}
+            sélectionnée{pluriel(selectionCount)}
+            {hiddenSelectedCount > 0 && (
+              <span className="adm-meta font-normal">
+                , dont {hiddenSelectedCount} masquée{pluriel(hiddenSelectedCount)} par les filtres
+              </span>
+            )}
+          </p>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+            Annuler la sélection
           </Button>
-        )}
-
-        <div className="ml-auto text-sm text-muted-foreground self-center">
-          {filteredEquipes.length} équipe{filteredEquipes.length > 1 ? 's' : ''}
-        </div>
-      </div>
-
-      {selectedIds.length > 0 && (
-        <div className="mb-4 flex items-center gap-4 p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedIds.length} équipe{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
-          </span>
           <Button
-            variant="destructive"
+            type="button"
+            variant="outline"
             size="sm"
             onClick={() => setShowBulkDelete(true)}
+            className="border-destructive text-destructive hover:border-destructive hover:bg-destructive hover:text-white active:border-destructive active:bg-destructive active:text-white"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 aria-hidden="true" />
             Supprimer la sélection
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedIds([])}
-          >
-            Annuler
           </Button>
         </div>
       )}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedIds.length === filteredEquipes.length && filteredEquipes.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Photo</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Entraîneur</TableHead>
-              <TableHead>Entraînements</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Ordre</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredEquipes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                  {hasActiveFilters ? 'Aucune équipe trouvée' : 'Aucune équipe'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              <SortableContext
-                items={filteredEquipes.map((e) => e.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {filteredEquipes.map((equipe) => (
-                  <SortableRow
-                    key={equipe.id}
-                    equipe={equipe}
-                    onDelete={() => setDeleteId(equipe.id)}
-                    onTogglePublished={() => handleTogglePublished(equipe.id)}
-                    onToggleSelect={() => toggleSelectOne(equipe.id)}
-                    isSelected={selectedIds.includes(equipe.id)}
-                  />
-                ))}
-              </SortableContext>
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
+      {filteredEquipes.length === 0 ? (
+        hasActiveFilters ? (
+          <EmptyState
+            title="Aucune équipe ne correspond"
+            action={
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Effacer les filtres
+              </Button>
+            }
+          >
+            <p>Élargissez la recherche ou retirez un filtre pour retrouver les autres équipes.</p>
+          </EmptyState>
+        ) : (
+          <EmptyState
+            title="Aucune équipe pour l'instant"
+            action={
+              <Button asChild>
+                <Link href="/admin/equipes/new">
+                  <Plus aria-hidden="true" />
+                  Créer la première équipe
+                </Link>
+              </Button>
+            }
+          >
+            <p>
+              Une équipe a sa page sur le site : photo, entraîneur, créneaux d'entraînement et
+              matchs. À l'enregistrement, vous choisissez de la publier ou de la garder en
+              brouillon.
+            </p>
+          </EmptyState>
+        )
+      ) : (
+        <SortableEquipes
+          equipes={filteredEquipes}
+          selectedIds={selectedIds}
+          allSelected={selectedIds.length === filteredEquipes.length && filteredEquipes.length > 0}
+          onToggleSelectAll={toggleSelectAll}
+          onToggleSelect={toggleSelectOne}
+          onDragEnd={handleDragEnd}
+          actions={(equipe) => (
+            <RowActions
+              label={`Actions pour « ${equipe.nom} »`}
+              items={[
+                { label: 'Modifier', icon: Pencil, href: `/admin/equipes/${equipe.id}` },
+                {
+                  label: equipe.published ? 'Dépublier' : 'Publier',
+                  icon: equipe.published ? EyeOff : Eye,
+                  onSelect: () => handleTogglePublished(equipe),
+                },
+                'separator',
+                {
+                  label: 'Supprimer',
+                  icon: Trash2,
+                  destructive: true,
+                  onSelect: () => setDeleteId(equipe.id),
+                },
+              ]}
+            />
+          )}
+        />
+      )}
 
       <DeleteDialog
         open={deleteId !== null}
@@ -416,7 +304,8 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
         onConfirm={handleDelete}
         isLoading={isDeleting}
         title="Supprimer cette équipe ?"
-        description="Cette action est irréversible. L'équipe et tous ses entraînements seront supprimés."
+        description="Cette action est irréversible. L'équipe, ses créneaux d'entraînement, ses matchs et son classement seront définitivement supprimés."
+        confirmLabel="Supprimer l'équipe"
       />
 
       <DeleteDialog
@@ -424,8 +313,13 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
         onOpenChange={(open) => !open && setShowBulkDelete(false)}
         onConfirm={handleBulkDelete}
         isLoading={isDeleting}
-        title={`Supprimer ${selectedIds.length} équipe${selectedIds.length > 1 ? 's' : ''} ?`}
-        description={`Cette action est irréversible. ${selectedIds.length} équipe${selectedIds.length > 1 ? 's' : ''} et tous leurs entraînements seront supprimés.`}
+        title={`Supprimer ${selectionCount} équipe${pluriel(selectionCount)} ?`}
+        description={`Cette action est irréversible. ${selectionCount} équipe${pluriel(selectionCount)}, avec ${selectionCount > 1 ? 'leurs' : 'ses'} créneaux d'entraînement, ${selectionCount > 1 ? 'leurs' : 'ses'} matchs et ${selectionCount > 1 ? 'leur' : 'son'} classement, ${selectionCount > 1 ? 'seront définitivement supprimées' : 'sera définitivement supprimée'}.${
+          hiddenSelectedCount > 0
+            ? ` Attention : ${hiddenSelectedCount} équipe${pluriel(hiddenSelectedCount)} sélectionnée${pluriel(hiddenSelectedCount)} ${hiddenSelectedCount > 1 ? 'ne sont pas affichées' : "n'est pas affichée"} avec les filtres en cours.`
+            : ''
+        }`}
+        confirmLabel={`Supprimer ${selectionCount > 1 ? `les ${selectionCount} équipes` : "l'équipe"}`}
       />
     </>
   )

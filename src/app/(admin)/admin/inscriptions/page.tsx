@@ -1,193 +1,166 @@
-import { ClipboardList, Calendar } from "lucide-react";
-import { getAllInscriptions, getInscriptionsStats } from "./actions";
-import { InscriptionsTable } from "./InscriptionsTable";
-import { ManquesResume } from "./ManquesResume";
-import { Badge } from "@/components/ui/badge";
-import { format, isThisWeek, addWeeks, isSameWeek } from "date-fns";
-import { fr } from "date-fns/locale";
+import { addWeeks, isSameWeek, isThisWeek } from 'date-fns'
+import { PageHeader } from '@/components/admin/PageHeader'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/admin/Tabs'
+import { getAllInscriptions, getInscriptionsStats } from './actions'
+import { InscriptionsTable } from './InscriptionsTable'
+import { ManquesResume } from './ManquesResume'
 
 export const metadata = {
-  title: "Inscriptions - Admin",
-  description: "Gérer les inscriptions aux matchs",
-};
+  title: 'Inscriptions - Admin',
+  description: 'Gérer les inscriptions aux matchs',
+}
 
-function getWeekendLabel(friday: Date): string {
-  const now = new Date();
+// Le vendredi d'un week-end est calculé à minuit, heure du serveur : ses
+// libellés se formatent donc sans fuseau imposé.
+const formatPeriode = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+const formatQuantieme = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' })
+const formatJourMois = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' })
+const formatJourMoisAnnee = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+function dimancheDe(friday: Date) {
+  const sunday = new Date(friday)
+  sunday.setDate(friday.getDate() + 2)
+  return sunday
+}
+
+/** Vendredi du week-end auquel un match est rattaché (règle inchangée) */
+function vendrediDe(date: Date) {
+  const matchDate = new Date(date)
+  const dayOfWeek = matchDate.getDay()
+  const friday = new Date(matchDate)
+  friday.setDate(matchDate.getDate() - (dayOfWeek - 5))
+  friday.setHours(0, 0, 0, 0)
+  return friday
+}
+
+/** « Cette semaine », « Semaine prochaine », puis le week-end par ses dates */
+function nommerWeekend(friday: Date): { titre: string; periode?: string } {
+  const sunday = dimancheDe(friday)
+  const periode = formatPeriode.formatRange(friday, sunday)
 
   if (isThisWeek(friday, { weekStartsOn: 1 })) {
-    return "Cette semaine";
+    return { titre: 'Cette semaine', periode }
   }
 
-  const nextWeek = addWeeks(now, 1);
-  if (isSameWeek(friday, nextWeek, { weekStartsOn: 1 })) {
-    return "Semaine prochaine";
+  if (isSameWeek(friday, addWeeks(new Date(), 1), { weekStartsOn: 1 })) {
+    return { titre: 'Semaine prochaine', periode }
   }
 
-  const sunday = new Date(friday);
-  sunday.setDate(friday.getDate() + 2);
+  const debut =
+    friday.getMonth() === sunday.getMonth()
+      ? formatQuantieme.format(friday)
+      : formatJourMois.format(friday)
+  const fin =
+    sunday.getFullYear() === new Date().getFullYear()
+      ? formatJourMois.format(sunday)
+      : formatJourMoisAnnee.format(sunday)
 
-  return `Semaine du ${format(friday, "d", { locale: fr })} au ${format(sunday, "d MMM", { locale: fr })}`;
+  return { titre: `Week-end du ${debut} au ${fin}` }
 }
 
 export default async function InscriptionsPage() {
   const [inscriptions, matchsAvecManques] = await Promise.all([
     getAllInscriptions(),
     getInscriptionsStats(),
-  ]);
+  ])
 
-  // Grouper toutes les données par weekend
-  const weekendsData = new Map<string, {
-    friday: Date;
-    manques: typeof matchsAvecManques;
-    inscriptions: typeof inscriptions;
-  }>();
+  // Grouper toutes les données par week-end
+  const weekendsData = new Map<
+    string,
+    {
+      friday: Date
+      manques: typeof matchsAvecManques
+      inscriptions: typeof inscriptions
+    }
+  >()
 
-  // Grouper les matchs avec manques par weekend
-  matchsAvecManques.forEach((match) => {
-    const matchDate = new Date(match.date);
-    const dayOfWeek = matchDate.getDay();
-    const friday = new Date(matchDate);
-    friday.setDate(matchDate.getDate() - (dayOfWeek - 5));
-    friday.setHours(0, 0, 0, 0);
-    const weekendKey = friday.toISOString().split('T')[0];
+  const weekendDe = (date: Date) => {
+    const friday = vendrediDe(date)
+    const weekendKey = friday.toISOString().split('T')[0]
 
     if (!weekendsData.has(weekendKey)) {
-      weekendsData.set(weekendKey, {
-        friday,
-        manques: [],
-        inscriptions: [],
-      });
+      weekendsData.set(weekendKey, { friday, manques: [], inscriptions: [] })
     }
-    weekendsData.get(weekendKey)!.manques.push(match);
-  });
+    return weekendsData.get(weekendKey)!
+  }
 
-  // Grouper les inscriptions par weekend
-  inscriptions.forEach((inscription) => {
-    const matchDate = new Date(inscription.match.date);
-    const dayOfWeek = matchDate.getDay();
-    const friday = new Date(matchDate);
-    friday.setDate(matchDate.getDate() - (dayOfWeek - 5));
-    friday.setHours(0, 0, 0, 0);
-    const weekendKey = friday.toISOString().split('T')[0];
+  matchsAvecManques.forEach((match) => weekendDe(match.date).manques.push(match))
+  inscriptions.forEach((inscription) =>
+    weekendDe(inscription.match.date).inscriptions.push(inscription)
+  )
 
-    if (!weekendsData.has(weekendKey)) {
-      weekendsData.set(weekendKey, {
-        friday,
-        manques: [],
-        inscriptions: [],
-      });
-    }
-    weekendsData.get(weekendKey)!.inscriptions.push(inscription);
-  });
+  // Trier les week-ends par date et écarter ceux dont le dimanche est passé
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
 
-  // Trier les weekends par date et filtrer les weekends passés
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
-  const sortedWeekends = Array.from(weekendsData.entries())
-    .filter(([_, data]) => {
-      // Calculer le dimanche du weekend
-      const sunday = new Date(data.friday);
-      sunday.setDate(data.friday.getDate() + 2);
-      sunday.setHours(23, 59, 59, 999);
-
-      // Garder seulement les weekends dont le dimanche n'est pas encore passé
-      return sunday >= now;
+  const weekends = Array.from(weekendsData.entries())
+    .filter(([, data]) => {
+      const sunday = dimancheDe(data.friday)
+      sunday.setHours(23, 59, 59, 999)
+      return sunday >= now
     })
-    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .map(([cle, data]) => ({ cle, ...nommerWeekend(data.friday), ...data }))
+
+  const postesAPourvoir = weekends.reduce(
+    (somme, weekend) =>
+      somme + weekend.manques.reduce((sousTotal, match) => sousTotal + match.totalManques, 0),
+    0
+  )
+  const inscrits = weekends.reduce((somme, weekend) => somme + weekend.inscriptions.length, 0)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500">
-          <ClipboardList className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-        </div>
-        <div>
-          <h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Inscriptions aux matchs
-          </h1>
-          <p className="text-xs sm:text-base text-muted-foreground">
-            Gérez les inscriptions des bénévoles
-          </p>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="Inscriptions"
+        description="Les bénévoles des matchs à domicile, semaine après semaine : table de marque, arbitrage, responsable de salle et buvette."
+      />
 
-      {sortedWeekends.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg bg-muted/20">
-          <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Aucune inscription</h3>
-          <p className="text-muted-foreground">
-            Il n'y a pas encore d'inscriptions pour les matchs à venir
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {sortedWeekends.map(([weekendKey, data]) => {
-            const weekendLabel = getWeekendLabel(data.friday);
-            const sunday = new Date(data.friday);
-            sunday.setDate(data.friday.getDate() + 2);
-            const totalManques = data.manques.reduce((sum, m) => sum + m.totalManques, 0);
+      <Tabs defaultValue="postes">
+        <TabsList aria-label="Postes à pourvoir ou bénévoles inscrits">
+          <TabsTrigger value="postes" count={postesAPourvoir}>
+            À pourvoir
+          </TabsTrigger>
+          <TabsTrigger value="inscrits" count={inscrits}>
+            Inscrits
+          </TabsTrigger>
+        </TabsList>
 
-            return (
-              <div key={weekendKey} className="space-y-4">
-                {/* Header du weekend */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg shadow-lg">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
-                    <div>
-                      <h2 className="text-lg sm:text-2xl font-bold text-white">
-                        {weekendLabel}
-                      </h2>
-                      <p className="text-white/80 text-xs sm:text-sm">
-                        {format(data.friday, "d MMM", { locale: fr })} - {format(sunday, "d MMM yyyy", { locale: fr })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {totalManques > 0 && (
-                      <Badge variant="destructive" className="text-xs sm:text-base bg-red-600">
-                        {totalManques} manque{totalManques > 1 ? "s" : ""}
-                      </Badge>
-                    )}
-                    <Badge variant="secondary" className="text-xs sm:text-base bg-white/20 text-white border-white/30">
-                      {data.inscriptions.length} inscription{data.inscriptions.length > 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                </div>
+        <TabsContent value="postes">
+          <ManquesResume
+            weekends={weekends
+              .filter((weekend) => weekend.manques.length > 0)
+              .map(({ cle, titre, periode, manques, inscriptions: inscritsDuWeekend }) => ({
+                cle,
+                titre,
+                periode,
+                matchs: manques,
+                inscrits: inscritsDuWeekend.length,
+              }))}
+          />
+        </TabsContent>
 
-                {/* Contenu du weekend */}
-                <div className="pl-4 space-y-4">
-                  {/* Manques pour ce weekend */}
-                  {data.manques.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3 text-orange-600">
-                        Besoins en bénévoles
-                      </h3>
-                      <ManquesResume matchs={data.manques} />
-                    </div>
-                  )}
-
-                  {/* Inscriptions pour ce weekend */}
-                  {data.inscriptions.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3 text-primary-700">
-                        Inscriptions enregistrées
-                      </h3>
-                      <InscriptionsTable inscriptions={data.inscriptions} hideWeekendHeaders />
-                    </div>
-                  )}
-
-                  {data.manques.length === 0 && data.inscriptions.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">
-                      Aucune donnée pour ce weekend
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        <TabsContent value="inscrits">
+          <InscriptionsTable
+            weekends={weekends
+              .filter((weekend) => weekend.inscriptions.length > 0)
+              .map(({ cle, titre, periode, inscriptions: inscritsDuWeekend }) => ({
+                cle,
+                titre,
+                periode,
+                inscriptions: inscritsDuWeekend,
+              }))}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 }

@@ -37,3 +37,6 @@ tsconfig.tsbuildinfo
 *.sw?
 .vercel
 .env*
+
+# Captures de revue de design : peuvent contenir des données réelles du club
+.impeccable/review/

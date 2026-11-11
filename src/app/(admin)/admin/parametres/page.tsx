@@ -1,20 +1,27 @@
-import { Settings } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { HeroBackgroundForm } from './HeroBackgroundForm'
 import { PageBackgroundForm } from './PageBackgroundForm'
 import { CalendrierPasswordForm } from './CalendrierPasswordForm'
 import { getHeroBackground, getPageBackground, getCalendrierPassword } from './actions'
-import { Separator } from '@/components/ui/separator'
 
 export const metadata = {
   title: 'Paramètres - Admin',
   description: 'Gérer les paramètres du site',
 }
 
-export default async function ParametresPage() {
-  const heroBackgroundSetting = await getHeroBackground()
+// Espaces insécables : dans la colonne des titres, la coupure tombe avant le nom de la page
+const FOND_DE_LA_PAGE = 'Fond\u00a0de\u00a0la\u00a0page'
 
-  // Récupérer les backgrounds de toutes les pages
-  const [partnersBackground, newsBackground, teamsBackground, contactBackground, calendrierPassword] = await Promise.all([
+export default async function ParametresPage() {
+  const [
+    heroBackgroundSetting,
+    partnersBackground,
+    newsBackground,
+    teamsBackground,
+    contactBackground,
+    calendrierPassword,
+  ] = await Promise.all([
+    getHeroBackground(),
     getPageBackground('partenaires'),
     getPageBackground('actus'),
     getPageBackground('equipes'),
@@ -23,82 +30,46 @@ export default async function ParametresPage() {
   ])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500">
-          <Settings className="h-8 w-8 text-white" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Paramètres
-          </h1>
-          <p className="text-muted-foreground">
-            Gérez les paramètres généraux du site
-          </p>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="Paramètres"
+        description="L'accès au calendrier des bénévoles et les images de fond du site. Chaque réglage s'enregistre séparément."
+      />
 
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Calendrier Interactif
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Configurez le mot de passe pour accéder au calendrier des matchs
-          </p>
-          <CalendrierPasswordForm initialPassword={calendrierPassword} />
-        </div>
+      {/* Une section par réglage : le trait de l'en-tête tient lieu de premier filet */}
+      <div>
+        {/* Le mot de passe reste sur le serveur : la page ne reçoit que son existence */}
+        <CalendrierPasswordForm isDefined={calendrierPassword !== ''} />
 
-        <Separator />
+        <HeroBackgroundForm initialImage={heroBackgroundSetting?.value || ''} />
 
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Images de fond
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Gérez les images de fond affichées sur les différentes pages du site
-          </p>
+        <PageBackgroundForm
+          page="partenaires"
+          title={`${FOND_DE_LA_PAGE} Partenaires`}
+          description="L'image derrière la page Partenaires et la page de chaque partenaire. Sans image, le fond reste sombre."
+          initialImage={partnersBackground || ''}
+        />
 
-          <div className="space-y-6">
-            <HeroBackgroundForm initialImage={heroBackgroundSetting?.value || ''} />
+        <PageBackgroundForm
+          page="actus"
+          title={`${FOND_DE_LA_PAGE} Actualités`}
+          description="L'image derrière la liste des actualités. Sans image, le fond reste sombre."
+          initialImage={newsBackground || ''}
+        />
 
-            <Separator />
+        <PageBackgroundForm
+          page="equipes"
+          title={`${FOND_DE_LA_PAGE} Équipes`}
+          description="L'image derrière la liste des équipes. Sans image, le fond reste sombre."
+          initialImage={teamsBackground || ''}
+        />
 
-            <PageBackgroundForm
-              page="partenaires"
-              title="Page Partenaires"
-              description="Image de fond affichée sur la page partenaires"
-              initialImage={partnersBackground || ''}
-            />
-
-            <Separator />
-
-            <PageBackgroundForm
-              page="actus"
-              title="Page Actualités"
-              description="Image de fond affichée sur la page actualités"
-              initialImage={newsBackground || ''}
-            />
-
-            <Separator />
-
-            <PageBackgroundForm
-              page="equipes"
-              title="Page Équipes"
-              description="Image de fond affichée sur la page équipes"
-              initialImage={teamsBackground || ''}
-            />
-
-            <Separator />
-
-            <PageBackgroundForm
-              page="contact"
-              title="Page Contact"
-              description="Image de fond affichée sur la page contact"
-              initialImage={contactBackground || ''}
-            />
-          </div>
-        </div>
+        <PageBackgroundForm
+          page="contact"
+          title={`${FOND_DE_LA_PAGE} Contact`}
+          description="L'image derrière le formulaire de contact. Sans image, le fond reste sombre."
+          initialImage={contactBackground || ''}
+        />
       </div>
     </div>
   )

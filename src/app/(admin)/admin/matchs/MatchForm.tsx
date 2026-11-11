@@ -1,20 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { LoadingButton } from '@/components/admin/LoadingButton'
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Button } from '@/components/admin/Button'
+import { Field, Input, SwitchField } from '@/components/admin/Field'
+import { FormSection, SaveBar } from '@/components/admin/FormSection'
+import { SimpleSelect } from '@/components/admin/Select'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { StatusMark } from '@/components/admin/StatusMark'
 
 interface Equipe {
   id: number
@@ -34,6 +28,8 @@ interface Match {
   scoreEquipe: number | null
   scoreAdversaire: number | null
   published: boolean
+  equipe?: Equipe
+  updatedAt?: Date
 }
 
 interface MatchFormProps {
@@ -42,12 +38,67 @@ interface MatchFormProps {
   action: (formData: FormData) => Promise<void>
 }
 
+const formatModification = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: 'Europe/Paris',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+type ChampMatch = 'equipeId' | 'adversaire' | 'date' | 'lieu' | 'scoreEquipe' | 'scoreAdversaire'
+
+// Ordre d'affichage des champs : la première erreur est celle du haut
+const ORDRE_CHAMPS: ChampMatch[] = [
+  'equipeId',
+  'adversaire',
+  'date',
+  'lieu',
+  'scoreEquipe',
+  'scoreAdversaire',
+]
+
+// Les chiffres du score sont pris sur la rampe du thème (24 px, tabulaires)
+const scoreInputClasses =
+  'h-12 w-full text-center font-semibold [font-family:var(--adm-font-condensed,var(--font-sans))] text-[length:var(--adm-num-md)] md:h-12 md:text-[length:var(--adm-num-md)]'
+
+/**
+ * Mêmes contraintes que celles du champ (`type="number"`, `min="0"`, pas de 1) :
+ * le formulaire n'en ajoute aucune, il les dit sous le champ.
+ */
+function erreurScore(form: HTMLFormElement, champ: 'scoreEquipe' | 'scoreAdversaire') {
+  const input = form.elements.namedItem(champ)
+  if (!(input instanceof HTMLInputElement)) return undefined
+
+  const { badInput, rangeUnderflow, stepMismatch } = input.validity
+  return badInput || rangeUnderflow || stepMismatch
+    ? 'Le score est un nombre entier, 0 ou plus.'
+    : undefined
+}
+
 export function MatchForm({ match, equipes, action }: MatchFormProps) {
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [termine, setTermine] = useState(match?.termine ?? false)
   const [domicile, setDomicile] = useState(match?.domicile ?? true)
   const [published, setPublished] = useState(match?.published ?? true)
   const [equipeId, setEquipeId] = useState(match?.equipeId?.toString() || '')
+  const [errors, setErrors] = useState<Partial<Record<ChampMatch, string>>>({})
+
+  // La liste ne propose que les équipes publiées. Si le match appartient à une
+  // équipe qui ne l'est pas, elle reste affichée : la valeur envoyée ne change pas.
+  const equipeHorsListe =
+    match?.equipe && !equipes.some((equipe) => equipe.id === match.equipe?.id)
+      ? match.equipe
+      : undefined
+
+  const equipeOptions = useMemo(
+    () =>
+      [...equipes, ...(equipeHorsListe ? [equipeHorsListe] : [])].map((equipe) => ({
+        value: equipe.id.toString(),
+        label: `${equipe.nom} (${equipe.categorie.trim()})`,
+      })),
+    [equipes, equipeHorsListe]
+  )
 
   // Format date for input[type="datetime-local"]
   const formatDateForInput = (date: Date) => {
@@ -60,32 +111,45 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
     return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
+  const clearError = (champ: ChampMatch) => {
+    if (errors[champ]) setErrors({ ...errors, [champ]: undefined })
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const adversaire = formData.get('adversaire') as string
     const date = formData.get('date') as string
     const lieu = formData.get('lieu') as string
 
     // Validation avec messages utilisateur
-    const errors: string[] = []
+    const found: Partial<Record<ChampMatch, string>> = {}
 
     if (!equipeId) {
-      errors.push('L\'équipe est requise')
+      found.equipeId = 'Choisissez l\'équipe du club qui joue ce match.'
     }
     if (!adversaire?.trim()) {
-      errors.push('Le nom de l\'adversaire est requis')
+      found.adversaire = 'Indiquez le nom de l\'équipe adverse.'
     }
     if (!date) {
-      errors.push('La date et l\'heure sont requises')
+      found.date = 'Indiquez la date et l\'heure du coup d\'envoi.'
     }
     if (!lieu?.trim()) {
-      errors.push('Le lieu est requis')
+      found.lieu = 'Indiquez la salle où le match se joue.'
+    }
+    if (termine) {
+      found.scoreEquipe = erreurScore(form, 'scoreEquipe')
+      found.scoreAdversaire = erreurScore(form, 'scoreAdversaire')
     }
 
-    if (errors.length > 0) {
-      toast.error(errors[0])
+    setErrors(found)
+
+    const premierChamp = ORDRE_CHAMPS.find((champ) => found[champ])
+    if (premierChamp) {
+      toast.error(found[premierChamp])
+      document.getElementById(premierChamp)?.focus()
       return
     }
 
@@ -98,172 +162,192 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
       formData.set('published', published.toString())
 
       await action(formData)
-    } catch (error: any) {
-      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+    } catch (error) {
+      const digest = (error as { digest?: unknown } | null)?.digest
+      if (typeof digest === 'string' && digest.startsWith('NEXT_REDIRECT')) {
         return
       }
       console.error(error)
-      toast.error('Une erreur est survenue')
+      toast.error("Le match n'a pas pu être enregistré.", {
+        description: 'Vérifiez votre connexion, puis réessayez.',
+      })
       setIsSubmitting(false)
     }
   }
 
+  const submitLabel = match
+    ? 'Enregistrer'
+    : published
+      ? 'Publier le match'
+      : 'Enregistrer le brouillon'
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations générales</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="equipeId">Équipe *</Label>
-            <Select value={equipeId} onValueChange={setEquipeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une équipe" />
-              </SelectTrigger>
-              <SelectContent>
-                {equipes.map((equipe) => (
-                  <SelectItem key={equipe.id} value={equipe.id.toString()}>
-                    {equipe.nom} ({equipe.categorie})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <form onSubmit={handleSubmit} noValidate>
+      <FormSection title="Rencontre" description="Qui joue, quand et dans quelle salle.">
+        <Field
+          id="equipeId"
+          label="Équipe"
+          required
+          error={errors.equipeId}
+          hint={
+            equipeHorsListe && equipeId === equipeHorsListe.id.toString()
+              ? 'Cette équipe n\'est pas publiée sur le site.'
+              : undefined
+          }
+        >
+          <SimpleSelect
+            value={equipeId}
+            onValueChange={(value) => {
+              setEquipeId(value)
+              clearError('equipeId')
+            }}
+            options={equipeOptions}
+            placeholder="Choisir une équipe"
+          />
+        </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="adversaire">Adversaire *</Label>
+        <Field id="adversaire" label="Adversaire" required error={errors.adversaire}>
+          <Input
+            name="adversaire"
+            defaultValue={match?.adversaire}
+            onChange={() => clearError('adversaire')}
+            placeholder="Nom de l'équipe adverse"
+          />
+        </Field>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="date" label="Date et heure" required error={errors.date}>
             <Input
-              id="adversaire"
-              name="adversaire"
-              defaultValue={match?.adversaire}
-              placeholder="Nom de l'équipe adverse"
+              name="date"
+              type="datetime-local"
+              defaultValue={match?.date ? formatDateForInput(match.date) : ''}
+              onChange={() => clearError('date')}
             />
-          </div>
+          </Field>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">Date et heure *</Label>
-              <Input
-                id="date"
-                name="date"
-                type="datetime-local"
-                defaultValue={match?.date ? formatDateForInput(match.date) : ''}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="lieu">Lieu *</Label>
-              <Input
-                id="lieu"
-                name="lieu"
-                defaultValue={match?.lieu}
-                placeholder="Gymnase des Prés Riants"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="competition">Compétition</Label>
+          <Field id="lieu" label="Lieu" required error={errors.lieu}>
             <Input
-              id="competition"
-              name="competition"
-              defaultValue={match?.competition || ''}
-              placeholder="Championnat, Coupe..."
+              name="lieu"
+              defaultValue={match?.lieu}
+              onChange={() => clearError('lieu')}
+              placeholder="Gymnase des Prés Riants"
             />
-          </div>
+          </Field>
+        </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="domicile"
-              name="domicile"
-              value="true"
-              checked={domicile}
-              onCheckedChange={(checked) => setDomicile(checked as boolean)}
-            />
-            <Label htmlFor="domicile" className="font-normal cursor-pointer">
-              Match à domicile
-            </Label>
-          </div>
-        </CardContent>
-      </Card>
+        <Field id="competition" label="Compétition" optional>
+          <Input
+            name="competition"
+            defaultValue={match?.competition || ''}
+            placeholder="Championnat, Coupe de France…"
+          />
+        </Field>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Résultat</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="termine"
-              name="termine"
-              value="true"
-              checked={termine}
-              onCheckedChange={(checked) => setTermine(checked as boolean)}
-            />
-            <Label htmlFor="termine" className="font-normal cursor-pointer">
-              Match terminé
-            </Label>
-          </div>
+        <div className="border-t border-border">
+          <SwitchField
+            id="domicile"
+            label="Match à domicile"
+            description={
+              domicile ? 'Le club reçoit.' : 'Le club se déplace chez l\'adversaire.'
+            }
+            checked={domicile}
+            onCheckedChange={setDomicile}
+            aside={
+              <StatusMark tone={domicile ? 'fill' : 'solid'}>
+                {domicile ? 'Domicile' : 'Extérieur'}
+              </StatusMark>
+            }
+          />
+        </div>
+      </FormSection>
 
-          {termine && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="scoreEquipe">Score équipe</Label>
+      <FormSection title="Résultat" description="À remplir une fois le match joué.">
+        <div className="border-t border-border">
+          <SwitchField
+            id="termine"
+            label="Match terminé"
+            description={
+              termine
+                ? 'Le match est joué : son score se saisit ci-dessous.'
+                : 'Activez une fois le match joué pour saisir le score.'
+            }
+            checked={termine}
+            onCheckedChange={setTermine}
+            aside={
+              <StatusMark tone={termine ? 'solid' : 'dashed'}>
+                {termine ? 'Terminé' : 'À venir'}
+              </StatusMark>
+            }
+          />
+        </div>
+
+        {termine && (
+          <>
+            <div className="grid max-w-80 grid-cols-2 gap-5">
+              <Field id="scoreEquipe" label="Score du club" error={errors.scoreEquipe}>
                 <Input
-                  id="scoreEquipe"
                   name="scoreEquipe"
                   type="number"
                   min="0"
+                  inputMode="numeric"
                   defaultValue={match?.scoreEquipe ?? ''}
+                  onChange={() => clearError('scoreEquipe')}
                   placeholder="0"
+                  className={scoreInputClasses}
                 />
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="scoreAdversaire">Score adversaire</Label>
+              <Field id="scoreAdversaire" label="Score adverse" error={errors.scoreAdversaire}>
                 <Input
-                  id="scoreAdversaire"
                   name="scoreAdversaire"
                   type="number"
                   min="0"
+                  inputMode="numeric"
                   defaultValue={match?.scoreAdversaire ?? ''}
+                  onChange={() => clearError('scoreAdversaire')}
                   placeholder="0"
+                  className={scoreInputClasses}
                 />
-              </div>
+              </Field>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <p className="adm-meta">
+              Laissez les deux champs vides si le score n'est pas connu : le match reste marqué
+              comme joué, sans score.
+            </p>
+          </>
+        )}
+      </FormSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Publication</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="published"
-              name="published"
-              value="true"
-              checked={published}
-              onCheckedChange={(checked) => setPublished(checked as boolean)}
-            />
-            <Label htmlFor="published" className="font-normal cursor-pointer">
-              Publié
-            </Label>
-          </div>
-        </CardContent>
-      </Card>
+      <FormSection title="Publication" description="Ce que le site montre de ce match.">
+        <div className="border-t border-border">
+          <SwitchField
+            id="published"
+            label="Publié"
+            description={
+              published
+                ? 'Visible sur le calendrier du site dès l\'enregistrement.'
+                : 'Gardé en brouillon : invisible sur le site.'
+            }
+            checked={published}
+            onCheckedChange={setPublished}
+            aside={<StatusBadge status={published ? 'published' : 'draft'} />}
+          />
+        </div>
+      </FormSection>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <LoadingButton type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-          Enregistrer
-        </LoadingButton>
-        <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting} className="w-full sm:w-auto">
+      <SaveBar
+        status={
+          match?.updatedAt &&
+          `Dernière modification le ${formatModification.format(new Date(match.updatedAt))}`
+        }
+      >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
           Annuler
         </Button>
-      </div>
+        <Button type="submit" isLoading={isSubmitting}>
+          {submitLabel}
+        </Button>
+      </SaveBar>
     </form>
   )
 }

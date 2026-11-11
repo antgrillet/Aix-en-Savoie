@@ -1,0 +1,445 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T11:15:15Z",
+  "title": "Design System: Administration du HBC Aix-en-Savoie",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Noir du logo",
+        "canonical": "#222221",
+        "tonalRamp": [
+          "oklch(15% 0.001 107)",
+          "oklch(27% 0.002 107)",
+          "oklch(39% 0.002 107)",
+          "oklch(51% 0.002 107)",
+          "oklch(63% 0.002 107)",
+          "oklch(75% 0.002 107)",
+          "oklch(87% 0.001 107)",
+          "oklch(95% 0.001 107)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Blanc",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(27% 0.000 90)",
+          "oklch(39% 0.000 90)",
+          "oklch(51% 0.000 90)",
+          "oklch(63% 0.000 90)",
+          "oklch(75% 0.000 90)",
+          "oklch(87% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "orange": {
+        "role": "primary",
+        "displayName": "Orange du logo",
+        "canonical": "#d77f29",
+        "tonalRamp": [
+          "oklch(15% 0.086 60)",
+          "oklch(27% 0.144 60)",
+          "oklch(39% 0.144 60)",
+          "oklch(51% 0.144 60)",
+          "oklch(63% 0.144 60)",
+          "oklch(75% 0.144 60)",
+          "oklch(87% 0.086 60)",
+          "oklch(95% 0.086 60)"
+        ]
+      },
+      "orange-ink": {
+        "role": "primary",
+        "displayName": "Orange encre",
+        "canonical": "#a35a14",
+        "tonalRamp": [
+          "oklch(15% 0.073 58)",
+          "oklch(27% 0.122 58)",
+          "oklch(39% 0.122 58)",
+          "oklch(51% 0.122 58)",
+          "oklch(63% 0.122 58)",
+          "oklch(75% 0.122 58)",
+          "oklch(87% 0.073 58)",
+          "oklch(95% 0.073 58)"
+        ]
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Gris de texte secondaire",
+        "canonical": "#5f5f5c",
+        "tonalRamp": [
+          "oklch(15% 0.003 107)",
+          "oklch(27% 0.005 107)",
+          "oklch(39% 0.005 107)",
+          "oklch(51% 0.005 107)",
+          "oklch(63% 0.005 107)",
+          "oklch(75% 0.005 107)",
+          "oklch(87% 0.003 107)",
+          "oklch(95% 0.003 107)"
+        ]
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Gris d'indication",
+        "canonical": "#6b6b68",
+        "tonalRamp": [
+          "oklch(15% 0.003 107)",
+          "oklch(27% 0.005 107)",
+          "oklch(39% 0.005 107)",
+          "oklch(51% 0.005 107)",
+          "oklch(63% 0.005 107)",
+          "oklch(75% 0.005 107)",
+          "oklch(87% 0.003 107)",
+          "oklch(95% 0.003 107)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Gris de filet",
+        "canonical": "#d9d9d6",
+        "tonalRamp": [
+          "oklch(15% 0.002 106)",
+          "oklch(27% 0.004 106)",
+          "oklch(39% 0.004 106)",
+          "oklch(51% 0.004 106)",
+          "oklch(63% 0.004 106)",
+          "oklch(75% 0.004 106)",
+          "oklch(87% 0.002 106)",
+          "oklch(95% 0.002 106)"
+        ]
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "Gris de champ",
+        "canonical": "#8a8a86",
+        "tonalRamp": [
+          "oklch(15% 0.004 107)",
+          "oklch(27% 0.006 107)",
+          "oklch(39% 0.006 107)",
+          "oklch(51% 0.006 107)",
+          "oklch(63% 0.006 107)",
+          "oklch(75% 0.006 107)",
+          "oklch(87% 0.004 107)",
+          "oklch(95% 0.004 107)"
+        ]
+      },
+      "red": {
+        "role": "secondary",
+        "displayName": "Rouge de suppression",
+        "canonical": "#b42318",
+        "tonalRamp": [
+          "oklch(15% 0.109 30)",
+          "oklch(27% 0.182 30)",
+          "oklch(39% 0.182 30)",
+          "oklch(51% 0.182 30)",
+          "oklch(63% 0.182 30)",
+          "oklch(75% 0.182 30)",
+          "oklch(87% 0.109 30)",
+          "oklch(95% 0.109 30)"
+        ]
+      },
+      "on-ink-2": {
+        "role": "neutral",
+        "displayName": "Gris clair sur noir",
+        "canonical": "#c2c2c0",
+        "tonalRamp": [
+          "oklch(15% 0.002 106)",
+          "oklch(27% 0.003 106)",
+          "oklch(39% 0.003 106)",
+          "oklch(51% 0.003 106)",
+          "oklch(63% 0.003 106)",
+          "oklch(75% 0.003 106)",
+          "oklch(87% 0.002 106)",
+          "oklch(95% 0.002 106)"
+        ]
+      },
+      "red-on-ink": {
+        "role": "secondary",
+        "displayName": "Rouge sur noir",
+        "canonical": "#ff8a75",
+        "tonalRamp": [
+          "oklch(15% 0.088 31)",
+          "oklch(27% 0.146 31)",
+          "oklch(39% 0.146 31)",
+          "oklch(51% 0.146 31)",
+          "oklch(63% 0.146 31)",
+          "oklch(75% 0.146 31)",
+          "oklch(87% 0.088 31)",
+          "oklch(95% 0.088 31)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Titre de page",
+        "purpose": "Le h1 de l'écran, un seul par page, en Barlow Condensed."
+      },
+      "headline": {
+        "displayName": "Titre de section",
+        "purpose": "Bloc titré, section de formulaire, titre de dialogue et d'état vide."
+      },
+      "subhead": {
+        "displayName": "Sous-titre",
+        "purpose": "Sous-division dans une section."
+      },
+      "body": {
+        "displayName": "Corps",
+        "purpose": "Texte courant, lignes de liste, champs à partir de 768 px. Chiffres tabulaires."
+      },
+      "label": {
+        "displayName": "Libellé",
+        "purpose": "Libellé de champ et texte de bouton, en casse de phrase."
+      },
+      "meta": {
+        "displayName": "Texte secondaire",
+        "purpose": "Aides, descriptions, en-têtes de colonnes, lien de retour."
+      },
+      "micro": {
+        "displayName": "Mention",
+        "purpose": "Compteur de caractères, libellé d'un total, texte d'une marque de statut."
+      },
+      "num-lg": {
+        "displayName": "Chiffre grand",
+        "purpose": "Ce qui attend une action. Seul chiffre en orange sur blanc."
+      },
+      "num-md": {
+        "displayName": "Chiffre moyen",
+        "purpose": "Totaux de la bande de chiffres, saisie d'un score."
+      },
+      "num-sm": {
+        "displayName": "Chiffre petit",
+        "purpose": "Chiffre dans une ligne ou à côté d'un titre."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialogue",
+        "value": "0 16px 40px -8px rgb(34 34 33 / 0.45)",
+        "purpose": "Dialogue et confirmation de suppression, avec un contour noir de 2 px."
+      },
+      {
+        "name": "panneau-du-bas",
+        "value": "0 -16px 40px -8px rgb(34 34 33 / 0.45)",
+        "purpose": "Panneau « Plus » du téléphone, qui monte du bas."
+      },
+      {
+        "name": "page",
+        "value": "none",
+        "purpose": "Dans l'arbre de l'admin, toute ombre de boîte ou de texte est annulée (box-shadow: none !important)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "adm-ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Courbe des transitions du thème (filets, navigation, contour)."
+      },
+      {
+        "name": "adm-fast",
+        "value": "150ms",
+        "purpose": "Retour d'état : couleur, contour, filet de ligne, trait d'onglet, dialogue."
+      },
+      {
+        "name": "adm-trace",
+        "value": "180ms",
+        "purpose": "Signature : le contour pointillé d'une marque se referme en trait plein."
+      },
+      {
+        "name": "panneau",
+        "value": "200ms",
+        "purpose": "Glissement du panneau « Plus » sur téléphone."
+      },
+      {
+        "name": "adm-skel",
+        "value": "1.2s ease-in-out infinite alternate",
+        "purpose": "Oscillation d'opacité (1 à 0,35) des lignes de squelette."
+      },
+      {
+        "name": "adm-draw",
+        "value": "200ms à 800ms par ligne, cubic-bezier(0.16, 1, 0.3, 1), retards de 0 à 900ms",
+        "purpose": "Tracé du demi-terrain sur la connexion, une seule fois."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none; animation: none",
+        "purpose": "Sous prefers-reduced-motion, les états changent sans transition et le tracé est simplement là."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action principale de l'écran : bloc orange à texte noir. Un seul par écran.",
+      "html": "<button class=\"ds-btn-primary\">Publier l'article</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 3px; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; line-height: 1; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out; border: 2px solid #d77f29; background: #d77f29; color: #222221; } .ds-btn-primary:hover { border-color: #222221; } .ds-btn-primary:active { background: #222221; color: #ffffff; } .ds-btn-primary:focus-visible { outline: 2px solid #d77f29; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton contour",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Action secondaire : contour noir, s'inverse en bloc noir au survol.",
+      "html": "<button class=\"ds-btn-outline\">Annuler</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 3px; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; line-height: 1; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out; border: 1px solid #222221; background: #ffffff; color: #222221; } .ds-btn-outline:hover, .ds-btn-outline:active { background: #222221; color: #ffffff; } .ds-btn-outline:focus-visible { outline: 2px solid #d77f29; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton de suppression",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Confirmation d'une suppression, dans un dialogue. Jamais ailleurs.",
+      "html": "<button class=\"ds-btn-destructive\">Supprimer l'article</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 3px; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; line-height: 1; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out; border: 2px solid #b42318; background: #b42318; color: #ffffff; } .ds-btn-destructive:hover { border-color: #222221; } .ds-btn-destructive:active { background: #222221; } .ds-btn-destructive:focus-visible { outline: 2px solid #d77f29; outline-offset: 2px; }"
+    },
+    {
+      "name": "Champ",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Champ de saisie avec libellé, compteur de place restante et aide.",
+      "html": "<div class=\"ds-field\"><div class=\"ds-field-head\"><label class=\"ds-field-label\" for=\"ds-titre\">Titre</label><span class=\"ds-field-counter\">158</span></div><input id=\"ds-titre\" class=\"ds-input\" type=\"text\" placeholder=\"Victoire à domicile\"><p class=\"ds-field-hint\">Le titre affiché sur le site.</p></div>",
+      "css": ".ds-field { display: grid; gap: 6px; max-width: 28rem; font-family: Barlow, system-ui, sans-serif; color: #222221; } .ds-field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; } .ds-field-label { font-size: 0.9375rem; font-weight: 600; line-height: 1.375; } .ds-field-counter { font-size: 0.75rem; color: #5f5f5c; font-variant-numeric: tabular-nums; } .ds-input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #8a8a86; border-radius: 3px; background: #ffffff; color: #222221; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; caret-color: #d77f29; transition: border-color 150ms ease-out; } .ds-input::placeholder { color: #6b6b68; opacity: 1; } .ds-input:hover { border-color: #222221; } .ds-input:focus-visible { border-color: #222221; outline: 2px solid #d77f29; outline-offset: 2px; } .ds-field-hint { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: #5f5f5c; }"
+    },
+    {
+      "name": "Marque de statut",
+      "kind": "chip",
+      "refersTo": "status-mark",
+      "description": "Quatre tons : contour plein (confirmé), contour pointillé (provisoire), bloc orange (attend une action), bloc noir (fait marquant).",
+      "html": "<div class=\"ds-marks\"><span class=\"ds-mark\"><svg class=\"ds-contour\" aria-hidden=\"true\"><rect width=\"100%\" height=\"100%\" rx=\"2\"/></svg>Publié</span><span class=\"ds-mark\"><svg class=\"ds-contour ds-contour-dashed\" aria-hidden=\"true\"><rect width=\"100%\" height=\"100%\" rx=\"2\"/></svg>Brouillon</span><span class=\"ds-mark ds-mark-action\">Non lu</span><span class=\"ds-mark ds-mark-fill\">Domicile</span></div>",
+      "css": ".ds-marks { display: flex; flex-wrap: wrap; gap: 8px; } .ds-mark { position: relative; display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border-radius: 2px; font-family: Barlow, system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; line-height: 1; white-space: nowrap; color: #222221; } .ds-contour { position: absolute; inset: 1px; width: calc(100% - 2px); height: calc(100% - 2px); overflow: visible; pointer-events: none; } .ds-contour rect { fill: none; stroke: currentColor; stroke-width: 2px; stroke-dasharray: 8px 0; transition: stroke-dasharray 180ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-contour-dashed rect { stroke-dasharray: 4px 4px; } .ds-mark-action { background: #d77f29; } .ds-mark-fill { background: #222221; color: #ffffff; } @media (prefers-reduced-motion: reduce) { .ds-contour rect { transition: none; } }"
+    },
+    {
+      "name": "Entrée de navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Rail noir : entrée courante en bloc orange à texte noir, compteur « à traiter » en chiffre condensé orange.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\">Tableau de bord</a><a class=\"ds-nav-item\" href=\"#\">Articles</a><a class=\"ds-nav-item\" href=\"#\">Messages<span class=\"ds-nav-count\">3</span></a></nav>",
+      "css": ".ds-rail { display: grid; gap: 2px; width: 232px; padding: 12px; background: #222221; } .ds-nav-item { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border: 1px solid transparent; border-radius: 3px; color: #ffffff; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 500; text-decoration: none; transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav-item:hover { border-color: #c2c2c0; } .ds-nav-item:active { background: #ffffff; color: #222221; } .ds-nav-item[aria-current='page'] { border-color: #d77f29; background: #d77f29; color: #222221; font-weight: 600; } .ds-nav-item:focus-visible { outline: 2px solid #d77f29; outline-offset: 2px; } .ds-nav-count { margin-left: auto; font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-size: 1rem; font-weight: 700; line-height: 1; color: #d77f29; font-variant-numeric: tabular-nums; } .ds-nav-item:active .ds-nav-count { color: #222221; }"
+    },
+    {
+      "name": "Liste à filets",
+      "kind": "custom",
+      "description": "Lignes de 56 px séparées par un filet gris ; le filet de la ligne survolée passe au noir.",
+      "html": "<ul class=\"ds-rows\"><li><span class=\"ds-rows-title\">Reprise des entraînements</span><span class=\"ds-rows-num\">128</span></li><li><span class=\"ds-rows-title\">Tournoi de rentrée</span><span class=\"ds-rows-num\">64</span></li></ul>",
+      "css": ".ds-rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid #222221; font-family: Barlow, system-ui, sans-serif; font-size: 0.9375rem; color: #222221; } .ds-rows > li { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; border-bottom: 1px solid #d9d9d6; transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-rows > li:hover { border-bottom-color: #222221; } .ds-rows-title { font-weight: 600; } .ds-rows-num { font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Filets : plein et pointillé",
+      "kind": "custom",
+      "description": "Trait plein de 2 px (structure, confirmé) et pointillé 6 px / 6 px (provisoire, facultatif).",
+      "html": "<div class=\"ds-rules\"><span class=\"ds-rule\"></span><span class=\"ds-rule ds-rule-dashed\"></span></div>",
+      "css": ".ds-rules { display: grid; gap: 20px; width: 100%; min-width: 240px; } .ds-rule { display: block; height: 2px; background: #222221; } .ds-rule-dashed { background: repeating-linear-gradient(to right, #222221 0 6px, transparent 6px 12px); }"
+    },
+    {
+      "name": "Bande de totaux",
+      "kind": "custom",
+      "description": "Totaux sur une seule bande entre deux traits pleins, séparés par des filets verticaux. Pas de tuiles.",
+      "html": "<dl class=\"ds-totals\"><div><dd>42</dd><dt>Articles</dt></div><div><dd>18</dd><dt>Équipes</dt></div><div><dd>7</dd><dt>Partenaires</dt></div></dl>",
+      "css": ".ds-totals { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 0; padding: 16px 0; border-top: 2px solid #222221; border-bottom: 2px solid #222221; color: #222221; } .ds-totals > div { display: flex; flex-direction: column; gap: 4px; padding: 0 16px; border-left: 1px solid #d9d9d6; } .ds-totals > div:first-child { padding-left: 0; border-left: 0; } .ds-totals dd { margin: 0; font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-size: 1.5rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; } .ds-totals dt { font-family: Barlow, system-ui, sans-serif; font-size: 0.75rem; line-height: 1.35; color: #5f5f5c; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le tracé",
+    "overview": "L'administration est dessinée avec la grammaire des lignes d'un terrain de handball. La ligne est le seul outil de structure, et son style dit l'état de ce qu'elle entoure : un trait plein pour ce qui est confirmé, un pointillé pour ce qui est provisoire. Il n'y a que deux encres, le noir et le blanc, plus l'orange du logo ; le gris n'existe que pour le texte secondaire et les filets, jamais pour remplir une surface.\n\nL'ensemble est dense et calme : des listes à filets plutôt que des cartes, une bande de chiffres plutôt que des tuiles, des coins vifs, et une seule grande courbe, l'arc de zone, qui taille le coin de la surface de travail et revient sur la connexion et dans les états vides. L'orange et le rouge sont rares parce qu'ils ont chacun un seul sens. Le bénévole qui revient après trois semaines lit l'écran sans légende : ce qui est orange l'attend, ce qui est en pointillé n'est pas fini.\n\nLe seul mouvement de signature est « le pointillé devient plein » : à la publication, le contour en tirets d'une marque de statut se referme en trait plein. Tout le reste des transitions est un retour d'état court, coupé sous `prefers-reduced-motion`.",
+    "keyCharacteristics": [
+      "Deux encres (noir du logo, blanc) et l'orange du club ; aucune surface grise, aucun dégradé.",
+      "Le style du trait porte l'état : plein = confirmé, pointillé = provisoire.",
+      "Orange = ce qui s'actionne ou attend une action. Rouge = suppression et erreur.",
+      "Listes à filets et bande de chiffres, pas de cartes ni de tuiles.",
+      "Coins de 2 à 4 px, une seule courbe : l'arc de zone.",
+      "Aucune ombre dans la page ; seules les surcouches en portent une.",
+      "Barlow partout, Barlow Condensed pour le titre de page et les chiffres, toujours tabulaires."
+    ],
+    "rules": [
+      {
+        "name": "La règle de l'orange",
+        "body": "L'orange désigne ce qui s'actionne ou attend une action, et rien d'autre : un seul bouton orange par écran, l'entrée courante de la navigation, les compteurs et marques « à traiter », le focus. Il ne décore jamais.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle du rouge",
+        "body": "Le rouge ne sert qu'à la suppression et à l'erreur. Un état négatif qui n'est ni l'une ni l'autre (défaite, extérieur, archivé) s'écrit en noir.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle des deux encres",
+        "body": "Aucune surface grise ou teintée : dans le thème, le jeton de fond « atténué » vaut blanc. Le gris n'a que trois emplois : texte secondaire, filet, contour de champ.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle de l'échelle fixe",
+        "body": "Cinq tailles de texte en rem (12, 13, 15, 18, 28 px), sans `clamp` ni taille qui change d'un point de rupture à l'autre. Dans l'admin, un `h1`–`h6` n'a que la taille qu'on lui donne. Seule exception relevée : le texte d'un champ passe à 16 px sous 768 px, pour que le téléphone ne zoome pas à la saisie.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle des trois chiffres",
+        "body": "L'importance d'un chiffre se lit à sa marche sur la rampe : 40, 24 ou 15 px. Tous les chiffres sont tabulaires, y compris dans le corps de texte.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle du lien noir",
+        "body": "Un lien dans le texte est noir et souligné (soulignement gris de champ, noir et épaissi à 2 px au survol). Jamais d'orange en petit corps sur blanc.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle du compte annoncé",
+        "body": "Toute liste dit combien elle contient (affichés et total), à droite, en chiffres tabulaires ; tout champ limité annonce sa place restante.",
+        "section": "layout"
+      },
+      {
+        "name": "La règle de l'élévation unique",
+        "body": "Une ombre signifie « au-dessus de la page » et rien d'autre. Elle n'apparaît jamais au survol, jamais sur une ligne, un bloc ou un bouton.",
+        "section": "elevation"
+      },
+      {
+        "name": "La règle du trait plein",
+        "body": "Un trait plein noir de 2 px dit « structure » ou « confirmé » : publié, lu, terminé. Il ne s'emploie pas pour entourer un bloc provisoire.",
+        "section": "shapes"
+      },
+      {
+        "name": "La règle du pointillé",
+        "body": "Le pointillé dit « provisoire » : brouillon, facultatif, en attente, zone de dépôt vide, contenu en cours de chargement. Il n'est jamais décoratif, et un état confirmé n'est jamais en pointillé.",
+        "section": "shapes"
+      },
+      {
+        "name": "La règle de l'arc unique",
+        "body": "Une seule géométrie courbe, le quart de cercle de la zone. Pas de pilule, pas de cercle décoratif, pas de grand arrondi.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do structurer avec la ligne : trait plein de 2 px pour ce qui structure ou est confirmé, filet de 1 px pour ce qui sépare, pointillé (6 px / 6 px) pour ce qui est provisoire.",
+      "Do garder un seul bouton orange par écran, à texte noir, et réserver l'orange à ce qui s'actionne ou attend une action.",
+      "Do réserver le rouge (`#b42318`) à la suppression et à l'erreur.",
+      "Do écrire un état avec une marque de statut à quatre tons (plein, pointillé, action, bloc), et garder l'élément monté quand l'état change pour que le pointillé devienne plein.",
+      "Do tenir les chiffres sur la rampe (40, 24, 15 px), en Barlow Condensed tabulaire, et annoncer le compte de chaque liste.",
+      "Do garder les coins entre 2 et 4 px et réutiliser l'arc de zone quand une courbe est nécessaire.",
+      "Do donner 44 px à toute cible tactile sous 768 px, et le même anneau de focus orange (2 px, décalé de 2 px) à tout contrôle.",
+      "Do limiter les transitions à 150–200 ms et les couper sous `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "Don't remplir une surface de gris ou d'une teinte : pas de fond atténué, pas de fond orangé clair, pas de flou d'arrière-plan.",
+      "Don't utiliser de couleur de palette (vert, bleu, violet, nuances d'orange ou de gris) : ni pour un état, ni pour une catégorie.",
+      "Don't poser d'ombre dans la page ni de dégradé ; l'ombre appartient aux surcouches.",
+      "Don't structurer une page ou une ligne avec des cartes, ni présenter des chiffres en grille de tuiles.",
+      "Don't écrire de petit texte orange sur blanc : l'orange du logo n'y atteint que 3,0:1.",
+      "Don't arrondir en pilule ni au-delà de 4 px, et ne pas ajouter de bordure latérale colorée.",
+      "Don't employer de taille de titre fluide ou empilée par point de rupture, ni une quatrième taille de chiffre.",
+      "Don't appliquer ces règles au site public : elles valent pour l'administration et la connexion seulement."
+    ]
+  }
+}

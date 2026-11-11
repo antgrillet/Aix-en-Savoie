@@ -1,0 +1,678 @@
+/* ==========================================================================
+ * LE TRACÉ — thème de l'administration du HBC Aix-en-Savoie
+ *
+ * Deux encres (noir, blanc) et l'orange du logo. La ligne est le seul outil
+ * de structure et son style porte l'état :
+ *   trait plein 2 px noir = structure, état confirmé (publié)
+ *   pointillé             = provisoire (brouillon, optionnel, en attente)
+ *   orange                = ce qui s'actionne ou attend une action
+ *   rouge                 = suppression et erreur, rien d'autre
+ *
+ * Tout est posé sur `:root:has([data-admin])` : les surcouches Radix (dialogue,
+ * menu, liste déroulante, toasts) sont rendues dans `body`, hors de l'arbre
+ * admin, et doivent recevoir les mêmes jetons.
+ *
+ * Tout vit dans des couches de cascade : les utilitaires Tailwind gardent le
+ * dernier mot. Les seuls `!important` sont le focus clavier et l'interdiction
+ * d'ombre, qui ne doivent pas pouvoir être défaits par une classe oubliée.
+ * ========================================================================== */
+
+@layer theme, base, components, utilities;
+
+@layer base {
+  :root:has([data-admin]) {
+    /* --- Encres ---------------------------------------------------------- */
+    --adm-ink: #222221; /* noir du logo */
+    --adm-paper: #ffffff;
+    --adm-orange: #d77f29; /* orange du logo : fonds, grands chiffres, focus */
+    --adm-orange-ink: #a35a14; /* petit texte orangé sur blanc (5,2:1) */
+    --adm-text-2: #5f5f5c; /* texte secondaire sur blanc (6,4:1) */
+    --adm-placeholder: #6b6b68; /* 5,3:1 */
+    --adm-rule: #d9d9d6; /* filet de séparation */
+    --adm-control: #8a8a86; /* contour de champ au repos (3,5:1) */
+    --adm-red: #b42318; /* erreur, suppression (6,6:1) */
+    --adm-on-ink-2: #c2c2c0; /* texte secondaire sur noir (8,9:1) */
+    --adm-red-on-ink: #ff8a75; /* erreur sur noir (6,9:1) */
+
+    /* --- Lignes ---------------------------------------------------------- */
+    --adm-line: 2px; /* trait plein de structure */
+    --adm-hair: 1px; /* filet */
+    --adm-dash: 6px; /* tiret = intervalle, comme la ligne des 9 m */
+    --adm-arc: 3.5rem; /* rayon de l'arc de zone (quart de cercle) */
+    --adm-dash-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 1' preserveAspectRatio='none'%3E%3Crect width='1' height='1'/%3E%3C/svg%3E");
+
+    /* --- Échelle typographique fixe (rem) -------------------------------- */
+    --adm-text-xs: 0.75rem; /* 12 : compteurs, mentions */
+    --adm-text-sm: 0.8125rem; /* 13 : texte secondaire, aides */
+    --adm-text-md: 0.9375rem; /* 15 : corps */
+    --adm-text-lg: 1.125rem; /* 18 : titre de section */
+    --adm-text-title: 1.75rem; /* 28 : titre de page */
+
+    /* --- Rampe de chiffres (trois tailles, pas une de plus) --------------- */
+    --adm-num-lg: 2.5rem; /* 40 : ce qui attend une action */
+    --adm-num-md: 1.5rem; /* 24 : totaux */
+    --adm-num-sm: 0.9375rem; /* 15 : chiffres en ligne */
+
+    /* --- Gabarit --------------------------------------------------------- */
+    --adm-rail: 232px;
+    --adm-topbar: 3.5rem;
+    --adm-tabbar: 3.75rem;
+    --adm-pad-x: 2.5rem; /* marge latérale de la surface de travail */
+    --adm-pad-b: 2.5rem;
+    --adm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --adm-fast: 150ms;
+    --adm-trace: 180ms;
+
+    /* --- Jetons shadcn redéfinis ----------------------------------------- */
+    --background: var(--adm-paper);
+    --foreground: var(--adm-ink);
+    --card: var(--adm-paper);
+    --card-foreground: var(--adm-ink);
+    --popover: var(--adm-paper);
+    --popover-foreground: var(--adm-ink);
+    --primary: var(--adm-orange);
+    --primary-foreground: var(--adm-ink);
+    --secondary: var(--adm-paper);
+    --secondary-foreground: var(--adm-ink);
+    --muted: var(--adm-paper); /* aucune surface grise */
+    --muted-foreground: var(--adm-text-2);
+    --accent: var(--adm-ink); /* survol et élément de menu actif : bloc noir */
+    --accent-foreground: var(--adm-paper);
+    --destructive: var(--adm-red);
+    --border: var(--adm-rule);
+    --input: var(--adm-control);
+    --ring: var(--adm-orange);
+
+    /* Rayon vif : toutes les marches du thème retombent entre 2 et 4 px */
+    --radius: 3px;
+    --radius-xs: 2px;
+    --radius-sm: 2px;
+    --radius-md: 3px;
+    --radius-lg: 4px;
+    --radius-xl: 4px;
+    --radius-2xl: 4px;
+    --radius-3xl: 4px;
+    --radius-4xl: 4px;
+
+    color-scheme: light;
+    accent-color: var(--adm-ink);
+    caret-color: var(--adm-orange);
+    scrollbar-color: var(--adm-control) transparent;
+  }
+
+  @media (max-width: 1023.98px) {
+    :root:has([data-admin]) {
+      --adm-arc: 2.5rem;
+      --adm-pad-x: 2rem;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    :root:has([data-admin]) {
+      --adm-pad-x: 1rem;
+    }
+  }
+
+  :root:has([data-admin]) body {
+    background-color: var(--adm-ink);
+    font-size: var(--adm-text-md);
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Les titres du site public sont immenses : dans l'admin, un titre n'a que
+     la taille qu'on lui donne. */
+  :root:has([data-admin]) :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-sans);
+    font-size: 1em;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+
+  :root:has([data-admin]) p {
+    line-height: inherit;
+  }
+
+  :root:has([data-admin]) ::selection {
+    background-color: var(--adm-orange);
+    color: var(--adm-ink);
+  }
+
+  :root:has([data-admin]) ::placeholder {
+    color: var(--adm-placeholder);
+    opacity: 1;
+  }
+
+  :root:has([data-admin]) a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  /* Focus clavier : un seul anneau, partout, y compris dans les surcouches et
+     dans les sections qui n'ont pas encore été refaites. */
+  :root:has([data-admin])
+    :focus-visible:not(
+      [role='menu'],
+      [role='listbox'],
+      [role='dialog'],
+      [role='alertdialog'],
+      .ProseMirror
+    ) {
+    outline: 2px solid var(--adm-orange) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Une seule élévation : seules les surcouches (hors de l'arbre admin)
+     portent une ombre. */
+  [data-admin] *,
+  [data-admin] *::before,
+  [data-admin] *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Dans une surcouche, l'ombre appartient au panneau, pas à ce qu'il contient */
+  :root:has([data-admin]) :is([role='dialog'], [role='alertdialog'], [role='menu'], [role='listbox']) * {
+    box-shadow: none !important;
+  }
+
+  [data-admin] {
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------------------
+   * Typographie
+   * ---------------------------------------------------------------------- */
+  .adm-title {
+    font-family: var(--adm-font-condensed, var(--font-sans));
+    font-size: var(--adm-text-title);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+
+  .adm-h2 {
+    font-size: var(--adm-text-lg);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .adm-h3 {
+    font-size: var(--adm-text-md);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .adm-meta {
+    font-size: var(--adm-text-sm);
+    line-height: 1.45;
+    color: var(--adm-text-2);
+  }
+
+  .adm-micro {
+    font-size: var(--adm-text-xs);
+    line-height: 1.35;
+    color: var(--adm-text-2);
+  }
+
+  /* Rampe de chiffres : Barlow Condensed, tabulaires */
+  .adm-num-lg,
+  .adm-num-md,
+  .adm-num-sm {
+    font-family: var(--adm-font-condensed, var(--font-sans));
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .adm-num-lg {
+    font-size: var(--adm-num-lg);
+  }
+
+  .adm-num-md {
+    font-size: var(--adm-num-md);
+    font-weight: 600;
+  }
+
+  .adm-num-sm {
+    font-size: var(--adm-num-sm);
+    font-weight: 600;
+    line-height: inherit;
+  }
+
+  /* Lien dans le texte : encre noire soulignée, jamais orange en petit corps */
+  .adm-link {
+    color: var(--adm-ink);
+    text-decoration-line: underline;
+    text-decoration-color: var(--adm-control);
+    transition: text-decoration-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-link:hover {
+    text-decoration-color: var(--adm-ink);
+    text-decoration-thickness: 2px;
+  }
+
+  /* ------------------------------------------------------------------------
+   * Grammaire de lignes
+   * ---------------------------------------------------------------------- */
+
+  /* Filet horizontal : plein par défaut, pointillé si provisoire */
+  .adm-rule {
+    display: block;
+    height: var(--adm-line);
+    border: 0;
+    background-color: currentColor;
+  }
+
+  .adm-rule--hair {
+    height: var(--adm-hair);
+    color: var(--adm-rule);
+  }
+
+  .adm-rule--dashed {
+    -webkit-mask: var(--adm-dash-mask) repeat-x left center /
+      calc(var(--adm-dash) * 2) 100%;
+    mask: var(--adm-dash-mask) repeat-x left center /
+      calc(var(--adm-dash) * 2) 100%;
+  }
+
+  /* Contour tracé autour d'un bloc (parent en position: relative).
+     Plein = confirmé ; `data-dashed` = provisoire. Le passage de l'un à
+     l'autre est la signature : le pointillé devient plein. */
+  .adm-contour {
+    --adm-contour-dash: var(--adm-dash);
+    position: absolute;
+    inset: calc(var(--adm-line) / 2);
+    width: calc(100% - var(--adm-line));
+    height: calc(100% - var(--adm-line));
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .adm-contour rect {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--adm-line);
+    stroke-dasharray: calc(var(--adm-contour-dash) * 2) 0;
+    transition: stroke-dasharray var(--adm-trace) var(--adm-ease);
+  }
+
+  .adm-contour[data-dashed] rect {
+    stroke-dasharray: var(--adm-contour-dash) var(--adm-contour-dash);
+  }
+
+  /* ------------------------------------------------------------------------
+   * Marque de statut
+   * ---------------------------------------------------------------------- */
+  .adm-mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 2px;
+    font-size: var(--adm-text-xs);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--adm-ink);
+  }
+
+  .adm-mark .adm-contour {
+    --adm-contour-dash: 4px;
+  }
+
+  .adm-mark > svg:not(.adm-contour) {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: none;
+  }
+
+  /* orange = attend une action */
+  .adm-mark[data-tone='action'] {
+    background-color: var(--adm-orange);
+  }
+
+  /* bloc plein = fait marquant confirmé (à la une, domicile) */
+  .adm-mark[data-tone='fill'] {
+    background-color: var(--adm-ink);
+    color: var(--adm-paper);
+  }
+
+  /* ------------------------------------------------------------------------
+   * Coque
+   * ---------------------------------------------------------------------- */
+  .adm-skip {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 60;
+    padding: 0.5rem 0.75rem;
+    border-radius: 3px;
+    background-color: var(--adm-orange);
+    color: var(--adm-ink);
+    font-weight: 600;
+    transform: translateY(-200%);
+  }
+
+  .adm-skip:focus {
+    transform: none;
+  }
+
+  /* Le coin de la surface de travail, taillé par l'arc de zone */
+  .adm-arc-corner {
+    position: fixed;
+    top: var(--adm-topbar);
+    left: 0;
+    z-index: 30;
+    width: var(--adm-arc);
+    height: var(--adm-arc);
+    color: var(--adm-ink);
+    pointer-events: none;
+  }
+
+  @media (min-width: 1024px) {
+    .adm-arc-corner {
+      top: 0;
+      left: var(--adm-rail);
+    }
+  }
+
+  .adm-rail {
+    scrollbar-color: var(--adm-control) transparent;
+  }
+
+  /* Entrée de navigation : bloc orange plein pour la section courante */
+  .adm-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.5rem;
+    padding: 0 0.75rem;
+    border: var(--adm-hair) solid transparent;
+    border-radius: 3px;
+    color: var(--adm-paper);
+    font-weight: 500;
+    transition:
+      border-color var(--adm-fast) var(--adm-ease),
+      background-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-nav-item:hover {
+    border-color: var(--adm-on-ink-2);
+  }
+
+  .adm-nav-item:active {
+    background-color: var(--adm-paper);
+    color: var(--adm-ink);
+  }
+
+  .adm-nav-item[aria-current='page'] {
+    border-color: var(--adm-orange);
+    background-color: var(--adm-orange);
+    color: var(--adm-ink);
+    font-weight: 600;
+  }
+
+  .adm-nav-count {
+    margin-left: auto;
+    font-family: var(--adm-font-condensed, var(--font-sans));
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--adm-orange);
+  }
+
+  .adm-nav-item[aria-current='page'] .adm-nav-count,
+  .adm-nav-item:active .adm-nav-count {
+    color: var(--adm-ink);
+  }
+
+  /* Barre d'onglets du téléphone */
+  .adm-tab {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1875rem;
+    min-height: 3rem;
+    border-radius: 3px;
+    color: var(--adm-paper);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: background-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-tab:active {
+    background-color: var(--adm-paper);
+    color: var(--adm-ink);
+  }
+
+  .adm-tab[aria-current='page'],
+  .adm-tab[data-current] {
+    background-color: var(--adm-orange);
+    color: var(--adm-ink);
+    font-weight: 600;
+  }
+
+  .adm-tab-count {
+    position: absolute;
+    top: 0.25rem;
+    left: calc(50% + 0.5rem);
+    font-family: var(--adm-font-condensed, var(--font-sans));
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--adm-orange);
+  }
+
+  .adm-tab[aria-current='page'] .adm-tab-count,
+  .adm-tab[data-current] .adm-tab-count,
+  .adm-tab:active .adm-tab-count {
+    color: var(--adm-ink);
+  }
+
+  /* ------------------------------------------------------------------------
+   * Listes à filets
+   * ---------------------------------------------------------------------- */
+  .adm-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .adm-table th {
+    height: 2.25rem;
+    padding: 0 0.75rem 0 0;
+    border-bottom: var(--adm-hair) solid var(--adm-ink);
+    font-size: var(--adm-text-sm);
+    font-weight: 600;
+    color: var(--adm-text-2);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .adm-table td {
+    height: 3.5rem;
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    border-bottom: var(--adm-hair) solid var(--adm-rule);
+    vertical-align: middle;
+    transition: border-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-table th:last-child,
+  .adm-table td:last-child {
+    padding-right: 0;
+  }
+
+  .adm-table tbody tr:hover td {
+    border-bottom-color: var(--adm-ink);
+  }
+
+  .adm-rows > * {
+    border-bottom: var(--adm-hair) solid var(--adm-rule);
+    transition: border-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-rows > *:hover {
+    border-bottom-color: var(--adm-ink);
+  }
+
+  /* Lien principal d'une ligne : sur téléphone, toute la ligne est la cible */
+  @media (max-width: 767.98px) {
+    .adm-row-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+   * Formulaires : un trait entre les sections, celui de l'en-tête au-dessus
+   * de la première
+   * ---------------------------------------------------------------------- */
+  .adm-form-section__body {
+    padding-top: 1.25rem;
+  }
+
+  .adm-form-section:first-child > .adm-rule {
+    display: none;
+  }
+
+  .adm-form-section:first-child > .adm-form-section__body {
+    padding-top: 0;
+  }
+
+  /* ------------------------------------------------------------------------
+   * Squelettes : ce qui charge est provisoire, donc en pointillé
+   * ---------------------------------------------------------------------- */
+  .adm-skel {
+    display: block;
+    height: var(--adm-line);
+    color: var(--adm-control);
+    background-color: currentColor;
+    -webkit-mask: var(--adm-dash-mask) repeat-x left center /
+      calc(var(--adm-dash) * 2) 100%;
+    mask: var(--adm-dash-mask) repeat-x left center /
+      calc(var(--adm-dash) * 2) 100%;
+    animation: adm-skel 1.2s ease-in-out infinite alternate;
+  }
+
+  @keyframes adm-skel {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.35;
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+   * Éditeur de texte
+   * ---------------------------------------------------------------------- */
+  .adm-editor:focus-within {
+    border-color: var(--adm-ink);
+    outline: 2px solid var(--adm-orange);
+    outline-offset: 2px;
+  }
+
+  .adm-editor .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: var(--adm-placeholder);
+    pointer-events: none;
+  }
+
+  /* ------------------------------------------------------------------------
+   * Connexion : le tracé du terrain se dessine une fois
+   * ---------------------------------------------------------------------- */
+  /* Encre blanche atténuée : sur cet écran, seuls le bouton et le focus sont orange */
+  .adm-court {
+    color: rgb(255 255 255 / 0.62);
+  }
+
+  .adm-court__line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--adm-line);
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* Le masque suit la même géométrie et se dévoile le long du trait */
+  .adm-court__draw {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 6;
+    stroke-linecap: square;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    animation: adm-draw 700ms var(--adm-ease) backwards;
+  }
+
+  @keyframes adm-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Contenu posé sur l'encre noire (connexion) : texte blanc, texte secondaire
+     et rouge d'erreur éclaircis pour garder le contraste */
+  .adm-on-ink {
+    --adm-text-2: var(--adm-on-ink-2);
+    --muted-foreground: var(--adm-on-ink-2);
+    --destructive: var(--adm-red-on-ink);
+    color: var(--adm-paper);
+  }
+
+  .adm-on-ink .adm-link {
+    color: inherit;
+    text-decoration-color: var(--adm-on-ink-2);
+  }
+
+  .adm-on-ink .adm-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* Champs sur fond noir (connexion) : l'auto-remplissage du navigateur ne
+     doit pas repeindre le champ */
+  .adm-on-ink input:-webkit-autofill {
+    -webkit-text-fill-color: var(--adm-ink);
+    caret-color: var(--adm-orange);
+  }
+
+  /* ------------------------------------------------------------------------
+   * Mouvement réduit : les états changent sans transition
+   * ---------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: reduce) {
+    .adm-contour rect,
+    .adm-nav-item,
+    .adm-tab,
+    .adm-table td,
+    .adm-rows > *,
+    .adm-link {
+      transition: none;
+    }
+
+    .adm-skel,
+    .adm-court__draw {
+      animation: none;
+    }
+  }
+}

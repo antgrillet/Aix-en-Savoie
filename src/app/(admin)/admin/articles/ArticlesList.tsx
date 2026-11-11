@@ -1,46 +1,37 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Edit, Trash2, Eye, EyeOff, Star, ExternalLink, Search, X, MoreVertical } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { StatusBadge } from '@/components/admin/StatusBadge'
-import { DeleteDialog } from '@/components/admin/DeleteDialog'
-import { deleteArticle, togglePublished, toggleVedette } from './actions'
+import { Eye, EyeOff, ExternalLink, Pencil, Plus, Star, StarOff, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Button } from '@/components/admin/Button'
+import { DataList, Thumb, type DataColumn } from '@/components/admin/DataList'
+import { DeleteDialog } from '@/components/admin/DeleteDialog'
+import { EmptyState } from '@/components/admin/EmptyState'
+import { FilterBar, FilterGroup, SearchField } from '@/components/admin/FilterBar'
+import { RowActions } from '@/components/admin/RowActions'
+import { SimpleSelect } from '@/components/admin/Select'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { deleteArticle, togglePublished, toggleVedette } from './actions'
 import type { Article } from '@/generated/prisma/client'
+
+export type ArticleStatusFilter = 'all' | 'published' | 'draft' | 'featured'
 
 interface ArticlesListProps {
   initialArticles: Article[]
+  initialStatus?: ArticleStatusFilter
 }
 
-export function ArticlesList({ initialArticles }: ArticlesListProps) {
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tous statuts' },
+  { value: 'published', label: 'Publiés' },
+  { value: 'draft', label: 'Brouillons' },
+  { value: 'featured', label: 'En vedette' },
+] as const
+
+export function ArticlesList({ initialArticles, initialStatus = 'all' }: ArticlesListProps) {
   const [articles, setArticles] = useState(initialArticles)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -48,22 +39,25 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
   // Filtres
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
 
   // Extraire les catégories uniques
-  const categories = useMemo(() => {
-    const cats = new Set(initialArticles.map(a => a.categorie))
-    return Array.from(cats).sort()
+  const categoryOptions = useMemo(() => {
+    const cats = Array.from(new Set(initialArticles.map((a) => a.categorie))).sort()
+    return [
+      { value: 'all', label: 'Toutes catégories' },
+      ...cats.map((cat) => ({ value: cat, label: cat })),
+    ]
   }, [initialArticles])
 
   // Filtrer les articles
   const filteredArticles = useMemo(() => {
-    return articles.filter(article => {
-      const matchesSearch = search === '' ||
-        article.titre.toLowerCase().includes(search.toLowerCase())
-      const matchesCategory = categoryFilter === 'all' ||
-        article.categorie === categoryFilter
-      const matchesStatus = statusFilter === 'all' ||
+    return articles.filter((article) => {
+      const matchesSearch =
+        search === '' || article.titre.toLowerCase().includes(search.toLowerCase())
+      const matchesCategory = categoryFilter === 'all' || article.categorie === categoryFilter
+      const matchesStatus =
+        statusFilter === 'all' ||
         (statusFilter === 'published' && article.published) ||
         (statusFilter === 'draft' && !article.published) ||
         (statusFilter === 'featured' && article.vedette)
@@ -88,255 +82,191 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
       setArticles(articles.filter((a) => a.id !== deleteId))
       toast.success('Article supprimé')
       setDeleteId(null)
-    } catch (error) {
-      toast.error('Erreur lors de la suppression')
+    } catch {
+      toast.error("L'article n'a pas pu être supprimé. Réessayez dans un instant.")
     } finally {
       setIsDeleting(false)
     }
   }
 
-  const handleTogglePublished = async (id: number) => {
+  const handleTogglePublished = async (article: Article) => {
     try {
-      await togglePublished(id)
+      await togglePublished(article.id)
       setArticles(
-        articles.map((a) =>
-          a.id === id ? { ...a, published: !a.published } : a
-        )
+        articles.map((a) => (a.id === article.id ? { ...a, published: !a.published } : a))
       )
-      toast.success('Statut modifié')
-    } catch (error) {
-      toast.error('Erreur lors de la modification')
+      toast.success(article.published ? 'Article repassé en brouillon' : 'Article publié')
+    } catch {
+      toast.error("Le statut n'a pas pu être modifié. Réessayez dans un instant.")
     }
   }
 
-  const handleToggleVedette = async (id: number) => {
+  const handleToggleVedette = async (article: Article) => {
     try {
-      await toggleVedette(id)
-      setArticles(
-        articles.map((a) =>
-          a.id === id ? { ...a, vedette: !a.vedette } : a
-        )
-      )
-      toast.success('Statut vedette modifié')
-    } catch (error) {
-      toast.error('Erreur lors de la modification')
+      await toggleVedette(article.id)
+      setArticles(articles.map((a) => (a.id === article.id ? { ...a, vedette: !a.vedette } : a)))
+      toast.success(article.vedette ? 'Article retiré de la vedette' : 'Article mis en vedette')
+    } catch {
+      toast.error("La mise en vedette n'a pas pu être modifiée. Réessayez dans un instant.")
     }
   }
 
-  const ArticleActions = ({ article }: { article: Article }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreVertical className="w-4 h-4" />
-          <span className="sr-only">Actions</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/admin/articles/${article.id}`}>
-            <Edit className="w-4 h-4 mr-2" />
-            Modifier
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+  const columns: DataColumn<Article>[] = [
+    {
+      id: 'titre',
+      header: 'Titre',
+      phone: 'title',
+      cell: (article) => (
+        <>
           <Link
-            href={`/actus/${article.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`/admin/articles/${article.id}`}
+            className="adm-row-link line-clamp-2 font-semibold decoration-1 underline-offset-4 hover:underline"
           >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Prévisualiser
+            {article.titre}
           </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleTogglePublished(article.id)}
-        >
-          {article.published ? (
-            <>
-              <EyeOff className="w-4 h-4 mr-2" />
-              Dépublier
-            </>
-          ) : (
-            <>
-              <Eye className="w-4 h-4 mr-2" />
-              Publier
-            </>
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleToggleVedette(article.id)}
-        >
-          <Star className={`w-4 h-4 mr-2 ${article.vedette ? 'fill-current' : ''}`} />
-          {article.vedette ? 'Retirer vedette' : 'Mettre en vedette'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setDeleteId(article.id)}
-          className="text-destructive"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Supprimer
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+          <span className="adm-meta hidden md:block lg:hidden">
+            {article.categorie} · {format(new Date(article.date), 'd MMM yyyy', { locale: fr })}
+          </span>
+        </>
+      ),
+    },
+    {
+      id: 'categorie',
+      header: 'Catégorie',
+      className: 'hidden lg:table-cell',
+      cell: (article) => article.categorie,
+    },
+    {
+      id: 'date',
+      header: 'Date',
+      className: 'hidden whitespace-nowrap lg:table-cell',
+      cell: (article) => format(new Date(article.date), 'd MMM yyyy', { locale: fr }),
+    },
+    {
+      id: 'statut',
+      header: 'Statut',
+      phone: 'marks',
+      cell: (article) => (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge status={article.published ? 'published' : 'draft'} />
+          {article.vedette && <StatusBadge status="featured" />}
+        </span>
+      ),
+    },
+    {
+      id: 'vues',
+      header: 'Vues',
+      align: 'end',
+      className: 'hidden lg:table-cell',
+      cell: (article) => (
+        <>
+          <span className="adm-num-sm">{article.views}</span>
+          <span className="md:sr-only"> {article.views > 1 ? 'vues' : 'vue'}</span>
+        </>
+      ),
+    },
+  ]
 
   return (
     <>
-      {/* Filtres - responsive */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un article..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+      <FilterBar
+        label="Filtrer les articles"
+        onReset={hasActiveFilters ? clearFilters : undefined}
+        count={{
+          shown: filteredArticles.length,
+          total: articles.length,
+          singular: 'article',
+          plural: 'articles',
+        }}
+      >
+        <SearchField value={search} onChange={setSearch} label="Rechercher un article par son titre" placeholder="Rechercher un titre" />
+        <FilterGroup>
+          <SimpleSelect
+            value={categoryFilter}
+            onValueChange={setCategoryFilter}
+            options={categoryOptions}
+            aria-label="Catégorie"
+            className="md:w-52"
           />
-        </div>
+          <SimpleSelect
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+            aria-label="Statut"
+            className="md:w-44"
+          />
+        </FilterGroup>
+      </FilterBar>
 
-        <div className="flex flex-wrap gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[130px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="published">Publiés</SelectItem>
-              <SelectItem value="draft">Brouillons</SelectItem>
-              <SelectItem value="featured">En vedette</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10">
-              <X className="w-4 h-4 mr-1" />
-              Effacer
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="text-sm text-muted-foreground mb-4">
-        {filteredArticles.length} article{filteredArticles.length > 1 ? 's' : ''}
-      </div>
-
-      {/* Vue Mobile - Cartes */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {filteredArticles.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
-          </div>
-        ) : (
-          filteredArticles.map((article) => (
-            <Card key={article.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="flex gap-3 p-4">
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <Image
-                      src={article.image}
-                      alt={article.titre}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-sm line-clamp-2">{article.titre}</h3>
-                      <ArticleActions article={article} />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {article.categorie} • {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <StatusBadge status={article.published ? 'published' : 'draft'} />
-                      {article.vedette && <StatusBadge status="featured" />}
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {article.views}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+      <DataList
+        caption="Articles"
+        items={filteredArticles}
+        columns={columns}
+        getKey={(article) => article.id}
+        media={(article) => <Thumb src={article.image} />}
+        actions={(article) => (
+          <RowActions
+            label={`Actions pour « ${article.titre} »`}
+            items={[
+              { label: 'Modifier', icon: Pencil, href: `/admin/articles/${article.id}` },
+              {
+                label: 'Prévisualiser',
+                icon: ExternalLink,
+                href: `/actus/${article.slug}`,
+                external: true,
+              },
+              {
+                label: article.published ? 'Dépublier' : 'Publier',
+                icon: article.published ? EyeOff : Eye,
+                onSelect: () => handleTogglePublished(article),
+              },
+              {
+                label: article.vedette ? 'Retirer de la vedette' : 'Mettre en vedette',
+                icon: article.vedette ? StarOff : Star,
+                onSelect: () => handleToggleVedette(article),
+              },
+              'separator',
+              {
+                label: 'Supprimer',
+                icon: Trash2,
+                destructive: true,
+                onSelect: () => setDeleteId(article.id),
+              },
+            ]}
+          />
         )}
-      </div>
-
-      {/* Vue Desktop - Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Titre</TableHead>
-              <TableHead className="hidden lg:table-cell">Catégorie</TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="hidden lg:table-cell">Vues</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredArticles.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  {hasActiveFilters ? 'Aucun article trouvé' : 'Aucun article'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredArticles.map((article) => (
-                <TableRow key={article.id}>
-                  <TableCell>
-                    <div className="relative w-14 h-14 rounded overflow-hidden bg-muted">
-                      <Image
-                        src={article.image}
-                        alt={article.titre}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium line-clamp-1 max-w-[200px] lg:max-w-[300px]">
-                      {article.titre}
-                    </div>
-                    <div className="text-xs text-muted-foreground lg:hidden mt-1">
-                      {article.categorie} • {format(new Date(article.date), 'dd/MM/yy', { locale: fr })}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{article.categorie}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {format(new Date(article.date), 'dd MMM yyyy', { locale: fr })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <StatusBadge status={article.published ? 'published' : 'draft'} />
-                      {article.vedette && <StatusBadge status="featured" />}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{article.views}</TableCell>
-                  <TableCell className="text-right">
-                    <ArticleActions article={article} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+        empty={
+          hasActiveFilters ? (
+            <EmptyState
+              title="Aucun article ne correspond"
+              action={
+                <Button type="button" variant="outline" onClick={clearFilters}>
+                  Effacer les filtres
+                </Button>
+              }
+            >
+              <p>Élargissez la recherche ou retirez un filtre pour retrouver les autres articles.</p>
+            </EmptyState>
+          ) : (
+            <EmptyState
+              title="Aucun article pour l'instant"
+              action={
+                <Button asChild>
+                  <Link href="/admin/articles/new">
+                    <Plus aria-hidden="true" />
+                    Écrire le premier article
+                  </Link>
+                </Button>
+              }
+            >
+              <p>
+                Un article annonce un match, raconte un week-end ou présente un événement du club.
+                À l'enregistrement, vous choisissez de le publier ou de le garder en brouillon.
+              </p>
+            </EmptyState>
+          )
+        }
+      />
 
       <DeleteDialog
         open={deleteId !== null}
@@ -345,6 +275,7 @@ export function ArticlesList({ initialArticles }: ArticlesListProps) {
         isLoading={isDeleting}
         title="Supprimer cet article ?"
         description="Cette action est irréversible. L'article et son image seront définitivement supprimés."
+        confirmLabel="Supprimer l'article"
       />
     </>
   )

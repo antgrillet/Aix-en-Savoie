@@ -1,380 +1,309 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Trash2, Calendar, Clipboard, Shield, Users, Coffee } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { toast } from "sonner";
-import { deleteInscription } from "./actions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useMemo, useState } from 'react'
+import { ExternalLink, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/admin/Button'
+import { DataList, type DataColumn } from '@/components/admin/DataList'
+import { DeleteDialog } from '@/components/admin/DeleteDialog'
+import { EmptyState } from '@/components/admin/EmptyState'
+import { FilterBar, FilterGroup } from '@/components/admin/FilterBar'
+import { Section } from '@/components/admin/PageHeader'
+import { RowActions } from '@/components/admin/RowActions'
+import { SimpleSelect } from '@/components/admin/Select'
+import { deleteInscription } from './actions'
+import { formatDateCourte, formatHeure, formatJour } from './format'
 
 interface Inscription {
-  id: number;
-  nom: string;
-  prenom: string;
-  role: string;
-  createdAt: Date;
+  id: number
+  nom: string
+  prenom: string
+  role: string
+  createdAt: Date
   match: {
-    id: number;
-    date: Date;
-    adversaire: string;
-    domicile: boolean;
+    id: number
+    date: Date
+    adversaire: string
+    domicile: boolean
     equipe: {
-      id: number;
-      nom: string;
-      categorie: string;
-    };
-  };
+      id: number
+      nom: string
+      categorie: string
+    }
+  }
+}
+
+export interface WeekendInscriptions {
+  cle: string
+  /** « Cette semaine », « Week-end du 27 au 29 novembre » */
+  titre: string
+  /** Dates du week-end, quand le titre ne les donne pas */
+  periode?: string
+  inscriptions: Inscription[]
 }
 
 interface InscriptionsTableProps {
-  inscriptions: Inscription[];
-  hideWeekendHeaders?: boolean;
+  weekends: WeekendInscriptions[]
 }
 
-const ROLE_CONFIG = {
-  TABLE_DE_MARQUE: {
-    label: "Table de marque",
-    icon: Clipboard,
-    color: "bg-blue-500/10 text-blue-700 border-blue-200",
-  },
-  ARBITRE: {
-    label: "Arbitre",
-    icon: Shield,
-    color: "bg-green-500/10 text-green-700 border-green-200",
-  },
-  RESPONSABLE_SALLE: {
-    label: "Responsable de salle",
-    icon: Users,
-    color: "bg-purple-500/10 text-purple-700 border-purple-200",
-  },
-  BUVETTE: {
-    label: "Buvette",
-    icon: Coffee,
-    color: "bg-orange-500/10 text-orange-700 border-orange-200",
-  },
-};
+const ROLES: Record<string, string> = {
+  TABLE_DE_MARQUE: 'Table de marque',
+  ARBITRE: 'Arbitre',
+  RESPONSABLE_SALLE: 'Responsable de salle',
+  BUVETTE: 'Buvette',
+}
 
-export function InscriptionsTable({ inscriptions, hideWeekendHeaders = false }: InscriptionsTableProps) {
-  const [filterEquipe, setFilterEquipe] = useState<string>("all");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
+const ROLE_OPTIONS = [
+  { value: 'all', label: 'Tous postes' },
+  ...Object.entries(ROLES).map(([value, label]) => ({ value, label })),
+]
+
+// Largeurs fixes : les colonnes restent alignées d'une semaine à l'autre
+const columns: DataColumn<Inscription>[] = [
+  {
+    id: 'benevole',
+    header: 'Bénévole',
+    className: 'w-[26%]',
+    phone: 'title',
+    cell: (inscription) => (
+      <>
+        <span className="font-semibold">
+          {inscription.prenom} {inscription.nom}
+        </span>
+        <span className="adm-meta block font-normal md:hidden">
+          {inscription.match.equipe.nom} – {inscription.match.adversaire}
+        </span>
+      </>
+    ),
+  },
+  {
+    id: 'poste',
+    header: 'Poste',
+    className: 'w-[20%]',
+    cell: (inscription) => ROLES[inscription.role] ?? inscription.role,
+  },
+  {
+    id: 'match',
+    header: 'Match',
+    phone: 'hidden',
+    cell: (inscription) => (
+      <>
+        <span className="block font-medium">
+          {inscription.match.equipe.nom} – {inscription.match.adversaire}
+        </span>
+        <span className="adm-meta block">{inscription.match.equipe.categorie}</span>
+      </>
+    ),
+  },
+  {
+    id: 'date',
+    header: 'Date',
+    className: 'w-28 whitespace-nowrap',
+    cell: (inscription) => (
+      <span>
+        <span className="md:block md:text-[0.8125rem] md:font-semibold md:text-foreground">
+          {formatJour(inscription.match.date)}
+        </span>
+        <span className="md:hidden"> · </span>
+        <span className="md:block md:text-[0.8125rem] md:text-muted-foreground">
+          {formatHeure(inscription.match.date)}
+        </span>
+      </span>
+    ),
+  },
+  {
+    id: 'inscription',
+    header: 'Inscrit le',
+    className: 'hidden w-44 whitespace-nowrap xl:table-cell',
+    phone: 'hidden',
+    cell: (inscription) => (
+      <span className="adm-meta">
+        {formatDateCourte(inscription.createdAt)}, {formatHeure(inscription.createdAt)}
+      </span>
+    ),
+  },
+]
+
+/**
+ * Les bénévoles inscrits aux matchs à domicile à venir, semaine par semaine,
+ * avec leurs filtres. Une inscription se retire depuis le menu de sa ligne.
+ */
+export function InscriptionsTable({ weekends }: InscriptionsTableProps) {
+  const [filterEquipe, setFilterEquipe] = useState<string>('all')
+  const [filterRole, setFilterRole] = useState<string>('all')
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  // Uniquement les matchs à domicile
+  const groupes = useMemo(
+    () =>
+      weekends.map((weekend) => ({
+        ...weekend,
+        inscriptions: weekend.inscriptions.filter((inscription) => inscription.match.domicile),
+      })),
+    [weekends]
+  )
+
+  const total = groupes.reduce((somme, groupe) => somme + groupe.inscriptions.length, 0)
 
   // Extraire les équipes uniques
-  const equipes = Array.from(
-    new Set(inscriptions.map((i) => JSON.stringify(i.match.equipe)))
-  ).map((e) => JSON.parse(e));
+  const equipeOptions = useMemo(() => {
+    const equipes = new Map<number, string>()
+    groupes.forEach((groupe) =>
+      groupe.inscriptions.forEach((inscription) =>
+        equipes.set(inscription.match.equipe.id, inscription.match.equipe.nom)
+      )
+    )
+    return [
+      { value: 'all', label: 'Toutes équipes' },
+      ...Array.from(equipes, ([id, nom]) => ({ value: id.toString(), label: nom })),
+    ]
+  }, [groupes])
 
   // Filtrer les inscriptions
-  const filteredInscriptions = inscriptions.filter((inscription) => {
-    // Filtrer uniquement les matchs à domicile
-    if (!inscription.match.domicile) {
-      return false;
-    }
-    if (
-      filterEquipe !== "all" &&
-      inscription.match.equipe.id !== parseInt(filterEquipe)
-    ) {
-      return false;
-    }
-    if (filterRole !== "all" && inscription.role !== filterRole) {
-      return false;
-    }
-    return true;
-  });
+  const groupesFiltres = groupes
+    .map((groupe) => ({
+      ...groupe,
+      inscriptions: groupe.inscriptions.filter((inscription) => {
+        if (filterEquipe !== 'all' && inscription.match.equipe.id !== parseInt(filterEquipe)) {
+          return false
+        }
+        if (filterRole !== 'all' && inscription.role !== filterRole) {
+          return false
+        }
+        return true
+      }),
+    }))
+    .filter((groupe) => groupe.inscriptions.length > 0)
 
-  // Regrouper par weekend
-  const inscriptionsByWeekend = filteredInscriptions.reduce((acc, inscription) => {
-    const matchDate = new Date(inscription.match.date);
-    // Trouver le début du weekend (vendredi)
-    const dayOfWeek = matchDate.getDay();
-    const daysToFriday = dayOfWeek >= 5 ? 0 : (5 - dayOfWeek + 7) % 7;
-    const friday = new Date(matchDate);
-    friday.setDate(matchDate.getDate() - (dayOfWeek - 5));
-    friday.setHours(0, 0, 0, 0);
+  const shown = groupesFiltres.reduce((somme, groupe) => somme + groupe.inscriptions.length, 0)
+  const hasActiveFilters = filterEquipe !== 'all' || filterRole !== 'all'
 
-    const weekendKey = friday.toISOString().split('T')[0];
-
-    if (!acc[weekendKey]) {
-      acc[weekendKey] = [];
-    }
-    acc[weekendKey].push(inscription);
-    return acc;
-  }, {} as Record<string, typeof filteredInscriptions>);
-
-  const weekends = Object.keys(inscriptionsByWeekend).sort();
+  const clearFilters = () => {
+    setFilterEquipe('all')
+    setFilterRole('all')
+  }
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteId) return
 
-    setDeleting(true);
+    setDeleting(true)
     try {
-      await deleteInscription(deleteId);
-      toast.success("Inscription supprimée");
-      setDeleteId(null);
+      await deleteInscription(deleteId)
+      toast.success('Inscription supprimée')
+      setDeleteId(null)
     } catch (error) {
-      console.error("Erreur:", error);
-      toast.error("Erreur lors de la suppression");
+      console.error('Erreur:', error)
+      toast.error("L'inscription n'a pas pu être supprimée. Réessayez dans un instant.")
     } finally {
-      setDeleting(false);
+      setDeleting(false)
     }
-  };
-
-  if (inscriptions.length === 0) {
-    return (
-      <div className="text-center py-12 border rounded-lg bg-muted/20">
-        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Aucune inscription</h3>
-        <p className="text-muted-foreground">
-          Il n'y a pas encore d'inscriptions pour les matchs à venir
-        </p>
-      </div>
-    );
   }
 
-  // Fonction pour rendre une ligne d'inscription
-  const renderInscriptionRow = (inscription: Inscription) => {
-    const config = ROLE_CONFIG[inscription.role as keyof typeof ROLE_CONFIG];
-    const Icon = config?.icon;
-
+  if (total === 0) {
     return (
-      <TableRow key={inscription.id}>
-        <TableCell>
-          <div className="space-y-1">
-            <div className="font-medium">
-              {inscription.match.equipe.nom} vs {inscription.match.adversaire}
-            </div>
-            <Badge variant={inscription.match.domicile ? "default" : "secondary"}>
-              {inscription.match.domicile ? "Domicile" : "Extérieur"}
-            </Badge>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm">
-            {format(new Date(inscription.match.date), "d MMM yyyy", { locale: fr })}
-            <div className="text-xs text-muted-foreground">
-              {format(new Date(inscription.match.date), "HH:mm")}
-            </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="space-y-1">
-            <div className="font-medium">{inscription.match.equipe.nom}</div>
-            <Badge variant="outline" className="text-xs">
-              {inscription.match.equipe.categorie}
-            </Badge>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="font-medium">
-            {inscription.prenom} {inscription.nom}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="h-4 w-4" />}
-            {config?.label}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm text-muted-foreground">
-            {format(new Date(inscription.createdAt), "d MMM yyyy 'à' HH:mm", { locale: fr })}
-          </div>
-        </TableCell>
-        <TableCell className="text-right">
-          <Button variant="ghost" size="sm" onClick={() => setDeleteId(inscription.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
+      <EmptyState
+        title="Aucun bénévole inscrit pour l'instant"
+        action={
+          <Button asChild variant="outline">
+            <a href="/calendrier" target="_blank" rel="noopener noreferrer">
+              <ExternalLink aria-hidden="true" />
+              Voir le calendrier du site
+              <span className="sr-only"> (nouvel onglet)</span>
+            </a>
           </Button>
-        </TableCell>
-      </TableRow>
-    );
-  };
-
-  // Si hideWeekendHeaders est true, afficher une simple table
-  if (hideWeekendHeaders) {
-    return (
-      <>
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Match</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Équipe</TableHead>
-                <TableHead>Bénévole</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Inscrit le</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInscriptions.map((inscription) => renderInscriptionRow(inscription))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-              <AlertDialogDescription>
-                Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action est irréversible.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deleting ? "Suppression..." : "Supprimer"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
-    );
+        }
+      >
+        <p>
+          Les bénévoles s'inscrivent depuis le calendrier du site, sur chaque match à domicile à
+          venir. Leur inscription arrive ici, où vous pouvez la retirer en cas d'erreur ou de
+          désistement.
+        </p>
+      </EmptyState>
+    )
   }
 
-  // Sinon, afficher la version groupée par weekend
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex gap-4">
-          <Select value={filterEquipe} onValueChange={setFilterEquipe}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Filtrer par équipe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les équipes</SelectItem>
-              {equipes.map((equipe) => (
-                <SelectItem key={equipe.id} value={equipe.id.toString()}>
-                  {equipe.nom}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <FilterBar
+        label="Filtrer les inscriptions"
+        onReset={hasActiveFilters ? clearFilters : undefined}
+        count={{ shown, total, singular: 'inscription', plural: 'inscriptions' }}
+      >
+        <FilterGroup>
+          <SimpleSelect
+            value={filterEquipe}
+            onValueChange={setFilterEquipe}
+            options={equipeOptions}
+            aria-label="Équipe"
+            className="md:w-60"
+          />
+          <SimpleSelect
+            value={filterRole}
+            onValueChange={setFilterRole}
+            options={ROLE_OPTIONS}
+            aria-label="Poste"
+            className="md:w-52"
+          />
+        </FilterGroup>
+      </FilterBar>
 
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Filtrer par rôle" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les rôles</SelectItem>
-              {Object.entries(ROLE_CONFIG).map(([value, config]) => {
-                const Icon = config.icon;
-                return (
-                  <SelectItem key={value} value={value}>
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      {config.label}
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
+      {groupesFiltres.length === 0 ? (
+        <EmptyState
+          title="Aucune inscription ne correspond"
+          action={
+            <Button type="button" variant="outline" onClick={clearFilters}>
+              Effacer les filtres
+            </Button>
+          }
+        >
+          <p>
+            Personne n'est inscrit à ce poste pour cette équipe. Retirez un filtre pour retrouver
+            les autres bénévoles.
+          </p>
+        </EmptyState>
+      ) : (
+        groupesFiltres.map((groupe) => (
+          <Section
+            key={groupe.cle}
+            title={groupe.titre}
+            count={groupe.inscriptions.length}
+            action={groupe.periode && <span className="adm-meta">{groupe.periode}</span>}
+            className="mt-8 first-of-type:mt-2"
+          >
+            <DataList
+              caption={`Bénévoles inscrits, ${groupe.titre.toLowerCase()}`}
+              items={groupe.inscriptions}
+              columns={columns}
+              getKey={(inscription) => inscription.id}
+              className="max-md:-mt-px"
+              actions={(inscription) => (
+                <RowActions
+                  label={`Actions pour l'inscription de ${inscription.prenom} ${inscription.nom}`}
+                  items={[
+                    {
+                      label: "Supprimer l'inscription",
+                      icon: Trash2,
+                      destructive: true,
+                      onSelect: () => setDeleteId(inscription.id),
+                    },
+                  ]}
+                />
+              )}
+            />
+          </Section>
+        ))
+      )}
 
-        <div className="text-sm text-muted-foreground">
-          {filteredInscriptions.length} inscription
-          {filteredInscriptions.length > 1 ? "s" : ""}
-        </div>
-
-        <div className="space-y-6">
-          {weekends.map((weekendKey) => {
-            const weekendInscriptions = inscriptionsByWeekend[weekendKey];
-            const friday = new Date(weekendKey);
-            const sunday = new Date(friday);
-            sunday.setDate(friday.getDate() + 2);
-
-            return (
-              <div key={weekendKey} className="space-y-2">
-                <div className="flex items-center gap-3 bg-gradient-to-r from-primary-100 to-secondary-100 p-3 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary-600" />
-                  <h3 className="font-semibold text-lg text-primary-700">
-                    Weekend du {format(friday, "d MMM", { locale: fr })} au{" "}
-                    {format(sunday, "d MMM yyyy", { locale: fr })}
-                  </h3>
-                  <Badge variant="secondary" className="ml-auto">
-                    {weekendInscriptions.length} inscription
-                    {weekendInscriptions.length > 1 ? "s" : ""}
-                  </Badge>
-                </div>
-
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Match</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Équipe</TableHead>
-                        <TableHead>Bénévole</TableHead>
-                        <TableHead>Rôle</TableHead>
-                        <TableHead>Inscrit le</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {weekendInscriptions.map((inscription) => renderInscriptionRow(inscription))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action
-              est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Suppression..." : "Supprimer"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        isLoading={deleting}
+        title="Supprimer cette inscription ?"
+        description="Cette action est irréversible. Le bénévole est retiré du match et du calendrier du site ; son poste redevient libre."
+        confirmLabel="Supprimer l'inscription"
+      />
     </>
-  );
+  )
 }

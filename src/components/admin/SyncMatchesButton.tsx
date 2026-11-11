@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/admin/Button'
 import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -53,14 +53,15 @@ export function SyncMatchesButton({ equipeId, equipeNom, hasMatchesUrl }: SyncMa
 
   return (
     <Button
+      type="button"
       onClick={handleSync}
       disabled={isSyncing || !hasMatchesUrl}
       variant="outline"
       size="sm"
-      className="gap-2"
+      aria-busy={isSyncing || undefined}
     >
-      <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-      {isSyncing ? 'Synchronisation...' : 'Synchroniser les matchs'}
+      <RefreshCw className={isSyncing ? 'animate-spin' : undefined} aria-hidden="true" />
+      {isSyncing ? 'Synchronisation…' : 'Synchroniser les matchs'}
     </Button>
   )
 }

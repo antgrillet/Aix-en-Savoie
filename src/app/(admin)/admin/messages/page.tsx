@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/admin/PageHeader'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/admin/Tabs'
 import { getMessages } from './actions'
 import { MessagesList } from './MessagesList'
 
@@ -9,69 +9,35 @@ export default async function MessagesPage() {
   const archivedMessages = await getMessages('archived')
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-          Messages
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Gérez les messages de contact
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Messages"
+        description="Les messages envoyés depuis la page Contact du site. Ouvrir un message le marque comme lu."
+      />
 
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="bg-gradient-to-r from-orange-100 to-blue-100 w-full sm:w-auto flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="all" className="flex-1 sm:flex-none text-xs sm:text-sm">
-            Tous ({allMessages.length})
+      <Tabs defaultValue="all">
+        <TabsList aria-label="Filtrer les messages">
+          <TabsTrigger value="all" count={allMessages.length}>
+            Tous
           </TabsTrigger>
-          <TabsTrigger value="unread" className="flex-1 sm:flex-none text-xs sm:text-sm">
-            Non lus ({unreadMessages.length})
+          <TabsTrigger value="unread" count={unreadMessages.length}>
+            Non lus
           </TabsTrigger>
-          <TabsTrigger value="archived" className="flex-1 sm:flex-none text-xs sm:text-sm">
-            Archivés ({archivedMessages.length})
+          <TabsTrigger value="archived" count={archivedMessages.length}>
+            Archivés
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
-            <CardHeader>
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-                Tous les messages
-              </CardTitle>
-              <CardDescription>{allMessages.length} message{allMessages.length > 1 ? 's' : ''}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MessagesList initialMessages={allMessages} />
-            </CardContent>
-          </Card>
+          <MessagesList initialMessages={allMessages} view="all" />
         </TabsContent>
 
         <TabsContent value="unread">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
-            <CardHeader>
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-                Messages non lus
-              </CardTitle>
-              <CardDescription>{unreadMessages.length} message{unreadMessages.length > 1 ? 's' : ''}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MessagesList initialMessages={unreadMessages} />
-            </CardContent>
-          </Card>
+          <MessagesList initialMessages={unreadMessages} view="unread" />
         </TabsContent>
 
         <TabsContent value="archived">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
-            <CardHeader>
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-                Messages archivés
-              </CardTitle>
-              <CardDescription>{archivedMessages.length} message{archivedMessages.length > 1 ? 's' : ''}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MessagesList initialMessages={archivedMessages} />
-            </CardContent>
-          </Card>
+          <MessagesList initialMessages={archivedMessages} view="archived" />
         </TabsContent>
       </Tabs>
     </div>

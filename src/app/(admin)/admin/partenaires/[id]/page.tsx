@@ -1,5 +1,8 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExternalLink } from 'lucide-react'
+import { Button } from '@/components/admin/Button'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { PartenaireForm } from '../PartenaireForm'
 import { getPartenaire, updatePartenaire } from '../actions'
 
@@ -17,26 +20,28 @@ export default async function EditPartenairePage({
 
   const updateWithId = updatePartenaire.bind(null, partenaire.id)
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Modifier le partenaire</h1>
-        <p className="text-muted-foreground">
-          Modifiez les informations du partenaire
-        </p>
-      </div>
+  // La page publique n'existe que pour un partenaire publié
+  const pagePublique = partenaire.published && partenaire.slug ? `/partenaires/${partenaire.slug}` : null
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du partenaire</CardTitle>
-          <CardDescription>
-            Modifiez les informations du partenaire
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PartenaireForm action={updateWithId} initialData={partenaire} />
-        </CardContent>
-      </Card>
+  return (
+    <div>
+      <PageHeader
+        title="Modifier le partenaire"
+        description={partenaire.nom}
+        back={{ href: '/admin/partenaires', label: 'Partenaires' }}
+        actions={
+          pagePublique && (
+            <Button asChild variant="outline">
+              <Link href={pagePublique} target="_blank" rel="noopener noreferrer">
+                <ExternalLink aria-hidden="true" />
+                Voir sa page
+                <span className="sr-only"> (nouvel onglet)</span>
+              </Link>
+            </Button>
+          )
+        }
+      />
+      <PartenaireForm action={updateWithId} initialData={partenaire} />
     </div>
   )
 }

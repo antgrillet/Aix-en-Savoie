@@ -1,28 +1,16 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { ArticleForm } from '../ArticleForm'
 import { createArticle } from '../actions'
 
 export default function NewArticlePage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Nouvel article</h1>
-        <p className="text-muted-foreground">
-          Créez un nouvel article ou actualité
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations de l'article</CardTitle>
-          <CardDescription>
-            Remplissez les informations de l'article
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ArticleForm action={createArticle} />
-        </CardContent>
-      </Card>
+    <div>
+      <PageHeader
+        title="Nouvel article"
+        description="Rédigez l'article, choisissez son image, puis publiez-le ou gardez-le en brouillon."
+        back={{ href: '/admin/articles', label: 'Articles' }}
+      />
+      <ArticleForm action={createArticle} />
     </div>
   )
 }

@@ -20,7 +20,7 @@ import {
   Heading2,
   Loader2,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/admin/Button'
 import { cn } from '@/lib/utils'
 import {
   looksLikePlainList,
@@ -35,6 +35,43 @@ interface RichTextEditorProps {
   onChange: (content: string) => void
   placeholder?: string
   className?: string
+  /** Nom accessible de la zone de texte : « Contenu de l'article » */
+  label?: string
+  /** Transmis par `Field` : relie l'aide et l'erreur à la zone de texte */
+  id?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
+  'aria-required'?: boolean
+}
+
+interface ToolButtonProps {
+  label: string
+  onClick: () => void
+  /** Format actif à l'endroit du curseur */
+  pressed?: boolean
+  disabled?: boolean
+  children: React.ReactNode
+}
+
+function ToolButton({ label, onClick, pressed, disabled, children }: ToolButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+    >
+      {children}
+    </Button>
+  )
+}
+
+function ToolSeparator() {
+  return <span aria-hidden="true" className="mx-1 h-6 w-px self-center bg-border" />
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -45,6 +82,10 @@ export function RichTextEditor({
   onChange,
   placeholder = 'Commencez à écrire...',
   className,
+  label = 'Contenu',
+  id,
+  'aria-describedby': describedBy,
+  'aria-invalid': invalid,
 }: RichTextEditorProps) {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -109,7 +150,8 @@ export function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-primary underline',
+          // Orange encre : l'orange du logo est illisible en corps de texte sur blanc
+          class: 'text-[color:var(--adm-orange-ink)] underline',
         },
       }),
       ResizableImageExtension.configure({
@@ -142,8 +184,13 @@ export function RichTextEditor({
     },
     editorProps: {
       attributes: {
+        ...(id ? { id } : {}),
+        ...(describedBy ? { 'aria-describedby': describedBy } : {}),
+        role: 'textbox',
+        'aria-multiline': 'true',
+        'aria-label': label,
         class:
-          'tiptap article-content prose prose-sm max-w-none focus:outline-none min-h-[500px] px-4 py-3 [&_img]:max-w-full [&_img]:h-auto',
+          'tiptap article-content prose prose-sm max-w-none focus:outline-none min-h-[24rem] px-4 py-3 [&_img]:max-w-full [&_img]:h-auto',
       },
       transformPastedHTML: (html) => normalizePastedHtml(html),
       handlePaste: (_view, event) => {
@@ -162,7 +209,8 @@ export function RichTextEditor({
   editorRef.current = editor
 
   if (!editor) {
-    return null
+    // Réserve la place de l'éditeur le temps qu'il se monte
+    return <div aria-hidden="true" className={cn('h-[28rem] rounded-[3px] border border-border', className)} />
   }
 
   const addLink = () => {
@@ -187,115 +235,94 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={cn('border rounded-lg overflow-hidden', className)}>
+    <div
+      className={cn(
+        'adm-editor overflow-hidden rounded-[3px] border bg-background transition-colors duration-150 ease-out hover:border-foreground',
+        invalid ? 'border-destructive' : 'border-input',
+        className
+      )}
+    >
       <input
         ref={fileInputRef}
         type="file"
         accept={ALLOWED_MIME_TYPES.join(',')}
         onChange={handleFileSelect}
         className="hidden"
+        tabIndex={-1}
       />
 
-      <div className="border-b bg-muted/30 p-2 flex flex-wrap gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+      <div role="toolbar" aria-label="Mise en forme" className="flex flex-wrap gap-0.5 border-b border-border p-1">
+        <ToolButton
+          label="Gras"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted' : ''}
+          pressed={editor.isActive('bold')}
         >
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <Bold />
+        </ToolButton>
+        <ToolButton
+          label="Italique"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted' : ''}
+          pressed={editor.isActive('italic')}
         >
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <Italic />
+        </ToolButton>
+        <ToolButton
+          label="Intertitre"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}
+          pressed={editor.isActive('heading', { level: 2 })}
         >
-          <Heading2 className="w-4 h-4" />
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <Heading2 />
+        </ToolButton>
+        <ToolSeparator />
+        <ToolButton
+          label="Liste à puces"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+          pressed={editor.isActive('bulletList')}
         >
-          <List className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <List />
+        </ToolButton>
+        <ToolButton
+          label="Liste numérotée"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+          pressed={editor.isActive('orderedList')}
         >
-          <ListOrdered className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <ListOrdered />
+        </ToolButton>
+        <ToolButton
+          label="Citation"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editor.isActive('blockquote') ? 'bg-muted' : ''}
+          pressed={editor.isActive('blockquote')}
         >
-          <Quote className="w-4 h-4" />
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={addLink}
-          className={editor.isActive('link') ? 'bg-muted' : ''}
-        >
-          <LinkIcon className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <Quote />
+        </ToolButton>
+        <ToolSeparator />
+        <ToolButton label="Lien" onClick={addLink} pressed={editor.isActive('link')}>
+          <LinkIcon />
+        </ToolButton>
+        <ToolButton
+          label={isUploading ? "Envoi de l'image…" : 'Insérer une image'}
           onClick={triggerImageUpload}
           disabled={isUploading}
         >
-          {isUploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <ImageIcon className="w-4 h-4" />
-          )}
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          {isUploading ? <Loader2 className="animate-spin" /> : <ImageIcon />}
+        </ToolButton>
+        <ToolSeparator />
+        <ToolButton
+          label="Annuler la dernière action"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
         >
-          <Undo className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          <Undo />
+        </ToolButton>
+        <ToolButton
+          label="Rétablir"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
         >
-          <Redo className="w-4 h-4" />
-        </Button>
+          <Redo />
+        </ToolButton>
       </div>
-      <div className="overflow-auto max-h-[800px]">
+      <div className="max-h-[800px] overflow-auto">
         <EditorContent editor={editor} />
       </div>
     </div>

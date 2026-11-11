@@ -1,255 +1,210 @@
-"use client";
+import { DataList, type DataColumn } from '@/components/admin/DataList'
+import { EmptyState } from '@/components/admin/EmptyState'
+import { Section } from '@/components/admin/PageHeader'
+import { StatusMark } from '@/components/admin/StatusMark'
+import type { getInscriptionsStats } from './actions'
+import { formatHeure, formatJour, pluriel } from './format'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Calendar, MapPin, Home, Plane } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+type MatchAvecManques = Awaited<ReturnType<typeof getInscriptionsStats>>[number]
 
-interface MatchAvecManques {
-  id: number;
-  date: Date;
-  adversaire: string;
-  equipe: {
-    id: number;
-    nom: string;
-    categorie: string;
-  };
-  domicile: boolean;
-  inscriptionsParRole: {
-    tableDeMarque: number;
-    arbitre: number;
-    responsableSalle: number;
-    buvette: number;
-  };
-  inscritsParRole: {
-    tableDeMarque: string[];
-    arbitre: string[];
-    responsableSalle: string[];
-    buvette: string[];
-  };
-  manques: {
-    tableDeMarque: number;
-    arbitre: number;
-    responsableSalle: number;
-  };
-  totalManques: number;
+export interface WeekendManques {
+  cle: string
+  /** « Cette semaine », « Week-end du 27 au 29 novembre » */
+  titre: string
+  /** Dates du week-end, quand le titre ne les donne pas */
+  periode?: string
+  /** Matchs à domicile auxquels il manque au moins un bénévole */
+  matchs: MatchAvecManques[]
+  /** Bénévoles déjà inscrits sur ce week-end, tous matchs confondus */
+  inscrits: number
 }
 
 interface ManquesResumeProps {
-  matchs: MatchAvecManques[];
+  weekends: WeekendManques[]
 }
 
-export function ManquesResume({ matchs }: ManquesResumeProps) {
-  if (matchs.length === 0) {
+interface PostesProps {
+  /** Nom du poste, affiché sur téléphone (l'en-tête de colonne le dit ailleurs) */
+  libelle: string
+  /** Bénévoles inscrits à ce poste */
+  inscrits: string[]
+  /** Postes attendus qui restent à pourvoir */
+  manque?: number
+  /** Poste sans effectif attendu : vide, il ne manque à personne */
+  facultatif?: boolean
+}
+
+/**
+ * Les postes d'un match pour un rôle. Pourvu : trait plein, au nom du
+ * bénévole. Libre : pointillé, qui se referme en trait plein à l'inscription.
+ */
+function Postes({ libelle, inscrits, manque = 0, facultatif }: PostesProps) {
+  return (
+    <span className="flex w-full items-start gap-3 md:w-auto">
+      <span className="adm-meta w-[7.5rem] shrink-0 pt-0.5 md:hidden">{libelle}</span>
+      <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+        {inscrits.map((nom, index) => (
+          <StatusMark key={`${nom}-${index}`} tone="solid">
+            {nom}
+          </StatusMark>
+        ))}
+        {manque > 0 && <StatusMark tone="dashed">{manque} à pourvoir</StatusMark>}
+        {facultatif && inscrits.length === 0 && <StatusMark tone="dashed">Facultatif</StatusMark>}
+      </span>
+    </span>
+  )
+}
+
+const columns: DataColumn<MatchAvecManques>[] = [
+  {
+    id: 'date',
+    header: 'Date',
+    className: 'hidden w-24 whitespace-nowrap xl:table-cell',
+    phone: 'hidden',
+    cell: (match) => (
+      <>
+        <span className="block text-[0.8125rem] font-semibold">{formatJour(match.date)}</span>
+        <span className="adm-meta block">{formatHeure(match.date)}</span>
+      </>
+    ),
+  },
+  {
+    id: 'match',
+    header: 'Match',
+    phone: 'title',
+    cell: (match) => (
+      <>
+        <span className="block font-semibold leading-snug">
+          {match.equipe.nom} – {match.adversaire}
+        </span>
+        <span className="adm-meta block font-normal">
+          <span className="xl:hidden">
+            {formatJour(match.date)} · {formatHeure(match.date)} ·{' '}
+          </span>
+          {match.equipe.categorie}
+        </span>
+      </>
+    ),
+  },
+  {
+    id: 'table',
+    header: 'Table de marque',
+    // Même largeur d'une semaine à l'autre : les colonnes restent alignées
+    className: 'w-[17%]',
+    phone: 'marks',
+    cell: (match) => (
+      <Postes
+        libelle="Table de marque"
+        inscrits={match.inscritsParRole.tableDeMarque}
+        manque={match.manques.tableDeMarque}
+      />
+    ),
+  },
+  {
+    id: 'arbitres',
+    header: 'Arbitres',
+    className: 'w-[17%]',
+    phone: 'marks',
+    cell: (match) => (
+      <Postes
+        libelle="Arbitres"
+        inscrits={match.inscritsParRole.arbitre}
+        manque={match.manques.arbitre}
+      />
+    ),
+  },
+  {
+    id: 'salle',
+    header: 'Responsable de salle',
+    className: 'w-[18%]',
+    phone: 'marks',
+    cell: (match) => (
+      <Postes
+        libelle="Resp. de salle"
+        inscrits={match.inscritsParRole.responsableSalle}
+        manque={match.manques.responsableSalle}
+      />
+    ),
+  },
+  {
+    id: 'buvette',
+    header: 'Buvette',
+    className: 'w-[13%]',
+    phone: 'marks',
+    cell: (match) => (
+      <Postes libelle="Buvette" inscrits={match.inscritsParRole.buvette} facultatif />
+    ),
+  },
+]
+
+/**
+ * Les postes de bénévoles qui restent à pourvoir, semaine par semaine. Le
+ * grand chiffre orange est réservé au week-end le plus proche, celui qui
+ * presse ; les suivants s'annoncent en noir. Chaque match détaille ses postes.
+ */
+export function ManquesResume({ weekends }: ManquesResumeProps) {
+  if (weekends.length === 0) {
     return (
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-orange-50 to-blue-50">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full">
-              <AlertTriangle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-secondary-700">
-                Aucun manque de bénévoles
-              </CardTitle>
-              <CardDescription className="text-primary-700">
-                Tous les matchs à venir ont suffisamment de bénévoles inscrits
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-    );
+      <EmptyState title="Aucun poste à pourvoir">
+        <p>
+          Aucun match à domicile à venir ne manque de bénévoles. Dès qu'un match publié n'a pas ses
+          deux personnes à la table de marque, ses deux arbitres et son responsable de salle, il
+          apparaît ici.
+        </p>
+      </EmptyState>
+    )
   }
 
-  const totalManques = matchs.reduce((sum, m) => sum + m.totalManques, 0);
-
   return (
-    <div className="space-y-6">
-      {/* Aperçu rapide par match */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3 text-primary-700">
-          Aperçu rapide - Matchs avec manques
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {matchs.map((match) => {
-            const manquesList = [];
-            if (match.manques.tableDeMarque > 0)
-              manquesList.push(
-                `${match.manques.tableDeMarque} table${
-                  match.manques.tableDeMarque > 1 ? "s" : ""
-                } de marque`
-              );
-            if (match.manques.arbitre > 0)
-              manquesList.push(
-                `${match.manques.arbitre} arbitre${match.manques.arbitre > 1 ? "s" : ""}`
-              );
-            if (match.manques.responsableSalle > 0)
-              manquesList.push(`${match.manques.responsableSalle} resp. salle`);
+    <>
+      <p className="adm-meta max-w-[75ch]">
+        Chaque match à domicile attend deux personnes à la table de marque, deux arbitres et un
+        responsable de salle. La buvette est facultative.
+      </p>
 
-            return (
-              <Card
-                key={match.id}
-                className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs font-semibold">
-                        {match.equipe.categorie}
-                      </Badge>
-                      <Badge variant="destructive" className="text-xs">
-                        {match.totalManques} manque{match.totalManques > 1 ? "s" : ""}
-                      </Badge>
-                    </div>
-                    <div className="font-semibold text-sm">
-                      {match.equipe.nom} vs {match.adversaire}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(match.date), "EEE d MMM 'à' HH:mm", {
-                        locale: fr,
-                      })}
-                    </div>
-                    <div className="text-xs text-orange-600 font-medium">
-                      Manque : {manquesList.join(", ")}
-                    </div>
-                    {(match.inscritsParRole.tableDeMarque.length > 0 ||
-                      match.inscritsParRole.arbitre.length > 0 ||
-                      match.inscritsParRole.responsableSalle.length > 0) && (
-                      <div className="pt-2 border-t space-y-1">
-                        {match.inscritsParRole.tableDeMarque.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Table :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.tableDeMarque.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        {match.inscritsParRole.arbitre.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Arbitre :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.arbitre.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        {match.inscritsParRole.responsableSalle.length > 0 && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">
-                              Resp. salle :{" "}
-                            </span>
-                            <span className="text-primary-700">
-                              {match.inscritsParRole.responsableSalle.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
+      {weekends.map((weekend, index) => {
+        const postes = weekend.matchs.reduce((somme, match) => somme + match.totalManques, 0)
 
-      {/* Détails par match */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-orange-50 to-blue-50">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full">
-              <AlertTriangle className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-secondary-700">
-                Détail des besoins par match
-              </CardTitle>
-              <CardDescription className="text-primary-700">
-                {totalManques} poste{totalManques > 1 ? "s" : ""} à pourvoir au total
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      <CardContent className="space-y-4">
-        {matchs.map((match) => (
-          <div
-            key={match.id}
-            className="p-4 bg-gradient-to-r from-white to-orange-50 border-0 shadow-md rounded-lg space-y-3"
+        return (
+          <Section
+            key={weekend.cle}
+            title={weekend.titre}
+            action={weekend.periode && <span className="adm-meta">{weekend.periode}</span>}
+            className="mt-8"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold">
-                    {match.equipe.nom} vs {match.adversaire}
-                  </h4>
-                  <Badge variant="outline">{match.equipe.categorie}</Badge>
-                  {match.domicile ? (
-                    <Badge variant="default" className="gap-1">
-                      <Home className="h-3 w-3" />
-                      Domicile
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="gap-1">
-                      <Plane className="h-3 w-3" />
-                      Extérieur
-                    </Badge>
-                  )}
-                </div>
+            <p className="flex items-center gap-4 py-3 sm:gap-6">
+              <span
+                className={
+                  index === 0
+                    ? 'adm-num-lg w-14 shrink-0 text-primary sm:w-16'
+                    : 'adm-num-md w-14 shrink-0 sm:w-16'
+                }
+              >
+                {postes}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold leading-snug">
+                  {pluriel(postes, 'poste à pourvoir', 'postes à pourvoir')}
+                </span>
+                <span className="adm-meta block">
+                  Sur {weekend.matchs.length}{' '}
+                  {pluriel(weekend.matchs.length, 'match', 'matchs')} à domicile.{' '}
+                  {weekend.inscrits === 0
+                    ? 'Aucun bénévole inscrit pour l’instant.'
+                    : `${weekend.inscrits} ${pluriel(weekend.inscrits, 'bénévole déjà inscrit', 'bénévoles déjà inscrits')}.`}
+                </span>
+              </span>
+            </p>
 
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  {format(new Date(match.date), "EEEE d MMMM yyyy 'à' HH:mm", {
-                    locale: fr,
-                  })}
-                </div>
-              </div>
-
-              <Badge variant="destructive" className="text-base">
-                {match.totalManques} manque{match.totalManques > 1 ? "s" : ""}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-sm pt-2 border-t">
-              {match.manques.tableDeMarque > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Table de marque</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.tableDeMarque}
-                  </Badge>
-                </div>
-              )}
-              {match.manques.arbitre > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Arbitre</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.arbitre}
-                  </Badge>
-                </div>
-              )}
-              {match.manques.responsableSalle > 0 && (
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-muted-foreground">Resp. salle</span>
-                  <Badge variant="outline" className="text-orange-600">
-                    -{match.manques.responsableSalle}
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-    </div>
-  );
+            <DataList
+              caption={`Postes à pourvoir, ${weekend.titre.toLowerCase()}`}
+              items={weekend.matchs}
+              columns={columns}
+              getKey={(match) => match.id}
+            />
+          </Section>
+        )
+      })}
+    </>
+  )
 }

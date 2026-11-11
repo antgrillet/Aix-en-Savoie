@@ -1,45 +1,32 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/admin/Button'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { getMatchs } from './actions'
 import { MatchsList } from './MatchsList'
 
 export default async function MatchsPage() {
   const matchs = await getMatchs()
+  // L'heure de référence vient du serveur : la liste dit la même chose au
+  // rendu et à l'hydratation (« à venir » ou « score en attente »).
+  const maintenant = new Date()
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Matchs
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Gérez les matchs du club
-          </p>
-        </div>
-        <Button asChild className="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 w-full sm:w-auto">
-          <Link href="/admin/matchs/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau match
-          </Link>
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title="Matchs"
+        description="Le calendrier du club. Les matchs arrivent avec la synchronisation FFHANDBALL ou s'ajoutent à la main ; seuls les matchs publiés paraissent sur le site."
+        actions={
+          <Button asChild>
+            <Link href="/admin/matchs/new">
+              <Plus aria-hidden="true" />
+              Nouveau match
+            </Link>
+          </Button>
+        }
+      />
 
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-white to-orange-50">
-        <CardHeader>
-          <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-            Liste des matchs
-          </CardTitle>
-          <CardDescription>
-            {matchs.length} match{matchs.length > 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MatchsList initialMatchs={matchs} />
-        </CardContent>
-      </Card>
+      <MatchsList initialMatchs={matchs} maintenant={maintenant.getTime()} />
     </div>
   )
 }

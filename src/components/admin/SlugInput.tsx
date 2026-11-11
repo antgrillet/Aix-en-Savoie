@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Field, Input } from '@/components/admin/Field'
 
 interface SlugInputProps {
   value: string
@@ -16,7 +15,7 @@ function generateSlug(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
 }
@@ -35,18 +34,17 @@ export function SlugInput({
   }, [sourceValue, value, onChange])
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="slug">{label}</Label>
+    <Field
+      id="slug"
+      label={label}
+      hint="Rempli automatiquement à partir du titre. Lettres minuscules, chiffres et tirets."
+    >
       <Input
-        id="slug"
         value={value}
         onChange={(e) => onChange(generateSlug(e.target.value))}
         disabled={disabled}
         placeholder="mon-super-article"
       />
-      <p className="text-xs text-muted-foreground">
-        Le slug est généré automatiquement à partir du titre
-      </p>
-    </div>
+    </Field>
   )
 }
