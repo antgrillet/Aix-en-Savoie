@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin, Clock, Trophy, User } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, excerptFromHtml } from '@/lib/seo'
+import { assainirHtml } from '@/lib/html'
 import { formatDateHeure, formatJourMoisChiffres } from '@/lib/dates'
 
 export const revalidate = 1800
@@ -158,7 +159,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
           {/* Description */}
           <div
             className="prose prose-lg prose-invert max-w-none mb-12 [&_*]:text-neutral-200 [&_p]:text-neutral-200 [&_strong]:text-white [&_em]:text-neutral-300 text-neutral-200"
-            dangerouslySetInnerHTML={{ __html: equipe.description }}
+            dangerouslySetInnerHTML={{ __html: assainirHtml(equipe.description) }}
           />
 
           {/* Training Schedule & Upcoming Matches - 2 colonnes */}

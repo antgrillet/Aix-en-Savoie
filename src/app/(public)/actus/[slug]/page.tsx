@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { normalizeImagePath } from '@/lib/utils'
 import { calculateReadingTime } from '@/lib/reading-time'
+import { assainirHtml } from '@/lib/html'
 import { ReadingProgress } from '@/components/article/ReadingProgress'
 import { Breadcrumb } from '@/components/article/Breadcrumb'
 import { ArticleHero } from '@/components/article/ArticleHero'
@@ -170,7 +171,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   prose-code:!text-primary-400 prose-code:!bg-zinc-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[0.9em] prose-code:break-all
                   prose-pre:!bg-zinc-800 prose-pre:border prose-pre:border-zinc-700 prose-pre:break-words prose-pre:whitespace-pre-wrap
                   [&_*]:!text-neutral-300 [&_h1]:!text-white [&_h2]:!text-white [&_h3]:!text-white [&_h4]:!text-white [&_h5]:!text-white [&_h6]:!text-white [&_strong]:!text-white [&_a]:!text-primary-500 [&_img]:mx-auto [&_img]:block"
-                dangerouslySetInnerHTML={{ __html: article.contenu }}
+                dangerouslySetInnerHTML={{ __html: assainirHtml(article.contenu) }}
               />
 
               {article.tags && article.tags.length > 0 && (

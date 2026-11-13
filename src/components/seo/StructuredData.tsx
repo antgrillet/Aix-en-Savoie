@@ -1,4 +1,5 @@
 import { absoluteUrl, SITE_URL } from '@/lib/seo'
+import { jsonPourScript } from '@/lib/html'
 
 export function OrganizationSchema() {
   const schema = {
@@ -55,7 +56,7 @@ export function OrganizationSchema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonPourScript(schema) }}
     />
   )
 }
@@ -104,7 +105,7 @@ export function ArticleSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonPourScript(schema) }}
     />
   )
 }
@@ -124,7 +125,7 @@ export function BreadcrumbSchema({ items }: { items: { name: string; url: string
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonPourScript(schema) }}
     />
   )
 }
