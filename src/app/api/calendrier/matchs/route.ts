@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sessionBenevoleActive } from "@/lib/calendrier-session";
+import { limiteMatchsOuverts } from "@/lib/calendrier-regles";
 
 export async function GET(request: Request) {
   try {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
     // Construire le where clause
     const whereClause: any = {
       termine: false, // Uniquement les matchs à venir
+      date: { gte: limiteMatchsOuverts(new Date()) }, // Pas de match passé resté non terminé
       published: true,
       domicile: true, // Uniquement les matchs à domicile
     };
