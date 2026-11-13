@@ -14,7 +14,7 @@ import { estCategoriePlateau } from './resultats-weekend'
 export interface SyncResult {
   equipeId: number
   equipeNom: string
-  status: 'success' | 'error'
+  status: 'success' | 'warning' | 'error'
   message: string
   matchesCreated: number
   matchesUpdated: number
@@ -136,6 +136,13 @@ export async function syncTeamMatches(
     console.log(
       `  ℹ️  ${calendrier.equipe.libelle} — ${datees.length} matchs datés sur ${calendrier.rencontres.length}`
     )
+    // Des rencontres lues sans aucune date : le format de date a sans doute changé
+    const avertissement =
+      calendrier.rencontres.length > 0 && datees.length === 0
+        ? `Aucune rencontre datée sur ${calendrier.rencontres.length} lues : format de date FFHandball à vérifier. `
+        : ''
+    const status: SyncResult['status'] = avertissement ? 'warning' : 'success'
+    if (avertissement) console.warn(`  ⚠️  ${avertissement.trim()}`)
 
     const orphelins: string[] = []
 
@@ -268,12 +275,12 @@ export async function syncTeamMatches(
     }
     const classementUpdated = classement?.length ?? 0
 
-    const resume = `${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} inchangés. Classement: ${classementUpdated} équipes`
+    const resume = `${avertissement}${matchesCreated} créés, ${matchesUpdated} mis à jour, ${matchesSkipped} inchangés. Classement: ${classementUpdated} équipes`
     await prisma.syncLog.create({
       data: {
         equipeId,
         type: 'matches',
-        status: 'success',
+        status,
         message:
           orphelins.length > 0
             ? `${resume}. ${orphelins.length} match(s) en base absents de FFHandball: ${orphelins.join(' ; ')}`
@@ -289,7 +296,7 @@ export async function syncTeamMatches(
     return {
       equipeId,
       equipeNom,
-      status: 'success',
+      status,
       message: resume,
       matchesCreated,
       matchesUpdated,

@@ -385,7 +385,11 @@ function titreCompetition(composants: Composants): string | null {
   return typeof titre === 'string' && nettoyer(titre) ? mettreEnForme(titre) : null
 }
 
-/** Classement de la poule, ou `null` dès qu'une partie du bloc est illisible. */
+/**
+ * Classement de la poule, ou `null` dès qu'une partie du bloc est illisible, ou
+ * qu'aucune de ses lignes n'est de la poule de l'équipe. Seul un bloc
+ * explicitement vide donne un classement vide.
+ */
 function lireClassement(composants: Composants, pouleId: string | null): LigneClassement[] | null {
   const brut = deserialiser(composants.get('competitions---mini-classement-or-ads')?.classements)
   if (!Array.isArray(brut)) return null
@@ -401,6 +405,8 @@ function lireClassement(composants: Composants, pouleId: string | null): LigneCl
     }
     lignes.push({ position: Number(ligne.data.place), club, points: Number(ligne.data.point) })
   }
+  // Des lignes toutes écartées par le filtre de poule ne vident pas le classement en base
+  if (brut.length > 0 && lignes.length === 0) return null
   return lignes
 }
 
@@ -472,10 +478,18 @@ export function lireCalendrierEquipe(
   const equipe = versEquipe(selection.data)
 
   const liste = composants.get('competitions---rencontre-list')
-  if (!Array.isArray(deserialiser(liste?.rencontres))) {
+  const brutes = deserialiser(liste?.rencontres)
+  if (!Array.isArray(brutes)) {
     throw new Error('La page FFHandball ne contient pas la liste des rencontres')
   }
-  const rencontres = lireListe(liste?.rencontres, schemaRencontre)
+  const lisibles = lireListe(brutes, schemaRencontre)
+  // Des rencontres présentes mais rejetées en masse signalent un format de page
+  // changé : mieux vaut une erreur qu'un calendrier vide lu comme un succès.
+  const rejetees = brutes.length - lisibles.length
+  if (brutes.length > 0 && (lisibles.length === 0 || rejetees * 2 > brutes.length)) {
+    throw new Error(`La page FFHandball contient des rencontres illisibles (${rejetees} sur ${brutes.length})`)
+  }
+  const rencontres = lisibles
     .filter((brute) => brute.equipe1Id === equipe.id || brute.equipe2Id === equipe.id)
     .map((brute) => versRencontre(brute, equipe.id))
     .filter((rencontre) => rencontre.adversaire.length > 0)
