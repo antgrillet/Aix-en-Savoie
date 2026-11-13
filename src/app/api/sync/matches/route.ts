@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth-utils';
+import { sessionAdmin } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +8,11 @@ export const dynamic = 'force-dynamic';
  * POST /api/sync/matches
  */
 export async function POST() {
-  try {
-    // Vérifier l'authentification admin
-    await requireAdmin();
+  if (!(await sessionAdmin())) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
 
+  try {
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPO; // format: "owner/repo"
 
@@ -61,7 +62,7 @@ export async function POST() {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        error: 'Erreur lors du déclenchement',
       },
       { status: 500 }
     );
@@ -73,9 +74,11 @@ export async function POST() {
  * GET /api/sync/matches
  */
 export async function GET() {
-  try {
-    await requireAdmin();
+  if (!(await sessionAdmin())) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
 
+  try {
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPO;
 

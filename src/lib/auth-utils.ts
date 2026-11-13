@@ -23,6 +23,12 @@ export async function requireAuth() {
   return session
 }
 
+// For API routes: no redirect, the caller answers 401 itself.
+export async function sessionAdmin() {
+  const session = await getServerSession()
+  return session?.user.role === 'admin' ? session : null
+}
+
 export async function requireAdmin() {
   const session = await getServerSession()
 

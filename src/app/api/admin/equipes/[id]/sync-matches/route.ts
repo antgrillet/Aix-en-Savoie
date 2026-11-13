@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth-utils'
+import { sessionAdmin } from '@/lib/auth-utils'
 import { syncTeamMatches } from '@/lib/sync-matches'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,9 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdmin()
+  if (!(await sessionAdmin())) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
 
   const { id } = await params
   const equipeId = Number(id)
@@ -43,7 +45,7 @@ export async function POST(
 
   if (resultat.status === 'error') {
     return NextResponse.json(
-      { error: 'Erreur lors de la synchronisation', message: resultat.message },
+      { status: resultat.status, error: 'Erreur lors de la synchronisation', message: resultat.message },
       { status: 502 }
     )
   }
@@ -55,6 +57,7 @@ export async function POST(
 
   return NextResponse.json({
     success: true,
+    status: resultat.status,
     summary: {
       total: resultat.matchesCreated + resultat.matchesUpdated + resultat.matchesSkipped,
       created: resultat.matchesCreated,

@@ -8,7 +8,7 @@ process.env.DATABASE_URL = 'postgresql://test@127.0.0.1:1/hbc_auth_tests'
 process.env.BETTER_AUTH_SECRET = 'hbc-auth-regression-test-secret-not-for-production'
 process.env.BETTER_AUTH_URL = 'http://localhost:3000'
 
-const { auth: appAuth } = await import('../src/lib/auth')
+const { auth: appAuth, originesDeConfiance } = await import('../src/lib/auth')
 const { betterAuth } = await import('better-auth/minimal')
 const { memoryAdapter } = await import('better-auth/adapters/memory')
 const { getAuthTables } = await import('@better-auth/core/db')
@@ -61,6 +61,29 @@ test('rejects sign-in requests from an unrelated origin', async () => {
   const response = await auth.handler(new Request('https://www.hbcaixensavoie.fr/api/auth/sign-in/email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: 'https://untrusted.example', Cookie: 'site-preference=test' },
+    body: signInBody,
+  }))
+
+  assert.equal(response.status, 403)
+  assert.equal((await response.json()).code, 'INVALID_ORIGIN')
+})
+
+test('trusts neither localhost nor a wildcard in production', () => {
+  const origins = originesDeConfiance({ NODE_ENV: 'production' })
+  assert.ok(origins.includes('https://www.hbcaixensavoie.fr'))
+  assert.deepEqual(origins.filter(origin => origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('*')), [])
+})
+
+test('trusts the preview deployment URLs of this project', () => {
+  const origins = originesDeConfiance({ NODE_ENV: 'production', VERCEL_URL: 'hbc-xyz.vercel.app', VERCEL_BRANCH_URL: 'hbc-git-main.vercel.app' })
+  assert.ok(origins.includes('https://hbc-xyz.vercel.app'))
+  assert.ok(origins.includes('https://hbc-git-main.vercel.app'))
+})
+
+test('rejects sign-in requests from another Vercel project', async () => {
+  const response = await auth.handler(new Request('https://www.hbcaixensavoie.fr/api/auth/sign-in/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://autre-projet.vercel.app', Cookie: 'site-preference=test' },
     body: signInBody,
   }))
 
