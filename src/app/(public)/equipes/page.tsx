@@ -16,6 +16,7 @@ export const metadata = buildMetadata({
 
 export default async function EquipesPage() {
   const equipes = await prisma.equipe.findMany({
+    where: { published: true },
     orderBy: { ordre: 'asc' },
     include: {
       entrainements: true,

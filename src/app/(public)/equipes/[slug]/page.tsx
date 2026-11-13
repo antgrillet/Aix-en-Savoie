@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin, Clock, Trophy, User } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, excerptFromHtml } from '@/lib/seo'
+import { formatDateHeure, formatJourMoisChiffres } from '@/lib/dates'
 
 export const revalidate = 1800
 
@@ -48,7 +49,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
   const { slug } = await params
 
   const equipe = await prisma.equipe.findUnique({
-    where: { slug },
+    where: { slug, published: true },
     include: {
       entrainements: true,
       matchs: {
@@ -225,13 +226,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                       <div className="flex items-center gap-2 text-xs text-neutral-300">
                         <Calendar className="w-3 h-3" />
                         <span>
-                          {new Date(match.date).toLocaleDateString('fr-FR', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {formatDateHeure(match.date)}
                         </span>
                         <span
                           className={`ml-auto px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -283,10 +278,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
                           }`}
                         >
                           <td className="py-2 px-2 text-xs text-neutral-300">
-                            {new Date(match.date).toLocaleDateString('fr-FR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                            })}
+                            {formatJourMoisChiffres(match.date)}
                             <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-semibold ${
                               match.domicile
                                 ? 'bg-green-500/20 text-green-400'

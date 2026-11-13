@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
-export const SITE_URL = 'https://hbc-aix-en-savoie.fr'
+// Domaine qui sert réellement le site (hbc-aix-en-savoie.fr ne répond pas).
+export const SITE_URL = 'https://www.hbcaixensavoie.fr'
 export const SITE_NAME = 'HBC Aix-en-Savoie'
 export const DEFAULT_DESCRIPTION =
   "Club de handball d'Aix-en-Savoie - Actualités, équipes, formations et événements"

@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Toaster } from '@/components/providers/Toaster'
 
 export default function PublicLayout({
   children,
@@ -18,6 +19,7 @@ export default function PublicLayout({
       <Header />
       <main id="main-content" className="min-h-screen">{children}</main>
       <Footer />
+      <Toaster />
     </>
   )
 }

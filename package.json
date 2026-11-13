@@ -20,7 +20,8 @@
     "auth:generate": "bunx auth@latest generate --config src/lib/auth.ts",
     "sync:matches": "bun run scripts/sync-matches.ts",
     "ffhb:equipes": "bun run scripts/ffhb-equipes.ts",
-    "test:sync": "bun test scripts/ffhandball.test.ts scripts/resultats-weekend.test.ts"
+    "test:sync": "bun test scripts/ffhandball.test.ts scripts/resultats-weekend.test.ts",
+    "test:dates": "bun test scripts/dates.test.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

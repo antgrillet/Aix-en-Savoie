@@ -14,7 +14,7 @@ interface NavigationItem {
 }
 
 const leftNavigation: NavigationItem[] = [
-  { name: 'Inscription', href: '/contact' },
+  { name: 'Inscription', href: '/contact?sujet=inscription' },
   { name: 'Boutique', href: 'https://www.helloasso.com/associations/hbc-aix-en-savoie/boutiques/boutique-septembre', external: true },
 ]
 

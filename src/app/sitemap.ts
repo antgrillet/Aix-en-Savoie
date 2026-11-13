@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
+import { SITE_URL } from '@/lib/seo'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://hbc-aix-en-savoie.fr'
+  const baseUrl = SITE_URL
 
   const articles = await prisma.article.findMany({
     where: { published: true },
