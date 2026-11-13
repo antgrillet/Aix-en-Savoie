@@ -103,7 +103,7 @@ export async function updateArticle(id: number, formData: FormData) {
     select: { id: true },
   })
   if (homonyme) {
-    throw new Error('Un autre article porte d\u00e9j\u00e0 ce titre')
+    throw new Error('Un autre article porte déjà ce titre')
   }
 
   await prisma.article.update({
@@ -114,7 +114,7 @@ export async function updateArticle(id: number, formData: FormData) {
     },
   })
 
-  // Image supprim\u00e9e seulement une fois l'article enregistr\u00e9
+  // Image supprimée seulement une fois l'article enregistré
   if (existing && existing.image !== validated.image) {
     await deleteImage(existing.image)
   }
