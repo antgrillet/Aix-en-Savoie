@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { partenaireSchema } from '@/lib/validations/partenaire'
+import { ordreSchema } from '@/lib/validations/ordre'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
 
@@ -182,14 +183,6 @@ export async function updatePartenaire(id: number, formData: FormData) {
 
   const existing = await prisma.partenaire.findUnique({ where: { id } })
 
-  // Cleanup old images if changed
-  if (existing && existing.logo !== validated.logo) {
-    await deleteImage(existing.logo)
-  }
-  if (existing?.photoCouverture && existing.photoCouverture !== validated.photoCouverture) {
-    await deleteImage(existing.photoCouverture)
-  }
-
   // Régénérer le slug si le nom a changé
   let slug = existing?.slug
   if (!slug || (existing && existing.nom !== validated.nom)) {
@@ -207,6 +200,14 @@ export async function updatePartenaire(id: number, formData: FormData) {
     },
   })
 
+  // Cleanup old images if changed, once the partner is saved
+  if (existing && existing.logo !== validated.logo) {
+    await deleteImage(existing.logo)
+  }
+  if (existing?.photoCouverture && existing.photoCouverture !== validated.photoCouverture) {
+    await deleteImage(existing.photoCouverture)
+  }
+
   revalidatePath('/admin/partenaires')
   revalidatePath(`/admin/partenaires/${id}`)
   revalidatePath('/partenaires')
@@ -223,11 +224,12 @@ export async function deletePartenaire(id: number) {
   await requireAdmin()
 
   const partenaire = await prisma.partenaire.findUnique({ where: { id } })
+
+  await prisma.partenaire.delete({ where: { id } })
+
   if (partenaire) {
     await deleteImage(partenaire.logo)
   }
-
-  await prisma.partenaire.delete({ where: { id } })
 
   revalidatePath('/admin/partenaires')
 }
@@ -249,8 +251,10 @@ export async function togglePublished(id: number) {
 export async function updateOrdre(updates: { id: number; ordre: number }[]) {
   await requireAdmin()
 
-  await Promise.all(
-    updates.map((update) =>
+  const validated = ordreSchema.parse(updates)
+
+  await prisma.$transaction(
+    validated.map((update) =>
       prisma.partenaire.update({
         where: { id: update.id },
         data: { ordre: update.ordre },
@@ -269,15 +273,15 @@ export async function deleteMultiplePartenaires(ids: number[]) {
     where: { id: { in: ids } },
   })
 
-  // Supprimer les logos
-  for (const partenaire of partenaires) {
-    await deleteImage(partenaire.logo)
-  }
-
   // Supprimer les partenaires
   await prisma.partenaire.deleteMany({
     where: { id: { in: ids } },
   })
+
+  // Supprimer les logos une fois les partenaires effacés
+  for (const partenaire of partenaires) {
+    await deleteImage(partenaire.logo)
+  }
 
   revalidatePath('/admin/partenaires')
 }

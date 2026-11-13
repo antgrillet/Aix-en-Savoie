@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { equipeSchema } from '@/lib/validations/equipe'
+import { ordreSchema } from '@/lib/validations/ordre'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
 
@@ -118,6 +119,42 @@ export async function updateEquipe(id: number, formData: FormData) {
   const validated = equipeSchema.parse(data)
 
   const existing = await prisma.equipe.findUnique({ where: { id } })
+
+  const slug = buildSlug(validated.nom)
+
+  const homonyme = await prisma.equipe.findFirst({
+    where: { slug, id: { not: id } },
+    select: { id: true },
+  })
+  if (homonyme) {
+    throw new Error('Une autre équipe porte déjà ce nom')
+  }
+
+  await prisma.$transaction([
+    prisma.entrainement.deleteMany({ where: { equipeId: id } }),
+    prisma.equipe.update({
+      where: { id },
+      data: {
+        nom: validated.nom,
+        categorie: validated.categorie,
+        genre: validated.genre,
+        description: validated.description,
+        entraineur: validated.entraineur,
+        matches: validated.matches,
+        photo: validated.photo,
+        banniere: validated.banniere || null,
+        ordre: validated.ordre,
+        published: validated.published,
+        featured: validated.featured,
+        slug,
+        entrainements: {
+          create: validated.entrainements,
+        },
+      },
+    }),
+  ])
+
+  // Images supprimées seulement une fois la fiche enregistrée
   if (existing) {
     if (existing.photo !== validated.photo) {
       await deleteImage(existing.photo)
@@ -126,31 +163,6 @@ export async function updateEquipe(id: number, formData: FormData) {
       await deleteImage(existing.banniere)
     }
   }
-
-  await prisma.entrainement.deleteMany({ where: { equipeId: id } })
-
-  const slug = buildSlug(validated.nom)
-
-  await prisma.equipe.update({
-    where: { id },
-    data: {
-      nom: validated.nom,
-      categorie: validated.categorie,
-      genre: validated.genre,
-      description: validated.description,
-      entraineur: validated.entraineur,
-      matches: validated.matches,
-      photo: validated.photo,
-      banniere: validated.banniere || null,
-      ordre: validated.ordre,
-      published: validated.published,
-      featured: validated.featured,
-      slug,
-      entrainements: {
-        create: validated.entrainements,
-      },
-    },
-  })
 
   revalidatePath('/admin/equipes')
   revalidatePath(`/admin/equipes/${id}`)
@@ -162,14 +174,15 @@ export async function deleteEquipe(id: number) {
   await requireAdmin()
 
   const equipe = await prisma.equipe.findUnique({ where: { id } })
+
+  await prisma.equipe.delete({ where: { id } })
+
   if (equipe) {
     await deleteImage(equipe.photo)
     if (equipe.banniere) {
       await deleteImage(equipe.banniere)
     }
   }
-
-  await prisma.equipe.delete({ where: { id } })
 
   revalidatePath('/admin/equipes')
   revalidateEquipesPublic(equipe?.slug)
@@ -198,18 +211,18 @@ export async function deleteMultipleEquipes(ids: number[]) {
     where: { id: { in: ids } },
   })
 
-  // Supprimer les images
+  // Supprimer les équipes
+  await prisma.equipe.deleteMany({
+    where: { id: { in: ids } },
+  })
+
+  // Supprimer les images une fois les équipes effacées
   for (const equipe of equipes) {
     await deleteImage(equipe.photo)
     if (equipe.banniere) {
       await deleteImage(equipe.banniere)
     }
   }
-
-  // Supprimer les équipes
-  await prisma.equipe.deleteMany({
-    where: { id: { in: ids } },
-  })
 
   revalidatePath('/admin/equipes')
   revalidateEquipesPublic(...equipes.map((equipe) => equipe.slug))
@@ -218,8 +231,10 @@ export async function deleteMultipleEquipes(ids: number[]) {
 export async function updateOrdre(updates: { id: number; ordre: number }[]) {
   await requireAdmin()
 
-  await Promise.all(
-    updates.map((update) =>
+  const validated = ordreSchema.parse(updates)
+
+  await prisma.$transaction(
+    validated.map((update) =>
       prisma.equipe.update({
         where: { id: update.id },
         data: { ordre: update.ordre },

@@ -90,9 +90,6 @@ export async function updateArticle(id: number, formData: FormData) {
   const validated = articleSchema.parse(data)
 
   const existing = await prisma.article.findUnique({ where: { id } })
-  if (existing && existing.image !== validated.image) {
-    await deleteImage(existing.image)
-  }
 
   const slug = validated.titre
     .toLowerCase()
@@ -101,6 +98,14 @@ export async function updateArticle(id: number, formData: FormData) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
 
+  const homonyme = await prisma.article.findFirst({
+    where: { slug, id: { not: id } },
+    select: { id: true },
+  })
+  if (homonyme) {
+    throw new Error('Un autre article porte déjà ce titre')
+  }
+
   await prisma.article.update({
     where: { id },
     data: {
@@ -108,6 +113,11 @@ export async function updateArticle(id: number, formData: FormData) {
       slug,
     },
   })
+
+  // Image supprimée seulement une fois l'article enregistré
+  if (existing && existing.image !== validated.image) {
+    await deleteImage(existing.image)
+  }
 
   revalidatePath('/admin/articles')
   revalidatePath(`/admin/articles/${id}`)
@@ -119,11 +129,12 @@ export async function deleteArticle(id: number) {
   await requireAdmin()
 
   const article = await prisma.article.findUnique({ where: { id } })
+
+  await prisma.article.delete({ where: { id } })
+
   if (article) {
     await deleteImage(article.image)
   }
-
-  await prisma.article.delete({ where: { id } })
 
   revalidatePath('/admin/articles')
   revalidateActusPublic(article?.slug)
