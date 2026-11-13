@@ -49,9 +49,9 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true, // Désactiver l'inscription publique
-    sendResetPassword: async ({ user, url }) => {
-      // TODO: Implémenter l'envoi d'email
-      console.log('Reset password URL:', url)
+    sendResetPassword: async () => {
+      // TODO: envoyer le lien par courriel, sans jamais journaliser l'URL ni l'adresse.
+      console.warn('Réinitialisation de mot de passe demandée : envoi de courriel non configuré')
     },
     password: {
       hash: async (password) => {
