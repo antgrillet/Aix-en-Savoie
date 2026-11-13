@@ -20,7 +20,7 @@ Site officiel du HBC Aix-en-Savoie (handball) : une vitrine publique et un espac
 ## Operating Context
 
 - Les matchs, lieux et classements viennent de FFHANDBALL (synchronisation planifiée, déclenchable depuis l'admin) ; l'admin corrige et complète.
-- Les inscriptions arrivent par le formulaire public ; l'admin suit les dossiers et les pièces manquantes.
+- Les bénévoles s'inscrivent aux matchs à domicile depuis `/calendrier` ; l'admin suit les rôles non pourvus par match.
 - Les images passent par Vercel Blob, les courriels par Resend.
 
 ## Capabilities and Constraints
