@@ -80,6 +80,45 @@ function minuitParis(annee: number, mois: number, jour: number): Date {
   return new Date(approx - decalageParis(premier))
 }
 
+/** Valeur d'un champ `datetime-local` (« 2026-11-14T20:30 »), heure de Paris. */
+export function versChampDateHeure(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: FUSEAU_CLUB,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const lire = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${lire('year')}-${lire('month')}-${lire('day')}T${lire('hour')}:${lire('minute')}`
+}
+
+const CHAMP_DATE_HEURE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
+
+/**
+ * Instant saisi dans un champ `datetime-local`, lu comme une heure de Paris.
+ * `null` si le texte n'a pas le format attendu ou si la date n'existe pas.
+ */
+export function lireChampDateHeure(texte: string): Date | null {
+  const morceaux = CHAMP_DATE_HEURE.exec(texte)
+  if (!morceaux) return null
+  const [annee, mois, jour, heure, minute, seconde = 0] = morceaux.slice(1).map((v) => Number(v ?? 0))
+  if (heure > 23 || minute > 59 || seconde > 59) return null
+
+  const approx = Date.UTC(annee, mois - 1, jour, heure, minute, seconde)
+  const civil = new Date(approx)
+  // Date.UTC accepte le 30 février et le reporte au 2 mars : on le refuse.
+  if (civil.getUTCFullYear() !== annee || civil.getUTCMonth() !== mois - 1 || civil.getUTCDate() !== jour) {
+    return null
+  }
+
+  const premier = new Date(approx - decalageParis(civil))
+  // Second passage pour les heures proches d'un changement d'heure.
+  return new Date(approx - decalageParis(premier))
+}
+
 /**
  * Week-end à afficher : du vendredi 00:00 au dimanche 23:59:59, heure de Paris.
  * Du lundi au vendredi, c'est le week-end qui vient ; le samedi et le dimanche,

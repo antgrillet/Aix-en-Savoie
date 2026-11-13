@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-utils'
+import { lireMatchFormData } from '@/lib/validations/match'
 
 async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[]) {
   revalidatePath('/')
@@ -82,65 +83,20 @@ export async function getEquipesForSelect() {
 
 export async function createMatch(formData: FormData) {
   await requireAdmin()
-  const equipeId = parseInt(formData.get('equipeId') as string)
-  const adversaire = formData.get('adversaire') as string
-  const dateStr = formData.get('date') as string
-  const lieu = formData.get('lieu') as string
-  const domicile = formData.get('domicile') === 'true'
-  const competition = formData.get('competition') as string
-  const termine = formData.get('termine') === 'true'
-  const published = formData.get('published') === 'true'
-
-  let scoreEquipe = null
-  let scoreAdversaire = null
-
-  if (termine) {
-    const scoreEquipeStr = formData.get('scoreEquipe') as string
-    const scoreAdversaireStr = formData.get('scoreAdversaire') as string
-    if (scoreEquipeStr) scoreEquipe = parseInt(scoreEquipeStr)
-    if (scoreAdversaireStr) scoreAdversaire = parseInt(scoreAdversaireStr)
-  }
+  const data = lireMatchFormData(formData)
 
   await prisma.match.create({
-    data: {
-      equipeId,
-      adversaire,
-      date: new Date(dateStr),
-      lieu,
-      domicile,
-      competition: competition || null,
-      termine,
-      scoreEquipe,
-      scoreAdversaire,
-      published,
-    },
+    data,
   })
 
   revalidatePath('/admin/matchs')
-  await revalidateMatchsPublic(equipeId)
+  await revalidateMatchsPublic(data.equipeId)
   redirect('/admin/matchs')
 }
 
 export async function updateMatch(id: number, formData: FormData) {
   await requireAdmin()
-  const equipeId = parseInt(formData.get('equipeId') as string)
-  const adversaire = formData.get('adversaire') as string
-  const dateStr = formData.get('date') as string
-  const lieu = formData.get('lieu') as string
-  const domicile = formData.get('domicile') === 'true'
-  const competition = formData.get('competition') as string
-  const termine = formData.get('termine') === 'true'
-  const published = formData.get('published') === 'true'
-
-  let scoreEquipe = null
-  let scoreAdversaire = null
-
-  if (termine) {
-    const scoreEquipeStr = formData.get('scoreEquipe') as string
-    const scoreAdversaireStr = formData.get('scoreAdversaire') as string
-    if (scoreEquipeStr) scoreEquipe = parseInt(scoreEquipeStr)
-    if (scoreAdversaireStr) scoreAdversaire = parseInt(scoreAdversaireStr)
-  }
+  const data = lireMatchFormData(formData)
 
   const existing = await prisma.match.findUnique({
     where: { id },
@@ -149,22 +105,11 @@ export async function updateMatch(id: number, formData: FormData) {
 
   await prisma.match.update({
     where: { id },
-    data: {
-      equipeId,
-      adversaire,
-      date: new Date(dateStr),
-      lieu,
-      domicile,
-      competition: competition || null,
-      termine,
-      scoreEquipe,
-      scoreAdversaire,
-      published,
-    },
+    data,
   })
 
   revalidatePath('/admin/matchs')
-  await revalidateMatchsPublic(equipeId, existing?.equipeId)
+  await revalidateMatchsPublic(data.equipeId, existing?.equipeId)
   redirect('/admin/matchs')
 }
 
