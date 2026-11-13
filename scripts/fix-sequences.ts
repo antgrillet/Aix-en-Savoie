@@ -1,3 +1,4 @@
+// Recale les séquences d'auto-incrément Postgres sur le MAX(id) de chaque table ; écrit dans la base désignée par DATABASE_URL (production comprise).
 import { prisma } from '../src/lib/prisma'
 
 async function main() {
