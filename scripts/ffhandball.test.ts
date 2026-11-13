@@ -47,30 +47,30 @@ function rencontre(partiel: Record<string, unknown>) {
   }
 }
 
+const RENCONTRES = [
+  rencontre({ ext_rencontreId: '1' }),
+  rencontre({
+    ext_rencontreId: '2',
+    equipe1Id: '300',
+    equipe2Id: '100',
+    equipe1Libelle: 'SAINT GENIX-AOSTE  1',
+    equipe2Libelle: 'HBC AIX EN SAVOIE  2',
+    equipe1Score: '8',
+    equipe2Score: '16',
+    structure1Logo: 'genix.PNG',
+  }),
+  // Rencontre d'une autre équipe du club, listée sur la même page
+  rencontre({ ext_rencontreId: '3', equipe1Id: '101', equipe2Id: '400' }),
+  rencontre({ ext_rencontreId: '4', date: null }),
+]
+
 const PAGE_EQUIPE = [
   bloc('page-header', { title: 'MOINS DE 11 ANS MIXTE 1 ERE PHASE' }),
   bloc('competitions---poule-selector', {
     selected_equipe: AIX,
     equipe_options: [AIX, { ...AUTRE_AIX, structureId: '983' }, { id: '200', ext_equipeId: '902', structureId: '12', libelle: 'AUTRE CLUB' }],
   }),
-  bloc('competitions---rencontre-list', {
-    rencontres: [
-      rencontre({ ext_rencontreId: '1' }),
-      rencontre({
-        ext_rencontreId: '2',
-        equipe1Id: '300',
-        equipe2Id: '100',
-        equipe1Libelle: 'SAINT GENIX-AOSTE  1',
-        equipe2Libelle: 'HBC AIX EN SAVOIE  2',
-        equipe1Score: '8',
-        equipe2Score: '16',
-        structure1Logo: 'genix.PNG',
-      }),
-      // Rencontre d'une autre équipe du club, listée sur la même page
-      rencontre({ ext_rencontreId: '3', equipe1Id: '101', equipe2Id: '400' }),
-      rencontre({ ext_rencontreId: '4', date: null }),
-    ],
-  }),
+  bloc('competitions---rencontre-list', { rencontres: RENCONTRES }),
   bloc('competitions---mini-classement-or-ads', {
     classements: [
       { pouleId: '50', place: '1', point: '18', equipe_libelle: "HANDBALL CLUB COURNON D'AUVERGNE" },
@@ -171,6 +171,42 @@ describe('lecture des pages', () => {
     expect(() => lireCalendrierEquipe(extraireComposants(page))).toThrow(/liste des rencontres/)
   })
 
+  describe('rencontres illisibles', () => {
+    /** Page de test dont la liste des rencontres est remplacée. */
+    const avecRencontres = (rencontres: unknown[]) =>
+      extraireComposants(
+        PAGE_EQUIPE.replace(
+          bloc('competitions---rencontre-list', { rencontres: RENCONTRES }),
+          bloc('competitions---rencontre-list', { rencontres })
+        )
+      )
+    // Sans identifiant de rencontre, le schéma rejette l'élément
+    const abimee = (brute: Record<string, unknown>) => ({ ...brute, ext_rencontreId: undefined })
+
+    test('des rencontres toutes illisibles sont une erreur, pas un calendrier vide', () => {
+      expect(() => lireCalendrierEquipe(avecRencontres(RENCONTRES.map(abimee)))).toThrow(/illisibles \(4 sur 4\)/)
+    })
+
+    test('plus de la moitié des rencontres illisibles est une erreur', () => {
+      const rencontres = RENCONTRES.map((brute, index) => (index < 3 ? abimee(brute) : brute))
+      expect(() => lireCalendrierEquipe(avecRencontres(rencontres))).toThrow(/illisibles \(3 sur 4\)/)
+    })
+
+    test('une seule rencontre abîmée n’empêche pas de lire les autres', () => {
+      const rencontres = RENCONTRES.map((brute, index) => (index === 0 ? abimee(brute) : brute))
+      const calendrier = lireCalendrierEquipe(avecRencontres(rencontres))
+      expect(calendrier.rencontres.map((r) => r.extRencontreId)).toEqual(['2', '4'])
+    })
+
+    test('une liste vide reste un calendrier vide', () => {
+      expect(lireCalendrierEquipe(avecRencontres([])).rencontres).toEqual([])
+    })
+
+    test('des rencontres lisibles mais toutes d’une autre équipe ne sont pas une erreur', () => {
+      expect(lireCalendrierEquipe(avecRencontres([RENCONTRES[2]])).rencontres).toEqual([])
+    })
+  })
+
   test('un classement absent ou partiel n’est pas lu comme un classement vide', () => {
     const sans = [
       bloc('competitions---poule-selector', { selected_equipe: AIX }),
@@ -189,6 +225,20 @@ describe('lecture des pages', () => {
 
     const vide = sans + bloc('competitions---mini-classement-or-ads', { classements: [] })
     expect(lireCalendrierEquipe(extraireComposants(vide)).classement).toEqual([])
+  })
+
+  test('un classement dont aucune ligne n’est de la poule de l’équipe n’est pas lu comme vide', () => {
+    const page = [
+      bloc('competitions---poule-selector', { selected_equipe: AIX }),
+      bloc('competitions---rencontre-list', { rencontres: [] }),
+      bloc('competitions---mini-classement-or-ads', {
+        classements: [
+          { pouleId: '99', place: '1', point: '12', equipe_libelle: 'CLUB A' },
+          { pouleId: '99', place: '2', point: '9', equipe_libelle: 'CLUB B' },
+        ],
+      }),
+    ].join('')
+    expect(lireCalendrierEquipe(extraireComposants(page)).classement).toBeNull()
   })
 
   test('échoue clairement si la page ne désigne aucune équipe', () => {
