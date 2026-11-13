@@ -30,8 +30,6 @@ export function CalendrierAuth({ onSuccess }: CalendrierAuthProps) {
       });
 
       if (response.ok) {
-        // Stocker l'authentification dans sessionStorage
-        sessionStorage.setItem("calendrier_auth", "true");
         toast.success("Connexion réussie !");
         onSuccess();
       } else {

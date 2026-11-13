@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sessionBenevoleActive } from "@/lib/calendrier-session";
 
 export async function GET(request: Request) {
   try {
+    if (!(await sessionBenevoleActive())) {
+      return NextResponse.json(
+        { error: "Session expirée, reconnectez-vous" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const equipeId = searchParams.get("equipeId");
 
@@ -14,7 +22,11 @@ export async function GET(request: Request) {
     };
 
     if (equipeId) {
-      whereClause.equipeId = parseInt(equipeId);
+      const id = Number(equipeId);
+      if (!Number.isInteger(id)) {
+        return NextResponse.json({ error: "Équipe invalide" }, { status: 400 });
+      }
+      whereClause.equipeId = id;
     }
 
     // Récupérer les matchs à venir avec leurs inscriptions

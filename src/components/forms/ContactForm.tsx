@@ -116,6 +116,7 @@ export function ContactForm() {
       experience: estJoueur,
       niveau: estJoueur && niveau ? niveau : null,
       positions: estJoueur ? positions : [],
+      leurre: formData.get('leurre'),
     }
 
     try {
@@ -154,7 +155,12 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 text-neutral-100">
+      {/* Champ leurre contre les robots : hors écran, hors tabulation, ignoré des lecteurs d'écran */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="leurre">Ne pas remplir ce champ</label>
+        <input id="leurre" name="leurre" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
       {/* Choix du motif de contact */}
       <div>
         <Label className="mb-3 block">Votre demande concerne</Label>

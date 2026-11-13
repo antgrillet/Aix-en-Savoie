@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { RoleInscription } from "@/generated/prisma/client";
+import { z } from "zod";
+import { sessionBenevoleActive } from "@/lib/calendrier-session";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 // Quotas maximum par rôle
 const QUOTAS: Record<RoleInscription, number | null> = {
@@ -10,27 +13,48 @@ const QUOTAS: Record<RoleInscription, number | null> = {
   BUVETTE: null, // Illimité
 };
 
+const inscriptionSchema = z.object({
+  matchId: z.coerce.number().int().positive(),
+  nom: z.string().trim().min(1).max(60),
+  prenom: z.string().trim().min(1).max(60),
+  role: z.enum(["TABLE_DE_MARQUE", "ARBITRE", "RESPONSABLE_SALLE", "BUVETTE"]),
+});
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { matchId, nom, prenom, role } = body;
-
-    // Validation des champs
-    if (!matchId || !nom || !prenom || !role) {
+    if (!(await sessionBenevoleActive())) {
       return NextResponse.json(
-        { error: "Tous les champs sont requis" },
-        { status: 400 }
+        { error: "Session expirée, reconnectez-vous" },
+        { status: 401 }
       );
     }
 
-    // Vérifier que le rôle est valide
-    if (!Object.keys(QUOTAS).includes(role)) {
-      return NextResponse.json({ error: "Rôle invalide" }, { status: 400 });
+    if (
+      !rateLimit(`calendrier-inscription:${clientIp(request)}`, {
+        limit: 20,
+        windowMs: 10 * 60 * 1000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Trop d'inscriptions en peu de temps. Réessayez plus tard." },
+        { status: 429 }
+      );
     }
+
+    const parsed = inscriptionSchema.safeParse(
+      await request.json().catch(() => null)
+    );
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Nom, prénom et rôle sont requis" },
+        { status: 400 }
+      );
+    }
+    const { matchId, nom, prenom, role } = parsed.data;
 
     // Vérifier que le match existe et n'est pas terminé
     const match = await prisma.match.findUnique({
-      where: { id: parseInt(matchId) },
+      where: { id: matchId },
       include: {
         inscriptions: {
           where: { role },
@@ -38,7 +62,7 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!match) {
+    if (!match || !match.published || !match.domicile) {
       return NextResponse.json({ error: "Match non trouvé" }, { status: 404 });
     }
 
@@ -50,7 +74,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier les quotas
-    const quota = QUOTAS[role as RoleInscription];
+    const quota = QUOTAS[role];
     if (quota !== null && match.inscriptions.length >= quota) {
       return NextResponse.json(
         {
@@ -77,10 +101,10 @@ export async function POST(request: Request) {
     // Créer l'inscription
     const inscription = await prisma.inscription.create({
       data: {
-        matchId: parseInt(matchId),
-        nom: nom.trim(),
-        prenom: prenom.trim(),
-        role: role as RoleInscription,
+        matchId,
+        nom,
+        prenom,
+        role,
       },
     });
 

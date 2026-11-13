@@ -17,7 +17,27 @@ interface ContactEmailData {
   positions?: string[]
 }
 
-export async function sendContactEmail(data: ContactEmailData) {
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+export async function sendContactEmail(input: ContactEmailData) {
+  // Tout ce qui vient du formulaire est échappé avant d'entrer dans le HTML.
+  const data = {
+    ...input,
+    nom: escapeHtml(input.nom),
+    prenom: escapeHtml(input.prenom),
+    email: escapeHtml(input.email),
+    telephone: input.telephone ? escapeHtml(input.telephone) : undefined,
+    niveau: input.niveau ? escapeHtml(input.niveau) : undefined,
+    positions: input.positions?.map(escapeHtml),
+    message: escapeHtml(input.message),
+  }
+
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
   const toEmail = 'contact@hbcaixensavoie.fr' // Email du club
 
@@ -123,12 +143,18 @@ export async function sendContactEmail(data: ContactEmailData) {
     const result = await resend.emails.send({
       from: fromEmail,
       to: toEmail,
-      subject: `Nouveau message de ${data.prenom} ${data.nom}`,
+      subject: `Nouveau message de ${input.prenom} ${input.nom}`.replace(/[\r\n]+/g, ' '),
       html: htmlContent,
-      replyTo: data.email,
+      replyTo: input.email,
     })
 
-    return { success: true, data: result }
+    // Le SDK Resend ne lève pas d'exception sur une erreur d'API : il la renvoie.
+    if (result.error) {
+      console.error('Error sending email:', result.error.name)
+      return { success: false, error: result.error }
+    }
+
+    return { success: true, data: result.data }
   } catch (error) {
     console.error('Error sending email:', error)
     return { success: false, error }

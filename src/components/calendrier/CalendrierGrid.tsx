@@ -54,7 +54,7 @@ interface Match {
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7h à 22h
 const DAYS = [6, 0]; // Samedi et Dimanche
 
-export function CalendrierGrid() {
+export function CalendrierGrid({ onUnauthorized }: { onUnauthorized?: () => void }) {
   const [matchs, setMatchs] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -67,6 +67,9 @@ export function CalendrierGrid() {
       if (response.ok) {
         const data = await response.json();
         setMatchs(data);
+      } else if (response.status === 401) {
+        toast.error("Session expirée, reconnectez-vous");
+        onUnauthorized?.();
       } else {
         toast.error("Erreur lors du chargement des matchs");
       }
@@ -81,6 +84,8 @@ export function CalendrierGrid() {
 
   useEffect(() => {
     fetchMatchs();
+    // Chargement initial uniquement ; le rafraîchissement passe par handleRefresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = () => {

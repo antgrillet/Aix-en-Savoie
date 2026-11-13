@@ -1,23 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendrierAuth } from "@/components/calendrier/CalendrierAuth";
 import { CalendrierGrid } from "@/components/calendrier/CalendrierGrid";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-function getInitialAuth() {
-  if (typeof window === "undefined") return false;
-  return sessionStorage.getItem("calendrier_auth") === "true";
-}
-
 export default function CalendrierPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(getInitialAuth);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // La session vit dans un cookie httpOnly : seul le serveur sait si elle est valide.
+  useEffect(() => {
+    let annule = false;
+    fetch("/api/calendrier/auth")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!annule) setIsAuthenticated(Boolean(data?.authenticated));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!annule) setIsLoading(false);
+      });
+    return () => {
+      annule = true;
+    };
+  }, []);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("calendrier_auth");
     setIsAuthenticated(false);
+    fetch("/api/calendrier/auth", { method: "DELETE" }).catch(() => {});
   };
 
   if (isLoading) {
@@ -51,7 +63,7 @@ export default function CalendrierPage() {
             </Button>
           </div>
 
-          <CalendrierGrid />
+          <CalendrierGrid onUnauthorized={() => setIsAuthenticated(false)} />
         </div>
       )}
     </div>
