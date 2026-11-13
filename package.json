@@ -21,7 +21,8 @@
     "sync:matches": "bun run scripts/sync-matches.ts",
     "ffhb:equipes": "bun run scripts/ffhb-equipes.ts",
     "test:sync": "bun test scripts/ffhandball.test.ts scripts/resultats-weekend.test.ts",
-    "test:dates": "bun test scripts/dates.test.ts"
+    "test:dates": "bun test scripts/dates.test.ts",
+    "check": "bun run lint && bun run type-check && bun test scripts/"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
