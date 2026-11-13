@@ -9,7 +9,6 @@ lerna-debug.log*
 
 node_modules
 .env
-.env.example
 .env.local
 .next
 src/generated/prisma
@@ -37,6 +36,7 @@ tsconfig.tsbuildinfo
 *.sw?
 .vercel
 .env*
+!.env.example
 
 # Captures de revue de design : peuvent contenir des données réelles du club
 .impeccable/review/

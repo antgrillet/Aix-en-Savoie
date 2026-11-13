@@ -46,7 +46,7 @@ bun auth:generate    # Generate the Better Auth Prisma schema
 - `scripts/` - Admin/maintenance scripts and `bun test` files (run with Bun)
 
 ### Authentication
-Uses `better-auth` with Prisma adapter. Protected routes checked in `middleware.ts` via session cookie. Admin login at `/login`, dashboard at `/admin`.
+Uses `better-auth` with Prisma adapter. `/admin/*` is protected in `src/proxy.ts` (the Next.js 16 name for middleware), which validates the session and requires the `admin` role. Admin login at `/login`, dashboard at `/admin`.
 
 ### Database Models (Prisma)
 Main entities: Article, Equipe (team), Match, Partenaire (partner), ContactMessage, Inscription, Classement, Setting. Auth models: User, Session, Account.

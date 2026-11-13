@@ -11,7 +11,8 @@ Le calendrier interactif permet aux bénévoles de s'inscrire pour aider lors de
 1. **Authentification**
    - Accès protégé par un mot de passe unique
    - Le mot de passe est partagé avec tous les bénévoles
-   - Mot de passe par défaut : `handball2025` (modifiable dans l'admin)
+   - Le mot de passe se définit dans `/admin/parametres`
+   - Un mot de passe juste ouvre une session de 12 heures
 
 2. **Vue Calendrier Hebdomadaire**
    - **Grille calendrier** : Samedi et Dimanche avec horaires de 7h à 22h
@@ -101,7 +102,7 @@ Le calendrier interactif permet aux bénévoles de s'inscrire pour aider lors de
 
 2. **Navigation dans le calendrier**
    ```
-   Vue par défaut : Week-end actuel (Samedi + Dimanche)
+   Vue initiale : Week-end actuel (Samedi + Dimanche)
    Changer de semaine : Flèches gauche/droite
    Retour rapide : Bouton "Aujourd'hui"
    Scroll horizontal : Pour voir toute la grille horaire
@@ -186,19 +187,26 @@ enum RoleInscription {
 
 ## API Routes
 
-### Publiques (accessibles après authentification)
-- `POST /api/calendrier/auth` - Vérifier le mot de passe
+### Session bénévole
+- `POST /api/calendrier/auth` - Vérifier le mot de passe ; s'il est juste, pose le cookie de session
+- `GET /api/calendrier/auth` - Indiquer si la session est active
+- `DELETE /api/calendrier/auth` - Fermer la session
+
+### Bénévoles (session requise, 401 sinon)
 - `GET /api/calendrier/matchs` - Liste des matchs avec inscriptions
 - `POST /api/calendrier/inscriptions` - Créer une inscription
-- `DELETE /api/calendrier/inscriptions/[id]` - Supprimer une inscription
 
 ### Administrateur
+- `DELETE /api/calendrier/inscriptions/[id]` - Supprimer une inscription (réservé à l'admin, 401 sinon)
 - Toutes les routes admin nécessitent une authentification admin
 
 ## Sécurité
 
-- Mot de passe en clair dans la base (intentionnel, pas de données sensibles)
-- Session stockée côté client (sessionStorage)
+- Un mot de passe juste pose un cookie `httpOnly` signé (`src/lib/calendrier-session.ts`), valable 12 heures
+- Sans ce cookie, `/api/calendrier/matchs` et `/api/calendrier/inscriptions` répondent 401
+- Les bénévoles ne peuvent pas supprimer d'inscription : seul l'admin le peut
+- Tentatives de connexion et inscriptions limitées en débit par adresse IP (429 au-delà)
+- Mot de passe stocké en clair dans les réglages : choix assumé, il est partagé entre bénévoles
 - Pas de création de comptes utilisateurs (simplicité)
 - Authentification admin requise pour la gestion
 

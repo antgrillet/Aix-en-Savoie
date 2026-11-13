@@ -1,3 +1,4 @@
+// Supprime TOUS les fichiers du stockage Vercel Blob désigné par BLOB_READ_WRITE_TOKEN (production comprise), sans confirmation.
 import { list, del } from '@vercel/blob'
 
 async function cleanBlob() {
