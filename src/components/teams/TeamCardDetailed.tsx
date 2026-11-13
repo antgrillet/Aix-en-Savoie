@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Clock, Calendar, User, Trophy, MapPin } from 'lucide-react'
+import { formatDateHeure } from '@/lib/dates'
 import { normalizeImagePath } from '@/lib/utils'
 
 interface Entrainement {
@@ -158,15 +159,7 @@ export function TeamCardDetailed({ equipe }: TeamCardDetailedProps) {
                   </div>
                   <div className="flex items-center text-xs">
                     <Calendar className="w-3 h-3 mr-1 text-primary-500" />
-                    <span>
-                      {new Date(nextMatch.date).toLocaleDateString('fr-FR', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+                    <span>{formatDateHeure(new Date(nextMatch.date))}</span>
                   </div>
                   {nextMatch.lieu && (
                     <div className="flex items-center text-xs">

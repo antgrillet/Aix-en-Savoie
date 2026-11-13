@@ -9,6 +9,7 @@ import { FormSection, SaveBar } from '@/components/admin/FormSection'
 import { SimpleSelect } from '@/components/admin/Select'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { StatusMark } from '@/components/admin/StatusMark'
+import { versChampDateHeure } from '@/lib/dates'
 
 interface Equipe {
   id: number
@@ -99,17 +100,6 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
       })),
     [equipes, equipeHorsListe]
   )
-
-  // Format date for input[type="datetime-local"]
-  const formatDateForInput = (date: Date) => {
-    const d = new Date(date)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    const hours = String(d.getHours()).padStart(2, '0')
-    const minutes = String(d.getMinutes()).padStart(2, '0')
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
 
   const clearError = (champ: ChampMatch) => {
     if (errors[champ]) setErrors({ ...errors, [champ]: undefined })
@@ -220,7 +210,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
             <Input
               name="date"
               type="datetime-local"
-              defaultValue={match?.date ? formatDateForInput(match.date) : ''}
+              defaultValue={match?.date ? versChampDateHeure(new Date(match.date)) : ''}
               onChange={() => clearError('date')}
             />
           </Field>
