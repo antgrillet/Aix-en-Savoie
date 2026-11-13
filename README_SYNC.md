@@ -81,7 +81,6 @@ src/lib/
 │   └── client.ts           # Appels réseau à www.ffhandball.fr
 ├── sync-matches.ts         # Rapprochement avec la base, cache des salles
 ├── resultats-weekend.ts    # Calculs de la page admin « Résultats »
-└── cron.ts                 # Planification locale optionnelle (ENABLE_CRON)
 
 scripts/
 ├── sync-matches.ts         # Synchronisation complète
