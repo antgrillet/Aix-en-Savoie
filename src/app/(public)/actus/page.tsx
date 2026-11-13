@@ -5,6 +5,7 @@ import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
+import { lireNumeroPage } from '@/lib/pagination'
 
 export const revalidate = 600
 
@@ -20,7 +21,7 @@ export async function generateMetadata({
 }) {
   const params = await searchParams
   const categorie = params.categorie
-  const page = parseInt(params.page || '1')
+  const page = lireNumeroPage(params.page)
 
   const hasFilter = Boolean(categorie && categorie !== 'TOUS')
   const hasPagination = page > 1
@@ -49,7 +50,7 @@ export default async function ActusPage({
 }) {
   const params = await searchParams
   const categorie = params.categorie
-  const page = parseInt(params.page || '1')
+  const page = lireNumeroPage(params.page)
   const perPage = 12
 
   // Construire les conditions de filtrage
@@ -135,7 +136,7 @@ export default async function ActusPage({
                   (pageNum) => (
                     <a
                       key={pageNum}
-                      href={`/actus?${categorie ? `categorie=${categorie}&` : ''}page=${pageNum}`}
+                      href={`/actus?${categorie ? `categorie=${encodeURIComponent(categorie)}&` : ''}page=${pageNum}`}
                       className={`px-4 py-2 rounded font-display font-bold transition-colors ${
                         pageNum === page
                           ? 'bg-primary-500 text-white'
