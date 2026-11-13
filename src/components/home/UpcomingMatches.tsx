@@ -1,347 +1,127 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, MapPin, Trophy } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
+import { motion, useReducedMotion } from 'framer-motion'
+import { ArrowUpRight, MapPin } from 'lucide-react'
 
-interface Match {
+interface WeekendRow {
   id: number
-  adversaire: string
-  date: Date
-  lieu: string
-  domicile: boolean
-  competition: string | null
-  scoreEquipe: number | null
-  scoreAdversaire: number | null
-  termine: boolean
-  logoAdversaire: string | null
-}
-
-interface Team {
-  id: number
-  nom: string
-  slug: string
+  day: string
+  time: string
+  equipeNom: string
   categorie: string
-  genre: string
-  photo: string | null
-  featured: boolean
-  matchs: Match[]
+  adversaire: string
+  lieu: string
+  competition: string | null
+  teamSlug: string
 }
 
 interface UpcomingMatchesProps {
-  teams: Team[]
+  rows: WeekendRow[]
+  period: string
 }
 
-type FilterType = 'featured' | 'masculin' | 'feminin'
+const smoothEase = [0.22, 1, 0.36, 1] as const
 
-const cardHoverVariants = {
-  rest: {
-    y: 0,
-    scale: 1,
-    boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.2)',
-  },
-  hover: {
-    y: -8,
-    scale: 1.02,
-    boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.3)',
-    transition: {
-      duration: 0.3,
-      ease: 'easeOut' as const,
-    },
-  },
-}
-
-export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
-  const shouldReduceMotion = useReducedMotion()
-  const [filter, setFilter] = useState<FilterType>('featured')
-
-  // Séparer les équipes featured
-  const flagshipTeams = teams.filter(team => team.featured)
-
-  // Toutes les équipes par genre
-  const masculinTeams = teams.filter(team => team.genre === 'MASCULIN')
-  const femininTeams = teams.filter(team => team.genre === 'FEMININ')
-
-  // Déterminer quelles équipes afficher selon le filtre
-  const displayedTeams = filter === 'featured'
-    ? flagshipTeams
-    : filter === 'masculin'
-    ? masculinTeams
-    : femininTeams
-
-  const formatDate = (date: Date) => {
-    const d = new Date(date)
-    return d.toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    }).toUpperCase()
-  }
-
-  const formatTime = (date: Date) => {
-    const d = new Date(date)
-    return d.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(':', 'H')
-  }
-
-  if (teams.length === 0) {
-    return null
-  }
+export function UpcomingMatches({ rows, period }: UpcomingMatchesProps) {
+  const reduceMotion = useReducedMotion()
 
   return (
-    <section className="relative w-full bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 py-16 md:py-20">
-      <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5" />
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="bg-zinc-950 py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
-          className="text-center mb-12"
+          initial={reduceMotion ? undefined : { opacity: 0, y: 20, filter: 'blur(8px)' }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: smoothEase }}
+          className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight drop-shadow-lg">
-            Matchs du Week-end
-          </h2>
-          <div className="w-24 h-1 bg-white/40 mx-auto mt-4 rounded-full" />
-        </motion.div>
-
-        {/* Filtres */}
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.1 }}
-          className="flex flex-wrap justify-center items-center gap-4 mb-12"
-        >
-          <div
-            className="flex gap-2 bg-white/20 backdrop-blur-md p-1.5 rounded-xl shadow-lg"
-            role="group"
-            aria-label="Filtrer les équipes par catégorie"
-          >
-            <button
-              onClick={() => setFilter('featured')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                filter === 'featured'
-                  ? 'bg-white text-orange-600 shadow-md'
-                  : 'text-white hover:bg-white/20'
-              }`}
-              aria-label="Afficher les équipes à la une"
-              aria-pressed={filter === 'featured'}
-            >
-              À la Une
-            </button>
-            <button
-              onClick={() => setFilter('masculin')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                filter === 'masculin'
-                  ? 'bg-white text-orange-600 shadow-md'
-                  : 'text-white hover:bg-white/20'
-              }`}
-              aria-label="Afficher les équipes masculines"
-              aria-pressed={filter === 'masculin'}
-            >
-              Masculins
-            </button>
-            <button
-              onClick={() => setFilter('feminin')}
-              className={`py-2.5 px-5 rounded-lg font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                filter === 'feminin'
-                  ? 'bg-white text-orange-600 shadow-md'
-                  : 'text-white hover:bg-white/20'
-              }`}
-              aria-label="Afficher les équipes féminines"
-              aria-pressed={filter === 'feminin'}
-            >
-              Féminines
-            </button>
+          <div>
+            <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-primary-500">
+              {'// Au programme'}
+            </p>
+            <h2 className="font-display text-4xl font-black uppercase leading-none tracking-tight text-white md:text-6xl">
+              Le week-end
+              <br />
+              au gymnase
+            </h2>
           </div>
+          <p className="w-fit rounded-full border border-white/15 bg-white/5 px-4 py-2 font-mono text-xs uppercase tracking-widest tabular-nums text-neutral-300">
+            {period}
+          </p>
         </motion.div>
 
-        {/* Contenu selon le filtre */}
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
-        >
-          {displayedTeams.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedTeams.map((team) => (
-                team.matchs[0] && (
-                  <FeaturedMatchCard
-                    key={team.id}
-                    team={team}
-                    match={team.matchs[0]}
-                    formatDate={formatDate}
-                    formatTime={formatTime}
-                    reduceMotion={Boolean(shouldReduceMotion)}
-                  />
-                )
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-white/80 py-12">
-              <p className="text-lg">Aucun match ce week-end pour cette catégorie</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Lien vers toutes les équipes */}
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.2 }}
-          className="text-center mt-16"
-        >
-          <Link
-            href="/equipes"
-            className="inline-flex items-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/90 transition-colors duration-200 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-orange-600"
-          >
-            <span>Découvrir toutes nos équipes</span>
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <div className="border-t border-white/10">
+          {rows.map((row, i) => (
+            <motion.div
+              key={row.id}
+              initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{
+                delay: reduceMotion ? 0 : i * 0.06,
+                duration: 0.5,
+                ease: smoothEase,
+              }}
+              className="border-b border-white/10 last:border-b-0"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
-          </Link>
-        </motion.div>
+              <Link
+                href={`/equipes/${row.teamSlug}`}
+                aria-label={`${row.equipeNom} vs ${row.adversaire} — ${row.day} à ${row.time}, voir l'équipe`}
+                className="group flex flex-col gap-3 px-2 py-5 transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 sm:flex-row sm:items-center sm:gap-6 md:px-6 md:py-6"
+              >
+                {/* Date + heure */}
+                <div className="flex items-center gap-3 sm:w-48 sm:shrink-0 sm:flex-col sm:items-start sm:gap-1.5">
+                  <span className="rounded-lg border border-primary-500/30 bg-primary-500/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-primary-400">
+                    {row.day}
+                  </span>
+                  <span className="font-display text-xl font-bold tabular-nums text-white md:text-2xl">
+                    {row.time}
+                  </span>
+                </div>
+
+                {/* Affiche */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="font-display text-lg font-bold uppercase tracking-tight text-white transition-colors duration-200 group-hover:text-primary-400 md:text-xl">
+                      {row.equipeNom}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-widest text-neutral-600">vs</span>
+                    <span className="text-base font-semibold text-neutral-300 md:text-lg">
+                      {row.adversaire}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
+                    <span className="font-mono uppercase tracking-wider">{row.categorie}</span>
+                    {row.competition && (
+                      <span className="hidden rounded-full border border-white/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-neutral-400 sm:inline-block">
+                        {row.competition}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3 w-3" aria-hidden />
+                      {row.lieu}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Badge domicile + flèche */}
+                <div className="flex items-center justify-between gap-4 sm:justify-end md:gap-6">
+                  <span className="rounded-full border border-primary-500/30 bg-primary-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary-400">
+                    Domicile
+                  </span>
+                  <span
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 text-neutral-500 transition-[border-color,color,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary-500/50 group-hover:text-primary-400"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
-  )
-}
-
-// Carte pour les équipes fanions
-function FeaturedMatchCard({
-  team,
-  match,
-  formatDate,
-  formatTime,
-  reduceMotion,
-}: {
-  team: Team
-  match: Match
-  formatDate: (date: Date) => string
-  formatTime: (date: Date) => string
-  reduceMotion: boolean
-}) {
-  const hbcSide = { name: 'HBC', logo: '/img/home/logo.png', isHbc: true }
-  const opponentSide = { name: match.adversaire, logo: match.logoAdversaire, isHbc: false }
-  const homeSide = match.domicile ? hbcSide : opponentSide
-  const awaySide = match.domicile ? opponentSide : hbcSide
-
-  return (
-    <motion.div
-      initial={reduceMotion ? undefined : 'rest'}
-      whileHover={reduceMotion ? undefined : 'hover'}
-      variants={reduceMotion ? undefined : cardHoverVariants}
-      className="bg-white rounded-2xl p-6 shadow-xl"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h4 className="font-bold text-zinc-900 text-lg">{team.nom}</h4>
-          <p className="text-sm text-zinc-500">{team.categorie}</p>
-        </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-          match.domicile
-            ? 'bg-green-100 text-green-700'
-            : 'bg-blue-100 text-blue-700'
-        }`}>
-          {match.domicile ? 'DOMICILE' : 'EXTÉRIEUR'}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-6 my-6">
-        {/* Logo équipe recevante */}
-        <div className="text-center">
-          {homeSide.logo ? (
-            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-              <Image
-                src={homeSide.logo}
-                alt={homeSide.name}
-                fill
-                className="object-contain p-2"
-                unoptimized={!homeSide.isHbc}
-              />
-            </div>
-          ) : (
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-2">
-              <span className="text-orange-600 font-bold text-xs text-center px-2">
-                {homeSide.name.substring(0, 3).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <p className="text-xs text-zinc-600 font-semibold max-w-[80px] truncate">
-            {homeSide.name}
-          </p>
-        </div>
-
-        <span className="text-2xl font-bold text-zinc-400">VS</span>
-
-        {/* Logo équipe visiteuse */}
-        <div className="text-center">
-          {awaySide.logo ? (
-            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-2 p-2 relative overflow-hidden">
-              <Image
-                src={awaySide.logo}
-                alt={awaySide.name}
-                fill
-                className="object-contain p-2"
-                unoptimized={!awaySide.isHbc}
-              />
-            </div>
-          ) : (
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-2">
-              <span className="text-orange-600 font-bold text-xs text-center px-2">
-                {awaySide.name.substring(0, 3).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <p className="text-xs text-zinc-600 font-semibold max-w-[80px] truncate">
-            {awaySide.name}
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-2 text-sm text-zinc-600">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-orange-500" />
-          <span className="font-semibold">
-            {formatDate(match.date)} • {formatTime(match.date)}
-          </span>
-        </div>
-        {match.domicile && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-orange-500" />
-            <span>{match.lieu}</span>
-          </div>
-        )}
-        {match.competition && (
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-orange-500" />
-            <span>{match.competition}</span>
-          </div>
-        )}
-      </div>
-
-      <Link
-        href={`/equipes/${team.slug}`}
-        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-sm"
-      >
-        Voir l&apos;équipe et son calendrier
-      </Link>
-    </motion.div>
   )
 }

@@ -1,133 +1,152 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, ArrowRight } from 'lucide-react'
-import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
-import { normalizeImagePath } from '@/lib/utils'
+import { ArrowRight } from 'lucide-react'
 
-interface Article {
+interface NewsArticle {
   id: number
+  slug: string
   titre: string
   categorie: string
-  date: Date
-  image: string
-  resume: string
-  slug: string
+  dateLabel: string
+  image: string | null
+  resume: string | null
 }
 
 interface FeaturedNewsProps {
-  articles: Article[]
+  articles: NewsArticle[]
 }
 
+const smoothEase = [0.22, 1, 0.36, 1] as const
+
 export function FeaturedNews({ articles }: FeaturedNewsProps) {
-  const shouldReduceMotion = useReducedMotion()
+  const reduceMotion = useReducedMotion()
 
   if (!articles || articles.length === 0) {
     return null
   }
 
-  return (
-    <section className="py-16 bg-zinc-900 overflow-hidden relative">
-      {/* Motif graphique discret */}
-      <div className="absolute inset-0 opacity-10 bg-pattern pointer-events-none" />
+  const [featured, ...rest] = articles
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+  return (
+    <section className="bg-zinc-950 py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={shouldReduceMotion ? undefined : fadeInUp}
+          initial={reduceMotion ? undefined : { opacity: 0, y: 20, filter: 'blur(8px)' }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: smoothEase }}
           className="mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-6 relative inline-block">
-            Nos Actualités
-            <span className="absolute -bottom-2 left-0 w-20 h-1 bg-gradient-to-r from-primary-500 to-transparent" />
-          </h2>
-          <p className="text-neutral-400 max-w-2xl mt-6">
-            Découvrez les dernières actualités et événements du HBC Aix-en-Savoie
+          <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-primary-500">
+            {'// La vie du club'}
           </p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <h2 className="font-display text-4xl font-black uppercase leading-none tracking-tight text-white md:text-6xl">
+              Dernières actus
+            </h2>
+            <Link
+              href="/actus"
+              className="group inline-flex items-center gap-2 self-start font-mono text-sm uppercase tracking-widest text-neutral-400 transition-colors duration-200 hover:text-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 md:self-auto"
+            >
+              Tout voir
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+          </div>
         </motion.div>
 
-        <motion.div
-          variants={shouldReduceMotion ? undefined : staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {articles.map((article) => (
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Article à la une : reveal masqué de bas en haut */}
+          {featured && (
             <motion.div
-              key={article.id}
-              variants={shouldReduceMotion ? undefined : staggerItem}
-              className="h-full"
+              initial={reduceMotion ? false : 'hidden'}
+              whileInView="visible"
+              variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.8, ease: smoothEase }}
             >
-              <Link href={`/actus/${article.slug}`} className="group block h-full">
-                <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300 flex flex-col">
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden flex-shrink-0">
-                    <Image
-                      src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
-                      alt={article.titre}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110 filter brightness-90"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-bold uppercase rounded">
-                        {article.categorie}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 text-neutral-400 text-sm mb-3">
-                      <Calendar className="w-4 h-4" />
-                      <time dateTime={article.date.toISOString()}>
-                        {new Date(article.date).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </time>
-                    </div>
-
-                    <h3 className="font-display font-bold text-xl mb-3 text-white group-hover:text-primary-500 transition-colors line-clamp-2">
-                      {article.titre}
-                    </h3>
-
-                    <p className="text-neutral-300 text-sm line-clamp-3 mb-4 whitespace-pre-line flex-1">
-                      {article.resume}
-                    </p>
-
-                    <div className="flex items-center text-primary-500 font-semibold text-sm mt-auto">
-                      Lire la suite
-                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </article>
+              <Link href={`/actus/${featured.slug}`} className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+                {/* Le masque suit l'entrée du bloc parent : un élément entièrement
+                    masqué par clip-path ne se détecte pas lui-même de façon fiable (mobile). */}
+                <motion.div
+                  variants={{
+                    hidden: { clipPath: 'inset(100% 0 0 0)' },
+                    visible: { clipPath: 'inset(0% 0 0 0)' },
+                  }}
+                  transition={{ duration: 1.1, ease: smoothEase }}
+                  className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition-shadow duration-300 group-hover:shadow-[0_20px_60px_-20px_rgba(249,115,22,0.25)]"
+                >
+                  <Image
+                    src={featured.image || '/img/articles/default.jpg'}
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-t from-zinc-950/50 via-transparent to-transparent"
+                  />
+                  <span className="absolute left-4 top-4 rounded-full bg-primary-500 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-white">
+                    {featured.categorie}
+                  </span>
+                </motion.div>
+                <p className="mt-6 font-mono text-xs uppercase tracking-widest text-neutral-500">
+                  À la une · {featured.dateLabel}
+                </p>
+                <h3 className="mt-2 font-display text-2xl font-bold leading-tight tracking-tight text-white transition-colors duration-200 group-hover:text-primary-400 md:text-3xl">
+                  {featured.titre}
+                </h3>
+                {featured.resume && (
+                  <p className="mt-3 line-clamp-3 leading-relaxed text-neutral-400">
+                    {featured.resume}
+                  </p>
+                )}
               </Link>
             </motion.div>
-          ))}
-        </motion.div>
+          )}
 
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: shouldReduceMotion ? 0 : 0.5 }}
-          className="text-center mt-12"
-        >
-          <Link
-            href="/actus"
-            className="inline-flex items-center px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
-          >
-            Toutes les actualités
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Link>
-        </motion.div>
+          {/* Les autres : liste numérotée */}
+          <div className="flex flex-col justify-center border-t border-white/10 lg:border-t-0">
+            {rest.map((article, i) => (
+              <motion.div
+                key={article.id}
+                initial={reduceMotion ? undefined : { opacity: 0, x: 24 }}
+                whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{
+                  delay: reduceMotion ? 0 : i * 0.07,
+                  duration: 0.55,
+                  ease: smoothEase,
+                }}
+                className="border-b border-white/10"
+              >
+                <Link
+                  href={`/actus/${article.slug}`}
+                  className="group flex items-start gap-5 py-6 transition-[padding] duration-300 hover:pl-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500"
+                >
+                  <span className="mt-1 font-mono text-sm tabular-nums text-neutral-600">
+                    {String(i + 2).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-500">
+                      {article.categorie} · {article.dateLabel}
+                    </p>
+                    <h4 className="mt-1.5 font-display text-lg font-bold leading-snug tracking-tight text-white transition-colors duration-200 group-hover:text-primary-400 md:text-xl">
+                      {article.titre}
+                    </h4>
+                  </div>
+                  <ArrowRight
+                    aria-hidden
+                    className="mt-2 h-5 w-5 shrink-0 -translate-x-2 text-primary-500 opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                  />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )

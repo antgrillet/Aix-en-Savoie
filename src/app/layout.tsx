@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Archivo } from 'next/font/google'
+import { Inter, Archivo, JetBrains_Mono } from 'next/font/google'
 import '../styles.css'
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
@@ -14,6 +14,14 @@ const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+})
+
+// Mono pour les labels éditoriaux (ticker, eyebrows, horaires)
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500', '700'],
   display: 'swap',
 })
 
@@ -70,7 +78,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${archivo.variable}`}>
+    <html
+      lang="fr"
+      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="min-h-screen antialiased">
         {children}
       </body>

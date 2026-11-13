@@ -519,6 +519,24 @@
   }
 }
 
+/* Marquee infinie (page LAB) */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-30 {
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee-45 {
+  animation: marquee 45s linear infinite;
+}
+
 /* Hero light effect styling */
 .hero-light {
   position: absolute;
