@@ -1,5 +1,6 @@
 import {
   Handshake,
+  Images,
   LayoutDashboard,
   Medal,
   MessageSquare,
@@ -17,6 +18,7 @@ export type AdminSectionId =
   | 'equipes'
   | 'matchs'
   | 'resultats'
+  | 'visuels'
   | 'partenaires'
   | 'messages'
   | 'arbitrage'
@@ -50,6 +52,7 @@ export const ADMIN_GROUPS: AdminGroup[] = [
     sections: [
       { id: 'tableau', name: 'Tableau de bord', tabName: 'Accueil', href: '/admin', icon: LayoutDashboard, tab: true },
       { id: 'resultats', name: 'Résultats', href: '/admin/resultats', icon: Medal, tab: true, countTone: 'action' },
+      { id: 'visuels', name: 'Visuels', href: '/admin/visuels', icon: Images },
     ],
   },
   {

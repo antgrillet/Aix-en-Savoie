@@ -21,6 +21,7 @@ const ALLOWED_FOLDERS = [
   'partenaires/temoignages',
   'partenaires/galerie',
   'settings',
+  'gameday',
 ]
 
 function nomSur(nom: string): string {
