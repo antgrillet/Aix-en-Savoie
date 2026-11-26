@@ -1,17 +1,20 @@
 import { prisma } from '@/lib/prisma'
 import { getHeroBackgroundImage } from '@/lib/settings'
-import { bornesWeekend, formatJourCourt } from '@/lib/dates'
+import { bornesWeekend, formatHeure, FUSEAU_CLUB } from '@/lib/dates'
 import { filtreDateSaison } from '@/lib/saisons'
 import { getSaisonAffichee } from '@/lib/saison-courante'
+import { jourParis, libelleLieu } from '@/lib/resultats-weekend'
+import { codeEquipe, libelleCompetition, nomCourt } from '@/lib/visuels/composition'
+import { anton, scriptAffiche } from '@/lib/polices-affiche'
 import { HeroWelcome } from '@/components/home/HeroWelcome'
 import { FeaturedNews } from '@/components/home/FeaturedNews'
-import { FeaturedMatches } from '@/components/home/FeaturedMatches'
-import { UpcomingMatches } from '@/components/home/UpcomingMatches'
+import { EncartsMatchs, type CampEncart, type EncartProchain, type EncartResultat } from '@/components/home/EncartsMatchs'
+import { PlanningDomicile, type JourDomicile } from '@/components/home/PlanningDomicile'
+import { ResultatsDefilants, type CarteResultat } from '@/components/home/ResultatsDefilants'
 import { FeaturedPartners } from '@/components/home/FeaturedPartners'
-import { ResultatsClassements, type EquipeResultats } from '@/components/home/ResultatsClassements'
 import { NousTrouver } from '@/components/home/NousTrouver'
 import { ADRESSE_CLUB, getLieuDomicile, lienItineraire } from '@/lib/lieu-domicile'
-import { estNotreClub } from '@/components/team-page/reperes'
+import { estNotreClub, issueDe, rangOrdinal } from '@/components/team-page/reperes'
 import { OrganizationSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -23,233 +26,204 @@ export const metadata = buildMetadata({
   path: '/',
 })
 
-export default async function HomePage() {
-  // Récupérer les 6 derniers articles pour la section "À la Une"
-  const featuredArticles = await prisma.article.findMany({
-    where: {
-      published: true,
-    },
-    orderBy: {
-      date: 'desc',
-    },
-    take: 6,
-    select: {
-      id: true,
-      titre: true,
-      categorie: true,
-      date: true,
-      image: true,
-      resume: true,
-      slug: true,
-    },
-  })
+const CLUB: CampEncart = { nom: 'HBCA', logo: '/img/home/logo.png', club: true }
 
+const MOTS_MINUSCULES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'en', 'sur', 'aux', 'au'])
+
+/** « TEAM SALEVE » → « Team Saleve », « VAL DE LEYSSE » → « Val de Leysse » */
+function casseNom(nom: string): string {
+  return nom
+    .toLowerCase()
+    .split(/(\s+|-)/)
+    .map((mot, i) => (i > 0 && MOTS_MINUSCULES.has(mot) ? mot : mot.charAt(0).toUpperCase() + mot.slice(1)))
+    .join('')
+}
+
+const heureAffiche = (date: Date) => formatHeure(date).replace(':', 'H')
+
+const formatJourAffiche = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_CLUB, weekday: 'long', day: 'numeric', month: 'short' })
+const formatJourNumero = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_CLUB, weekday: 'long', day: 'numeric' })
+const formatNumero = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_CLUB, day: 'numeric' })
+const formatNumeroMois = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_CLUB, day: 'numeric', month: 'long' })
+const formatMois = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_CLUB, month: 'long' })
+
+/** « WEEKEND DU 28 – 29 NOVEMBRE » (samedi et dimanche) */
+function titreWeekend(dimanche: Date): string {
+  const samedi = new Date(dimanche.getTime() - 24 * 60 * 60 * 1000)
+  const memeMois = formatMois.format(samedi) === formatMois.format(dimanche)
+  const debut = memeMois ? formatNumero.format(samedi) : formatNumeroMois.format(samedi)
+  return `Weekend du ${debut} – ${formatNumeroMois.format(dimanche)}`.toUpperCase()
+}
+
+/** « SENIORS MASCULINS 1 » → « Seniors M1 » ; les jeunes gardent leur nom (« -18.1M ») */
+function nomEquipeCourt(nom: string): string {
+  const senior = nom.trim().toUpperCase().match(/^SENIORS?\s+(MASCULIN|FEMININ|FÉMININ)\w*\s*(\d*)$/)
+  return senior ? `Seniors ${senior[1].startsWith('M') ? 'M' : 'F'}${senior[2]}` : nom.trim()
+}
+
+const MAJUSCULE = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1)
+
+export default async function HomePage() {
+  const now = new Date()
   // Week-end à venir (vendredi → dimanche), calculé à l'heure de Paris ;
   // le samedi et le dimanche, on reste sur le week-end en cours.
-  const now = new Date()
-  const { debut: nextFriday, fin: nextSunday } = bornesWeekend(now)
+  const { debut: vendredi, fin: dimanche } = bornesWeekend(now)
   const saison = await getSaisonAffichee()
 
-  // Récupérer les équipes featured avec leurs matchs
-  const featuredEquipes = await prisma.equipe.findMany({
-    where: {
-      published: true,
-      featured: true,
-    },
-    select: {
-      id: true,
-      nom: true,
-      categorie: true,
-      slug: true,
-      ordre: true,
-      classement: {
-        orderBy: { position: 'asc' },
-        select: { id: true, position: true, club: true, points: true },
-      },
-    },
-    orderBy: {
-      ordre: 'asc',
-    },
-  })
+  const selectMatch = {
+    id: true,
+    adversaire: true,
+    date: true,
+    lieu: true,
+    domicile: true,
+    competition: true,
+    scoreEquipe: true,
+    scoreAdversaire: true,
+    termine: true,
+    logoAdversaire: true,
+  } as const
 
-  const featuredEquipeIds = featuredEquipes.map((e) => e.id)
-
-  // Récupérer les prochains matchs et les derniers résultats en une seule requête
-  const [upcomingMatchesAll, lastResultsAll] = await Promise.all([
-    prisma.match.findMany({
-      where: {
-        equipeId: { in: featuredEquipeIds },
-        published: true,
-        termine: false,
-        date: {
-          gte: now,
-        },
-      },
-      orderBy: {
-        date: 'asc',
-      },
+  const [featuredArticles, equipes, matchsExterieur, heroBackgroundImage, lieuDomicile] = await Promise.all([
+    // Les 6 derniers articles pour « À la Une » et l'onglet Actualités du hero
+    prisma.article.findMany({
+      where: { published: true },
+      orderBy: { date: 'desc' },
+      take: 6,
+      select: { id: true, titre: true, categorie: true, date: true, image: true, resume: true, slug: true },
+    }),
+    // Toutes les équipes publiées, dans l'ordre du club (SM1, SF1, SM2, autres seniors, -18, -15…)
+    prisma.equipe.findMany({
+      where: { published: true },
+      orderBy: { ordre: 'asc' },
       select: {
         id: true,
-        adversaire: true,
-        date: true,
-        lieu: true,
-        domicile: true,
-        competition: true,
-        scoreEquipe: true,
-        scoreAdversaire: true,
-        termine: true,
-        logoAdversaire: true,
-        equipeId: true,
-        equipe: {
-          select: {
-            nom: true,
-            categorie: true,
+        nom: true,
+        categorie: true,
+        genre: true,
+        slug: true,
+        featured: true,
+        classement: { orderBy: { position: 'asc' }, select: { position: true, club: true } },
+        // Dernier résultat de la saison affichée
+        matchs: {
+          where: {
+            published: true,
+            termine: true,
+            date: filtreDateSaison(saison),
+            scoreEquipe: { not: null },
+            scoreAdversaire: { not: null },
           },
+          orderBy: { date: 'desc' },
+          take: 1,
+          select: selectMatch,
         },
       },
     }),
+    prisma.match.count({
+      where: { published: true, domicile: false, date: { gte: vendredi, lte: dimanche }, equipe: { published: true } },
+    }),
+    getHeroBackgroundImage(),
+    getLieuDomicile(),
+  ])
+
+  const equipeParId = new Map(equipes.map((e) => [e.id, e]))
+  const idsPhares = equipes.filter((e) => e.featured).map((e) => e.id)
+
+  const [prochainsPhares, matchsDomicile] = await Promise.all([
     prisma.match.findMany({
-      where: {
-        equipeId: { in: featuredEquipeIds },
-        published: true,
-        termine: true,
-        // Saison affichée seulement : les résultats des saisons passées restent dans l'admin
-        date: filtreDateSaison(saison),
-        scoreEquipe: { not: null },
-        scoreAdversaire: { not: null },
-      },
-      orderBy: {
-        date: 'desc',
-      },
-      select: {
-        id: true,
-        adversaire: true,
-        date: true,
-        lieu: true,
-        domicile: true,
-        competition: true,
-        scoreEquipe: true,
-        scoreAdversaire: true,
-        termine: true,
-        logoAdversaire: true,
-        equipeId: true,
-        equipe: {
-          select: {
-            nom: true,
-            categorie: true,
-          },
-        },
-      },
+      where: { equipeId: { in: idsPhares }, published: true, termine: false, date: { gte: now } },
+      orderBy: { date: 'asc' },
+      select: { ...selectMatch, equipeId: true },
+    }),
+    prisma.match.findMany({
+      where: { published: true, domicile: true, date: { gte: vendredi, lte: dimanche }, equipe: { published: true } },
+      orderBy: { date: 'asc' },
+      select: { ...selectMatch, equipeId: true },
     }),
   ])
 
-  const upcomingByEquipe = new Map<number, (typeof upcomingMatchesAll)[number]>()
-  for (const match of upcomingMatchesAll) {
-    if (!upcomingByEquipe.has(match.equipeId)) {
-      upcomingByEquipe.set(match.equipeId, match)
-    }
+  const rangDe = (equipe: (typeof equipes)[number]) => {
+    const notre = equipe.classement.find((l) => estNotreClub(l.club))
+    return notre ? { position: rangOrdinal(notre.position), total: equipe.classement.length } : null
   }
 
-  const lastResultByEquipe = new Map<number, (typeof lastResultsAll)[number]>()
-  for (const match of lastResultsAll) {
-    if (!lastResultByEquipe.has(match.equipeId)) {
-      lastResultByEquipe.set(match.equipeId, match)
-    }
-  }
-
-  const upcomingMatches = featuredEquipes
-    .map((equipe) => upcomingByEquipe.get(equipe.id))
-    .filter((match): match is NonNullable<typeof match> => Boolean(match))
-
-  const lastResults = featuredEquipes
-    .map((equipe) => lastResultByEquipe.get(equipe.id))
-    .filter((match): match is NonNullable<typeof match> => Boolean(match))
-
-  // Limiter les matchs à venir à 2 maximum
-  const limitedUpcomingMatches = upcomingMatches.slice(0, 2)
-
-  // Récupérer l'image de fond du hero
-  const heroBackgroundImage = await getHeroBackgroundImage()
-
-  // Récupérer toutes les équipes publiées avec leurs matchs du week-end à domicile
-  const equipesWithWeekendMatches = await prisma.equipe.findMany({
-    where: {
-      published: true,
-    },
-    select: {
-      id: true,
-      nom: true,
-      categorie: true,
-      genre: true,
-      photo: true,
-      featured: true,
-      matchs: {
-        where: {
-          published: true,
-          domicile: true, // Seulement les matchs à domicile
-          date: {
-            gte: nextFriday,
-            lte: nextSunday,
-          },
-        },
-        orderBy: {
-          date: 'asc',
-        },
-        select: {
-          id: true,
-          adversaire: true,
-          date: true,
-          lieu: true,
-          domicile: true,
-          competition: true,
-          scoreEquipe: true,
-          scoreAdversaire: true,
-          termine: true,
-          logoAdversaire: true,
-        },
+  // Dernier résultat de chaque équipe, pour le bandeau qui défile
+  const cartesResultats: CarteResultat[] = equipes.flatMap((equipe) => {
+    const match = equipe.matchs[0]
+    if (!match || match.scoreEquipe === null || match.scoreAdversaire === null) return []
+    return [
+      {
+        id: equipe.id,
+        href: `/equipes/${equipe.slug}`,
+        equipe: nomEquipeCourt(equipe.nom),
+        division: equipe.categorie.trim().toUpperCase(),
+        adversaire: casseNom(nomCourt(match.adversaire)),
+        domicile: match.domicile,
+        scoreEquipe: match.scoreEquipe,
+        scoreAdversaire: match.scoreAdversaire,
+        issue: issueDe({ ...match, scoreEquipe: match.scoreEquipe, scoreAdversaire: match.scoreAdversaire }),
+        rang: rangDe(equipe),
       },
-    },
-    orderBy: {
-      ordre: 'asc',
-    },
+    ]
   })
 
-  // Filtrer pour ne garder que les équipes qui ont au moins un match à domicile
-  const teamsWithMatches = equipesWithWeekendMatches.filter(equipe => equipe.matchs.length > 0)
+  // Hero : prochain match de la première équipe phare (dans l'ordre du club) qui en a un
+  const prochainMatch = idsPhares
+    .map((id) => prochainsPhares.find((m) => m.equipeId === id))
+    .find((m): m is NonNullable<typeof m> => Boolean(m))
+  let prochain: EncartProchain | null = null
+  if (prochainMatch) {
+    const equipe = equipeParId.get(prochainMatch.equipeId)
+    const adversaire: CampEncart = { nom: nomCourt(prochainMatch.adversaire), logo: prochainMatch.logoAdversaire, club: false }
+    prochain = {
+      href: equipe ? `/equipes/${equipe.slug}` : '/equipes',
+      competition: libelleCompetition(prochainMatch.competition) || (equipe?.categorie.trim().toUpperCase() ?? ''),
+      exterieur: !prochainMatch.domicile,
+      jour: formatJourAffiche.format(prochainMatch.date).toUpperCase(),
+      heure: heureAffiche(prochainMatch.date),
+      salle: libelleLieu(prochainMatch.lieu, prochainMatch.domicile),
+      gauche: prochainMatch.domicile ? CLUB : adversaire,
+      droite: prochainMatch.domicile ? adversaire : CLUB,
+    }
+  }
 
-  // Résultats & classements des équipes phares : 3 derniers scores de la saison
-  // et haut du classement (avec la ligne du club si elle n'y figure pas)
-  const resultatsEquipes: EquipeResultats[] = featuredEquipes
-    .map((equipe) => {
-      const resultats = lastResultsAll
-        .filter((m) => m.equipeId === equipe.id && m.scoreEquipe !== null && m.scoreAdversaire !== null)
-        .slice(0, 3)
-        .map((m) => ({
-          id: m.id,
-          dateLabel: formatJourCourt(m.date),
-          domicile: m.domicile,
-          adversaire: m.adversaire,
-          scoreEquipe: m.scoreEquipe as number,
-          scoreAdversaire: m.scoreAdversaire as number,
-        }))
-      const lignes = equipe.classement.map((l) => ({ ...l, nous: estNotreClub(l.club) }))
-      const haut = lignes.slice(0, 4)
-      const notre = lignes.find((l) => l.nous)
-      const classement = notre && !haut.includes(notre) ? [...haut, notre] : haut
-      return {
-        id: equipe.id,
-        nom: equipe.nom,
-        categorie: equipe.categorie,
-        slug: equipe.slug,
-        resultats,
-        classement,
-        totalEquipes: lignes.length,
-      }
+  // Hero : dernier résultat de la première équipe phare qui a joué
+  const carteDernier = cartesResultats.find((c) => idsPhares.includes(c.id))
+  const dernier: EncartResultat | null = carteDernier
+    ? { ...carteDernier, equipe: codeEquipe(equipeParId.get(carteDernier.id)?.nom ?? carteDernier.equipe) }
+    : null
+
+  // Hero : matchs à domicile du week-end, hors prochain match déjà affiché
+  const domicileHero = matchsDomicile.filter((m) => m.id !== prochainMatch?.id)
+  const domicileAffiches = domicileHero.slice(0, 2).map((m) => ({
+    id: m.id,
+    heure: heureAffiche(m.date),
+    equipe: codeEquipe(equipeParId.get(m.equipeId)?.nom ?? ''),
+    adversaire: casseNom(nomCourt(m.adversaire)),
+  }))
+
+  // Planning domicile, groupé par jour
+  const jours: JourDomicile[] = []
+  for (const match of matchsDomicile) {
+    const equipe = equipeParId.get(match.equipeId)
+    if (!equipe) continue
+    const cle = jourParis(match.date)
+    let jour = jours.find((j) => j.cle === cle)
+    if (!jour) {
+      jour = { cle, libelle: MAJUSCULE(formatJourNumero.format(match.date)), lignes: [] }
+      jours.push(jour)
+    }
+    jour.lignes.push({
+      id: match.id,
+      heure: heureAffiche(match.date),
+      equipe: equipe.nom,
+      categorie: equipe.categorie,
+      adversaire: casseNom(nomCourt(match.adversaire)),
+      featured: equipe.featured,
+      genre: equipe.genre,
     })
-    .filter((e) => e.resultats.length > 0 || e.classement.length > 0)
-    .slice(0, 4)
-
-  const lieuDomicile = await getLieuDomicile()
+  }
+  const salles = new Set(matchsDomicile.map((m) => libelleLieu(m.lieu, true)))
+  const salleUnique = salles.size === 1 ? [...salles][0] : null
 
   // Partenaires : majeurs d'abord, sinon les partenaires publiés
   const partenairesQuery = (majeurs: boolean) =>
@@ -265,30 +239,35 @@ export default async function HomePage() {
   }
 
   return (
-    // Les titres gardent la police d'origine de la page d'accueil (Montserrat)
-    <div style={{ ['--font-display' as string]: "var(--font-montserrat), 'Inter', sans-serif" }}>
+    // Les titres gardent la police d'origine de la page d'accueil (Montserrat) ;
+    // Anton et l'écriture manuscrite viennent des affiches du club
+    <div
+      className={`${anton.variable} ${scriptAffiche.variable}`}
+      style={{ ['--font-display' as string]: "var(--font-montserrat), 'Inter', sans-serif" }}
+    >
       <OrganizationSchema />
 
-      {/* Hero Welcome - Club Presentation */}
       <HeroWelcome backgroundImage={heroBackgroundImage} partenaires={featuredPartenaires} articles={featuredArticles}>
-        <FeaturedMatches upcomingMatches={limitedUpcomingMatches} lastResults={lastResults} />
+        <EncartsMatchs
+          prochain={prochain}
+          dernier={dernier}
+          domicile={domicileAffiches}
+          autresDomicile={domicileHero.length - domicileAffiches.length}
+        />
       </HeroWelcome>
 
-      {/* Featured News */}
-      {featuredArticles.length > 0 && (
-        <FeaturedNews articles={featuredArticles} />
-      )}
+      {featuredArticles.length > 0 && <FeaturedNews articles={featuredArticles} />}
 
-      {/* Upcoming Matches */}
-      <UpcomingMatches teams={teamsWithMatches} />
+      <PlanningDomicile
+        titreWeekend={titreWeekend(dimanche)}
+        jours={jours}
+        salle={salleUnique}
+        matchsExterieur={matchsExterieur}
+      />
 
-      {/* Résultats et classements des équipes phares */}
-      <ResultatsClassements equipes={resultatsEquipes} />
+      <ResultatsDefilants cartes={cartesResultats} />
 
-      {/* Featured Partners */}
-      {featuredPartenaires.length > 0 && (
-        <FeaturedPartners partenaires={featuredPartenaires} />
-      )}
+      {featuredPartenaires.length > 0 && <FeaturedPartners partenaires={featuredPartenaires} />}
 
       {/* Gymnase, secrétariat et inscription */}
       <NousTrouver lieu={lieuDomicile} itineraire={lienItineraire(lieuDomicile ?? ADRESSE_CLUB)} />

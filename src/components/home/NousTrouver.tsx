@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { TitreAffiche } from './affiche'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowRight, Clock, MapPin, UserPlus } from 'lucide-react'
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
@@ -60,10 +61,7 @@ export function NousTrouver({ lieu, itineraire }: NousTrouverProps) {
           variants={fadeInUp}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-            Venir au club
-          </h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full" />
+          <TitreAffiche mot="au club" script="Venir" scriptAvant />
           <p className="text-neutral-300 max-w-2xl mx-auto mt-6">
             Un match à voir, une question ou l&apos;envie de jouer : voici où et quand nous trouver.
           </p>

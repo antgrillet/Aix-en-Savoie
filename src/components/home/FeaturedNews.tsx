@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { TitreAffiche } from './affiche'
 import { Calendar, ArrowRight } from 'lucide-react'
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
 import { normalizeImagePath } from '@/lib/utils'
@@ -41,10 +42,7 @@ export function FeaturedNews({ articles }: FeaturedNewsProps) {
           variants={fadeInUp}
           className="mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 relative inline-block">
-            Nos Actualités
-            <span className="absolute -bottom-2 left-0 w-20 h-1 bg-gradient-to-r from-primary-500 to-transparent" />
-          </h2>
+          <TitreAffiche mot="Actualités" script="du club" align="left" />
           <p className="text-neutral-400 max-w-2xl mt-6">
             Découvrez les dernières actualités et événements du HBC Aix-en-Savoie
           </p>

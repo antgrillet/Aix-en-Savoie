@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Users, Trophy, Calendar, Heart, ArrowRight, Sparkles, Newspaper } from 'lucide-react'
+import { ANTON, SCRIPT } from './affiche'
 import { normalizeImagePath } from '@/lib/utils'
 
 interface HeroWelcomeProps {
@@ -115,11 +116,12 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
           {/* Main Headline */}
           <motion.h1
             variants={itemVariants}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+            className="mb-6"
           >
-            Bienvenue au{' '}
-            <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-secondary-500 text-transparent bg-clip-text">
-              HBC Aix-en-Savoie
+            {/* Titre façon affiche : mot manuscrit orange sur les capitales Anton */}
+            <span className={`${SCRIPT} block text-5xl md:text-6xl lg:text-[76px] -mb-2 md:-mb-4 ml-1`}>Bienvenue au</span>
+            <span className={`${ANTON} block text-[52px] sm:text-6xl md:text-7xl lg:text-[88px] text-white`}>
+              HBC <span className="whitespace-nowrap">Aix-en-Savoie</span>
             </span>
           </motion.h1>
 

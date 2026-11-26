@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { TitreAffiche } from './affiche'
 import { Handshake, ArrowRight, ExternalLink } from 'lucide-react'
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
 import { normalizeImagePath } from '@/lib/utils'
@@ -45,9 +46,7 @@ export function FeaturedPartners({ partenaires }: FeaturedPartnersProps) {
             <div className="h-px flex-1 max-w-xs bg-gradient-to-l from-transparent via-primary-500 to-primary-500" />
           </div>
 
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center relative">
-            Nos Partenaires
-          </h2>
+          <TitreAffiche mot="Nos partenaires" className="mb-6" />
           <p className="text-neutral-400 max-w-2xl mx-auto text-center">
             Ils croient en notre projet et nous accompagnent au quotidien.
             Un grand merci pour leur soutien !
