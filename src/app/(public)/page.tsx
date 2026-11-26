@@ -130,8 +130,10 @@ export default async function HomePage() {
 
   const [prochainsPhares, matchsDomicile] = await Promise.all([
     prisma.match.findMany({
-      where: { equipeId: { in: idsPhares }, published: true, termine: false, date: { gte: now } },
+      // Matchs à domicile seulement : le hero montre ce qu'on peut venir voir au gymnase
+      where: { equipeId: { in: idsPhares }, published: true, termine: false, domicile: true, date: { gte: now } },
       orderBy: { date: 'asc' },
+      take: 1,
       select: { ...selectMatch, equipeId: true },
     }),
     prisma.match.findMany({
@@ -166,15 +168,14 @@ export default async function HomePage() {
     ]
   })
 
-  // Hero : prochain match de la première équipe phare (dans l'ordre du club) qui en a un
-  const prochainMatch = idsPhares
-    .map((id) => prochainsPhares.find((m) => m.equipeId === id))
-    .find((m): m is NonNullable<typeof m> => Boolean(m))
+  // Hero : prochain match à domicile d'une équipe phare, le plus proche dans le temps
+  const prochainMatch = prochainsPhares[0]
   let prochain: EncartProchain | null = null
   if (prochainMatch) {
     const equipe = equipeParId.get(prochainMatch.equipeId)
     const adversaire: CampEncart = { nom: nomCourt(prochainMatch.adversaire), logo: prochainMatch.logoAdversaire, club: false }
     prochain = {
+      equipe: codeEquipe(equipe?.nom ?? ''),
       href: equipe ? `/equipes/${equipe.slug}` : '/equipes',
       competition: libelleCompetition(prochainMatch.competition) || (equipe?.categorie.trim().toUpperCase() ?? ''),
       exterieur: !prochainMatch.domicile,
@@ -186,8 +187,11 @@ export default async function HomePage() {
     }
   }
 
-  // Hero : dernier résultat de la première équipe phare qui a joué
-  const carteDernier = cartesResultats.find((c) => idsPhares.includes(c.id))
+  // Contexte de l'équipe du prochain match (son dernier résultat et son classement) ;
+  // sans match à domicile à venir, la première équipe phare qui a joué
+  const carteDernier = prochainMatch
+    ? cartesResultats.find((c) => c.id === prochainMatch.equipeId)
+    : cartesResultats.find((c) => idsPhares.includes(c.id))
   const dernier: EncartResultat | null = carteDernier
     ? { ...carteDernier, equipe: codeEquipe(equipeParId.get(carteDernier.id)?.nom ?? carteDernier.equipe) }
     : null

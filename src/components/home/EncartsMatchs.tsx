@@ -10,6 +10,8 @@ export interface CampEncart {
 }
 
 export interface EncartProchain {
+  /** « SF1 » : l'équipe qui joue, dont la feuille donne ensuite le contexte */
+  equipe: string
   href: string
   /** « NATIONALE 3 MASCULINE » */
   competition: string
@@ -89,7 +91,9 @@ export function EncartsMatchs({ prochain, dernier, domicile, autresDomicile }: E
       {prochain && (
         <>
           <p className="flex items-center justify-between gap-3 bg-primary-500 px-5 py-2.5">
-            <span className={`${ANTON} text-lg`}>Prochain match</span>
+            <span className={`${ANTON} shrink-0 text-lg`}>
+              {prochain.equipe ? `${prochain.equipe} ${prochain.exterieur ? 'à l’extérieur' : 'à domicile'}` : 'Prochain match'}
+            </span>
             <span className="truncate text-[13px] font-semibold">
               {prochain.competition ? `${prochain.competition} · ` : ''}
               {prochain.jour}
@@ -103,7 +107,8 @@ export function EncartsMatchs({ prochain, dernier, domicile, autresDomicile }: E
             <span className="text-center">
               <span className={`${ANTON} block text-5xl text-[#ff7a1a] md:text-[56px]`}>{prochain.heure}</span>
               <span className="mx-auto block max-w-[11rem] truncate text-xs text-stone-400">
-                {prochain.exterieur ? 'À l’extérieur' : 'À domicile'}, {prochain.salle}
+                {prochain.exterieur ? 'À l’extérieur, ' : ''}
+                {prochain.salle}
               </span>
             </span>
             <Ecusson camp={prochain.droite} aDroite />
@@ -117,7 +122,7 @@ export function EncartsMatchs({ prochain, dernier, domicile, autresDomicile }: E
             href={dernier.href}
             className={`block py-3 text-sm text-stone-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${prochain ? FILET : ''}`}
           >
-            Dernier résultat, {dernier.equipe} {dernier.domicile ? 'contre' : 'à'} {dernier.adversaire} :{' '}
+            Dernier match des {dernier.equipe} {dernier.domicile ? 'contre' : 'à'} {dernier.adversaire} :{' '}
             <b className={`${ANTON} text-xl text-white`}>
               <Score resultat={dernier} />
             </b>
