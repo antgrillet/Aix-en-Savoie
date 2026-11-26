@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sessionAdmin } from '@/lib/auth-utils'
 import { lireSemaine } from '@/lib/resultats-weekend'
-import { composerGameDay, couleurParDefaut, lireCouleur } from '@/lib/visuels/composition'
+import {
+  LONGUEUR_COMPETITION,
+  LONGUEUR_INFO,
+  LONGUEUR_NOM,
+  LONGUEUR_SALLE,
+  composerGameDay,
+  couleurParDefaut,
+  lireCouleur,
+  photoGameDayAutorisee,
+} from '@/lib/visuels/composition'
 import { chargerMatchGameDay, chargerWeekend, idPage, lireGabarit } from '@/lib/visuels/donnees'
 import { rendreGameDay, rendreVisuel } from '@/lib/visuels/rendu'
 
@@ -11,7 +20,7 @@ export const maxDuration = 30
 /**
  * Visuel PNG 1080 × 1350 du week-end.
  * GET /api/admin/visuels?gabarit=planning|resultat&semaine=AAAA-MM-JJ&page=couverture|domicile-1|exterieur-1
- * GET /api/admin/visuels?gabarit=gameday&match=ID&couleur=bleu|orange|rose&nom=…&info=…&photo=URL
+ * GET /api/admin/visuels?gabarit=gameday&match=ID&couleur=bleu|orange|rose&nom=…&salle=…&info=…&photo=URL
  */
 export async function GET(request: NextRequest) {
   if (!(await sessionAdmin())) {
@@ -49,17 +58,21 @@ async function gameDay(parametres: URLSearchParams) {
     return NextResponse.json({ error: 'Match invalide' }, { status: 400 })
   }
   // Textes libres bornés : ils ne servent qu'à l'affichage
-  const nom = (parametres.get('nom') ?? '').slice(0, 24)
-  const competition = (parametres.get('competition') ?? '').slice(0, 60)
-  const info = parametres.has('info') ? (parametres.get('info') ?? '').slice(0, 40) : undefined
-  // Photo déposée pour l'affiche : le rendu n'accepte que public/ ou le Blob du site
-  const photoDeposee = (parametres.get('photo') ?? '').slice(0, 500) || null
+  const nom = (parametres.get('nom') ?? '').slice(0, LONGUEUR_NOM)
+  const competition = (parametres.get('competition') ?? '').slice(0, LONGUEUR_COMPETITION)
+  const salle = (parametres.get('salle') ?? '').slice(0, LONGUEUR_SALLE)
+  const info = parametres.has('info') ? (parametres.get('info') ?? '').slice(0, LONGUEUR_INFO) : undefined
+  // Photo déposée pour l'affiche : seulement le dossier gameday/ du magasin Blob du site
+  const photoDeposee = parametres.get('photo') || null
+  if (photoDeposee && (photoDeposee.length > 500 || !photoGameDayAutorisee(photoDeposee, process.env.BLOB_READ_WRITE_TOKEN))) {
+    return NextResponse.json({ error: 'Photo refusée' }, { status: 400 })
+  }
   try {
     const match = await chargerMatchGameDay(id)
     if (!match) {
       return NextResponse.json({ error: 'Match introuvable' }, { status: 404 })
     }
-    const affiche = composerGameDay(match, { nomAdversaire: nom, competition, info })
+    const affiche = composerGameDay(match, { nomAdversaire: nom, competition, salle, info })
     const couleur = lireCouleur(parametres.get('couleur'), couleurParDefaut(match))
     return await rendreGameDay(affiche, couleur, photoDeposee ?? match.equipe.banniere ?? match.equipe.photo)
   } catch (erreur) {

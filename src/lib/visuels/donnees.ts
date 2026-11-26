@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { bornesSemaine, estCategoriePlateau } from '@/lib/resultats-weekend'
-import { composerWeekend, type CompositionWeekend, type Gabarit } from './composition'
+import { bornesSemaine } from '@/lib/resultats-weekend'
+import { composerWeekend, estDuWeekend, estEquipePlateau, type CompositionWeekend, type Gabarit } from './composition'
 
 export const GABARITS: Gabarit[] = ['planning', 'resultat']
 
@@ -8,11 +8,11 @@ export function lireGabarit(valeur: string | null | undefined): Gabarit | null {
   return GABARITS.find((gabarit) => gabarit === valeur) ?? null
 }
 
-/** Matchs du week-end des équipes publiées, mis en forme pour les visuels. */
+/** Matchs publiés du week-end des équipes publiées, mis en forme pour les visuels. */
 export async function chargerWeekend(lundi: string, gabarit: Gabarit): Promise<CompositionWeekend> {
   const { debut, fin } = bornesSemaine(lundi)
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin }, equipe: { published: true } },
+    where: { date: { gte: debut, lt: fin }, published: true, equipe: { published: true } },
     orderBy: { date: 'asc' },
     select: {
       id: true,
@@ -35,21 +35,24 @@ export function idPage(page: { cote: string; numero: number }): string {
   return `${page.cote}-${page.numero}`
 }
 
-/** Matchs du week-end pouvant avoir une affiche Game Day : hors plateaux, seniors d'abord. */
+/**
+ * Matchs du samedi et du dimanche pouvant avoir une affiche Game Day (titre « Week-end du … ») :
+ * hors plateaux, seniors d'abord.
+ */
 export async function matchsGameDay(lundi: string) {
   const { debut, fin } = bornesSemaine(lundi)
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin }, equipe: { published: true } },
+    where: { date: { gte: debut, lt: fin }, published: true, equipe: { published: true } },
     orderBy: { date: 'asc' },
     select: selectGameDay,
   })
   return matchs
-    .filter((match) => !estCategoriePlateau(match.equipe.categorie) && !estCategoriePlateau(match.equipe.nom))
+    .filter((match) => estDuWeekend(match.date, lundi) && !estEquipePlateau(match.equipe))
     .sort((a, b) => Number(estSenior(b.equipe.nom)) - Number(estSenior(a.equipe.nom)) || a.equipe.ordre - b.equipe.ordre)
 }
 
 export function chargerMatchGameDay(id: number) {
-  return prisma.match.findFirst({ where: { id, equipe: { published: true } }, select: selectGameDay })
+  return prisma.match.findFirst({ where: { id, published: true, equipe: { published: true } }, select: selectGameDay })
 }
 
 const selectGameDay = {

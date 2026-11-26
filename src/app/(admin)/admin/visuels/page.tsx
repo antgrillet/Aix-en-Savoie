@@ -5,7 +5,20 @@ import { EmptyState } from '@/components/admin/EmptyState'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { requireAdmin } from '@/lib/auth-utils'
 import { ajouterJours, jourParis, lireSemaine } from '@/lib/resultats-weekend'
-import { COULEURS_GAME_DAY, composerGameDay, couleurParDefaut, legende, lireCouleur, type Gabarit } from '@/lib/visuels/composition'
+import {
+  COULEURS_GAME_DAY,
+  LONGUEUR_INFO,
+  LONGUEUR_NOM,
+  LONGUEUR_SALLE,
+  composerGameDay,
+  couleurParDefaut,
+  legende,
+  lireCouleur,
+  photoGameDayAutorisee,
+  titreWeekend,
+  type CompositionWeekend,
+  type Gabarit,
+} from '@/lib/visuels/composition'
 import { chargerWeekend, idPage, lireGabarit, matchsGameDay } from '@/lib/visuels/donnees'
 import { PhotoGameDay } from './PhotoGameDay'
 
@@ -34,15 +47,9 @@ export default async function VisuelsPage({
   // Dès le dimanche du week-end affiché : les résultats ; avant, le planning
   const gabaritDefaut: Gabarit = jourParis(maintenant) >= ajouterJours(lundi, 6) ? 'resultat' : 'planning'
   const vue: Vue = parametres.gabarit === 'gameday' ? 'gameday' : (lireGabarit(typeof parametres.gabarit === 'string' ? parametres.gabarit : null) ?? gabaritDefaut)
-  const gabarit: Gabarit = vue === 'gameday' ? 'planning' : vue
-  const composition = await chargerWeekend(lundi, gabarit)
+  const titre = titreWeekend(lundi)
 
   const lien = (semaine: string, g: Vue) => `/admin/visuels?${new URLSearchParams({ semaine, gabarit: g })}`
-  const image = (page: string) => `/api/admin/visuels?${new URLSearchParams({ gabarit, semaine: lundi, page })}`
-  const pages = composition.pages.length > 0 ? ['couverture', ...composition.pages.map(idPage)] : []
-  const nomFichier = (page: string) => `hbca-${gabarit}-${lundi}-${page}.png`
-  const libellePage = (page: string) =>
-    page === 'couverture' ? 'Couverture' : page.replace('domicile-', 'Domicile ').replace('exterieur-', 'Extérieur ').replace(/ 1$/, '')
 
   return (
     <>
@@ -59,7 +66,7 @@ export default async function VisuelsPage({
               Week-end précédent
             </Link>
           </Button>
-          <h2 className="px-1.5 text-[1rem] font-bold">{composition.titre.replace('WEEKEND DU', 'Week-end du').toLowerCase().replace(/^w/, 'W')}</h2>
+          <h2 className="px-1.5 text-[1rem] font-bold">{titre.replace('WEEKEND DU', 'Week-end du').toLowerCase().replace(/^w/, 'W')}</h2>
           <Button asChild variant="outline" size="sm">
             <Link href={lien(ajouterJours(lundi, 7), vue)}>
               Week-end suivant
@@ -79,7 +86,40 @@ export default async function VisuelsPage({
       {vue === 'gameday' ? (
         <GameDays lundi={lundi} parametres={parametres} />
       ) : (
-      <>
+        <Weekend lundi={lundi} gabarit={vue} composition={await chargerWeekend(lundi, vue)} />
+      )}
+    </>
+  )
+}
+
+/** Planning ou Résultat : les pages du week-end et le texte de la publication */
+function Weekend({ lundi, gabarit, composition }: { lundi: string; gabarit: Gabarit; composition: CompositionWeekend }) {
+  const image = (page: string) => `/api/admin/visuels?${new URLSearchParams({ gabarit, semaine: lundi, page })}`
+  const pages = composition.pages.length > 0 ? ['couverture', ...composition.pages.map(idPage)] : []
+  const nomFichier = (page: string) => `hbca-${gabarit}-${lundi}-${page}.png`
+  const libellePage = (page: string) =>
+    page === 'couverture' ? 'Couverture' : page.replace('domicile-', 'Domicile ').replace('exterieur-', 'Extérieur ').replace(/ 1$/, '')
+  const texte = legende(composition, gabarit)
+  const horsWeekend = composition.horsWeekend.length
+
+  return (
+    <>
+      {horsWeekend > 0 && (
+        <div role="status" className="adm-panel mb-4 px-4 py-3 text-[0.9375rem]">
+          <p className="font-semibold">
+            {horsWeekend} {horsWeekend === 1 ? 'match' : 'matchs'} hors samedi-dimanche non repris : les visuels ne couvrent que le
+            samedi et le dimanche.
+          </p>
+          <ul className="adm-meta mt-1">
+            {composition.horsWeekend.map((h) => (
+              <li key={h.cle}>
+                {h.equipe} ({formatJour.format(h.date)})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {gabarit === 'resultat' && composition.sansScore.length > 0 && (
         <div role="status" className="adm-panel mb-4 px-4 py-3 text-[0.9375rem]">
           <p className="font-semibold">
@@ -136,15 +176,13 @@ export default async function VisuelsPage({
             </h2>
             <textarea
               readOnly
-              value={legende(composition, gabarit)}
-              rows={Math.min(18, legende(composition, gabarit).split('\n').length + 1)}
+              value={texte}
+              rows={Math.min(18, texte.split('\n').length + 1)}
               className="adm-panel w-full resize-y p-3 font-mono text-[0.875rem]"
               aria-label="Texte à copier sous la publication"
             />
           </section>
         </>
-      )}
-      </>
       )}
     </>
   )
@@ -153,8 +191,8 @@ export default async function VisuelsPage({
 const libelleCouleur: Record<keyof typeof COULEURS_GAME_DAY, string> = { bleu: 'Bleu', orange: 'Orange', rose: 'Rose' }
 const formatMatch = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', hour: '2-digit', minute: '2-digit' })
 
-/** Réglages d'une carte dans l'adresse : c<id> couleur, n<id> nom, i<id> ligne sous la salle, p<id> photo */
-const CLE_CARTE = /^([cnip])(\d+)$/
+/** Réglages d'une carte dans l'adresse : c<id> couleur, n<id> nom, s<id> salle, i<id> ligne sous la salle, p<id> photo */
+const CLE_CARTE = /^([cnsip])(\d+)$/
 
 /**
  * Une affiche par match, déjà remplie depuis la FFHB ; il ne reste qu'à mettre la photo.
@@ -165,7 +203,7 @@ async function GameDays({ lundi, parametres }: { lundi: string; parametres: Reco
   if (matchs.length === 0) {
     return (
       <EmptyState title="Aucun match sur ce week-end">
-        <p>Les plateaux (-11, -9) n’ont pas d’affiche Game Day.</p>
+        <p>Seuls les matchs du samedi et du dimanche ont une affiche Game Day, hors plateaux (-11, -9).</p>
       </EmptyState>
     )
   }
@@ -184,16 +222,21 @@ async function GameDays({ lundi, parametres }: { lundi: string; parametres: Reco
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {matchs.map((match) => {
         const couleur = lireCouleur(valeur(`c${match.id}`), couleurParDefaut(match))
-        const nom = valeur(`n${match.id}`).slice(0, 24)
+        const nom = valeur(`n${match.id}`).slice(0, LONGUEUR_NOM)
+        // Salle vide : celle de la FFHB
+        const salle = valeur(`s${match.id}`).slice(0, LONGUEUR_SALLE)
         // Champ absent : ligne par défaut (entrée payante en N3 à domicile) ; champ vidé : pas de ligne
-        const infoSaisie = typeof parametres[`i${match.id}`] === 'string' ? valeur(`i${match.id}`).slice(0, 40) : undefined
-        const photoDeposee = valeur(`p${match.id}`).slice(0, 500)
-        const affiche = composerGameDay(match, { nomAdversaire: nom, info: infoSaisie })
+        const infoSaisie = typeof parametres[`i${match.id}`] === 'string' ? valeur(`i${match.id}`).slice(0, LONGUEUR_INFO) : undefined
+        // Une adresse refusée par l'API n'est pas reprise : l'aperçu garde la photo d'équipe
+        const photoBrute = valeur(`p${match.id}`)
+        const photoDeposee = photoGameDayAutorisee(photoBrute, process.env.BLOB_READ_WRITE_TOKEN) ? photoBrute : ''
+        const affiche = composerGameDay(match, { nomAdversaire: nom, salle, info: infoSaisie })
         const adresse = `/api/admin/visuels?${new URLSearchParams({
           gabarit: 'gameday',
           match: String(match.id),
           couleur,
           ...(nom ? { nom } : {}),
+          ...(salle ? { salle } : {}),
           ...(infoSaisie !== undefined ? { info: infoSaisie } : {}),
           ...(photoDeposee ? { photo: photoDeposee } : {}),
         })}`
@@ -235,14 +278,23 @@ async function GameDays({ lundi, parametres }: { lundi: string; parametres: Reco
               </label>
               <label className="flex min-w-0 flex-col gap-1 text-[0.8125rem] font-medium">
                 Nom affiché
-                <input name={`n${match.id}`} defaultValue={nom || adverse} maxLength={24} className="adm-panel h-9 px-2" />
+                <input name={`n${match.id}`} defaultValue={nom || adverse} maxLength={LONGUEUR_NOM} className="adm-panel h-9 px-2" />
+              </label>
+              <label className="col-span-2 flex min-w-0 flex-col gap-1 text-[0.8125rem] font-medium">
+                Salle
+                <input
+                  name={`s${match.id}`}
+                  defaultValue={affiche.salle}
+                  maxLength={LONGUEUR_SALLE}
+                  className="adm-panel h-9 px-2"
+                />
               </label>
               <label className="col-span-2 flex min-w-0 flex-col gap-1 text-[0.8125rem] font-medium">
                 Ligne sous la salle
                 <input
                   name={`i${match.id}`}
                   defaultValue={affiche.info}
-                  maxLength={40}
+                  maxLength={LONGUEUR_INFO}
                   placeholder="Facultatif, par exemple ENTRÉE PAYANTE : 3€"
                   className="adm-panel h-9 px-2"
                 />

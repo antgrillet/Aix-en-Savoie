@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowRight, Clock, MapPin, UserPlus } from 'lucide-react'
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
+import { ADRESSE_CLUB, gymnaseDuClub } from '@/lib/gymnases'
 
 interface NousTrouverProps {
   /** Gymnase où le club reçoit, s'il est connu. */
@@ -45,6 +46,8 @@ const LIEN =
   'group inline-flex items-center gap-2 rounded-sm font-semibold text-primary-400 hover:text-primary-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
 
 export function NousTrouver({ lieu, itineraire }: NousTrouverProps) {
+  // L'adresse affichée est celle du gymnase où le club reçoit ; sans lieu connu, celle du club
+  const adresse = lieu ? gymnaseDuClub(lieu)?.adresse ?? null : ADRESSE_CLUB
   return (
     <section className="relative py-16 md:py-20 bg-zinc-900 overflow-hidden">
       <div className="absolute bottom-0 right-10 w-80 h-80 bg-primary-500 rounded-full filter blur-3xl opacity-10" />
@@ -91,7 +94,7 @@ export function NousTrouver({ lieu, itineraire }: NousTrouverProps) {
             ) : (
               <p>Le lieu de chaque rencontre est indiqué sur la page de l&apos;équipe.</p>
             )}
-            <p className="mt-2 text-sm">7 rue des Prés Riants, 73100 Aix-les-Bains</p>
+            {adresse && <p className="mt-2 text-sm">{adresse}</p>}
           </Carte>
 
           <Carte

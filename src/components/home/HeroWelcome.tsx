@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Users, Trophy, Calendar, Heart, ArrowRight, Sparkles, Newspaper } from 'lucide-react'
+import { normalizeImagePath } from '@/lib/utils'
 
 interface HeroWelcomeProps {
   backgroundImage?: string | null
@@ -180,13 +181,8 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                 Nos partenaires principaux
               </h3>
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                {partenaires.slice(0, 6).map((partenaire) => (
-                  <Link
-                    key={partenaire.id}
-                    href={partenaire.site || '#'}
-                    target={partenaire.site ? '_blank' : undefined}
-                    className="aspect-video bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-2 hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300 group relative overflow-hidden"
-                  >
+                {partenaires.slice(0, 6).map((partenaire) => {
+                  const logo = (
                     <Image
                       src={partenaire.logo}
                       alt={partenaire.nom}
@@ -194,8 +190,26 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                       className="object-contain p-1 filter grayscale group-hover:grayscale-0 transition-all duration-300"
                       unoptimized
                     />
-                  </Link>
-                ))}
+                  )
+                  const classes =
+                    'aspect-video bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-2 transition-all duration-300 group relative overflow-hidden'
+                  // Sans site, le logo n'est pas un lien
+                  return partenaire.site ? (
+                    <a
+                      key={partenaire.id}
+                      href={partenaire.site}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${classes} hover:bg-white/10 hover:border-primary-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
+                    >
+                      {logo}
+                    </a>
+                  ) : (
+                    <div key={partenaire.id} className={classes}>
+                      {logo}
+                    </div>
+                  )
+                })}
               </div>
             </motion.div>
           )}
@@ -205,8 +219,10 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
           {/* Right Column - Tabs Widget */}
           <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
             {/* Tabs Header */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6" role="group" aria-label="Matchs ou actualités">
               <button
+                type="button"
+                aria-pressed={activeTab === 'matchs'}
                 onClick={() => setActiveTab('matchs')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                   activeTab === 'matchs'
@@ -214,10 +230,12 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                     : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Trophy className="w-4 h-4" />
+                <Trophy aria-hidden="true" className="w-4 h-4" />
                 <span className="text-sm">Matchs</span>
               </button>
               <button
+                type="button"
+                aria-pressed={activeTab === 'articles'}
                 onClick={() => setActiveTab('articles')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                   activeTab === 'articles'
@@ -225,7 +243,7 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                     : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Newspaper className="w-4 h-4" />
+                <Newspaper aria-hidden="true" className="w-4 h-4" />
                 <span className="text-sm">Actualités</span>
               </button>
             </div>
@@ -235,6 +253,19 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
               {activeTab === 'matchs' && (
                 <div>
                   {children}
+                </div>
+              )}
+
+              {activeTab === 'articles' && articles.length === 0 && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                  <p className="font-semibold text-white">Aucune actualité pour le moment</p>
+                  <Link
+                    href="/actus"
+                    className="mt-3 inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-primary-400 transition-colors hover:text-primary-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                  >
+                    Toutes les actualités
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Link>
                 </div>
               )}
 
@@ -250,9 +281,10 @@ export function HeroWelcome({ backgroundImage, children, partenaires = [], artic
                         <div className="flex gap-3 p-3">
                           <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
                             <Image
-                              src={article.image}
+                              src={normalizeImagePath(article.image)}
                               alt={article.titre}
                               fill
+                              sizes="80px"
                               className="object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>

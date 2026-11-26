@@ -101,7 +101,7 @@ export function UpcomingMatches({ teams }: UpcomingMatchesProps) {
 
   return (
     <section className="relative w-full bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 py-16 md:py-20">
-      <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5" />
+      <div aria-hidden="true" className="absolute inset-0 bg-pattern" />
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

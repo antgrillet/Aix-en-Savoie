@@ -4,12 +4,16 @@ import {
   composerGameDay,
   composerWeekend,
   couleurParDefaut,
+  estEquipePlateau,
   libelleCompetition,
+  libelleSalle,
   lireCouleur,
   nomCourt,
   legende,
   libelleHoraire,
   logoGrand,
+  LONGUEUR_NOM,
+  photoGameDayAutorisee,
   repartirColonnes,
   titreWeekend,
   type MatchVisuel,
@@ -49,7 +53,21 @@ describe('codeEquipe', () => {
     ['-11.3M', 'U11.3'],
     ['-11F', 'U11F'],
     ['-9', 'U9'],
+    ['U11.2M', 'U11.2'],
+    ['−11.1M', 'U11.1'],
+    ['–11M', 'U11'],
+    ['U13M', 'U13M'],
   ])('%s → %s', (nom, code) => expect(codeEquipe(nom)).toBe(code))
+
+  test.each([
+    ['-11.2M', '', true],
+    ['U11.2M', 'Moins de 11 ans', true],
+    ['−11F', '', true],
+    ['–9', '', true],
+    ['EQUIPE', 'U11', true],
+    ['-13.1M', '-13 ans', false],
+    ['U13M', '', false],
+  ])('plateau %s (%s) : %p', (nom, categorie, plateau) => expect(estEquipePlateau({ nom, categorie })).toBe(plateau))
 })
 
 describe('libellés', () => {
@@ -89,6 +107,8 @@ describe('composerWeekend', () => {
     match('-13.1M', '-13 ans', '2026-11-21T11:00:00Z'),
     // Hors week-end : ignoré
     match('SENIORS MASCULINS 2', 'Seniors', '2026-11-18T19:00:00Z'),
+    // Vendredi soir : hors samedi-dimanche aussi
+    match('SENIORS MASCULINS 2', 'Seniors', '2026-11-20T19:30:00Z'),
   ]
   const maintenant = new Date('2026-11-23T08:00:00Z')
 
@@ -119,6 +139,26 @@ describe('composerWeekend', () => {
     expect(sansScore).toEqual([])
   })
 
+  test('matchs hors samedi-dimanche signalés, pas sur les visuels', () => {
+    for (const gabarit of ['planning', 'resultat'] as const) {
+      const { pages, horsWeekend } = composerWeekend(matchs, LUNDI, gabarit, maintenant)
+      expect(pages.flatMap((p) => p.colonnes.flat()).map((l) => l.code)).not.toContain('SM2')
+      expect(horsWeekend.map((h) => [h.equipe, h.date.toISOString()])).toEqual([
+        ['SENIORS MASCULINS 2', '2026-11-18T19:00:00.000Z'],
+        ['SENIORS MASCULINS 2', '2026-11-20T19:30:00.000Z'],
+      ])
+    }
+  })
+
+  test('plateau écrit « U11 » : regroupé comme « -11 »', () => {
+    const plateau = [
+      match('U11.1M', 'Moins de 11 ans', '2026-11-22T09:00:00Z', { domicile: false }),
+      match('U11.1M', 'Moins de 11 ans', '2026-11-22T10:00:00Z', { domicile: false }),
+    ]
+    const lignes = composerWeekend(plateau, LUNDI, 'planning', maintenant).pages.flatMap((p) => p.colonnes.flat())
+    expect(lignes.map((l) => [l.code, l.logos.length])).toEqual([['U11.1', 2]])
+  })
+
   test('au-delà de dix lignes, une seconde page', () => {
     const beaucoup = Array.from({ length: 12 }, (_, i) =>
       match(`-15.${i + 1}M`, '-15 ans', '2026-11-21T10:00:00Z', { equipe: { id: 1000 + i, nom: `-15.${i + 1}M`, categorie: '-15', ordre: i } })
@@ -147,7 +187,23 @@ describe('Game Day', () => {
     ['MENDE GEVAUDAN', 'MENDE'],
     ['U18 CHAMBE', 'CHAMBE'],
     ['M13M HBCG FERNEY-VOLTAIRE', 'HBCG FERNEY-VOLTAIRE'],
+    // L'article de tête ne tombe que derrière un mot retiré
+    ['LA MOTTE SERVOLEX HANDBALL', 'LA MOTTE SERVOLEX'],
+    ['LE BOURGET DU LAC HANDBALL', 'LE BOURGET DU LAC'],
+    // Pas de nom qui finit sur « EN »
+    ['ST JULIEN EN GENEVOIS', 'ST JULIEN EN GENEVOIS'],
+    ['HANDBALL CLUB DE SAINT JULIEN EN GENEVOIS', 'SAINT JULIEN EN GENEVOIS'],
+    ['ENTENTE ST MARTIN SUR LA CHAMBRE', 'ST MARTIN SUR LA CHAMBRE'],
+    ['ST MARTIN SUR LA CHAMBRE HBC SAVOIE', 'ST MARTIN SUR LA CHAMBRE'],
   ])('nom court de %s', (nom, court) => expect(nomCourt(nom)).toBe(court))
+
+  test.each([
+    'ASSOCIATION SPORTIVE HANDBALL CLUB DE SAINT-MARTIN-D-HERES-ET-ENVIRONS',
+    'CHAMBERY SAVOIE MONT BLANC HANDBALL',
+    'HANDBALL CLUB DES PAYS DE SAVOIE ET DU LEMAN',
+  ])('nom court de %s : jamais plus de 24 caractères', (nom) => {
+    expect(nomCourt(nom).length).toBeLessThanOrEqual(LONGUEUR_NOM)
+  })
 
   test.each([
     ['Nationale 3 Masculine 2026-2027', 'NATIONALE 3 MASCULINE'],
@@ -177,6 +233,47 @@ describe('Game Day', () => {
     expect(couleurParDefaut({ domicile: true, competition: 'Coupe de France Regionale' })).toBe('rose')
     expect(couleurParDefaut({ domicile: true, competition: 'Nationale 3 Masculine' })).toBe('bleu')
     expect(couleurParDefaut({ domicile: false, competition: 'Nationale 3 Masculine' })).toBe('orange')
+  })
+
+  test.each([
+    ['Cité scolaire, Annecy', 'CITÉ SCOLAIRE'],
+    ['Cite des sports', 'CITE DES SPORTS'],
+    ['Hall des sports, Rumilly', 'HALL DES SPORTS'],
+    ['Cosec, Albertville', 'COSEC'],
+    ['Collège Jean Moulin', 'COLLÈGE JEAN MOULIN'],
+    ['Lycee du Granier', 'LYCEE DU GRANIER'],
+    ['Parc des sports', 'PARC DES SPORTS'],
+    ['La Verrerie, Chalon sur Saone', 'SALLE LA VERRERIE'],
+    ['Salleneuve', 'SALLE SALLENEUVE'],
+    ['Halles Ouest', 'SALLE HALLES OUEST'],
+  ])('salle %s → %s', (lieu, salle) => expect(libelleSalle(lieu, false)).toBe(salle))
+
+  test('salle saisie à la place de celle de la FFHB', () => {
+    const base = { adversaire: 'ARLESIEN', date: new Date('2026-11-21T18:00:00Z'), lieu: 'Gymnase des Prés Riants', logoAdversaire: null, domicile: true, competition: null }
+    expect(composerGameDay(base, { salle: 'Gymnase de Marlioz' }).salle).toBe('GYMNASE DE MARLIOZ')
+    expect(composerGameDay(base, { salle: '  ' }).salle).toBe('GYMNASE DES PRÉS RIANTS')
+  })
+
+  describe('photo déposée', () => {
+    const jeton = 'vercel_blob_rw_AbC123xyz_secret0123456789'
+    const hote = 'https://abc123xyz.public.blob.vercel-storage.com'
+    test.each([
+      [`${hote}/gameday/1764000000-photo.jpg`, true],
+      [`${hote}/equipes/photo.jpg`, false],
+      [`${hote}/gameday/../equipes/photo.jpg`, false],
+      [`${hote}/gameday%2F..%2Fx.jpg`, false],
+      ['http://abc123xyz.public.blob.vercel-storage.com/gameday/a.jpg', false],
+      ['https://autre.public.blob.vercel-storage.com/gameday/a.jpg', false],
+      ['https://abc123xyz.public.blob.vercel-storage.com.exemple.fr/gameday/a.jpg', false],
+      ['https://user@abc123xyz.public.blob.vercel-storage.com/gameday/a.jpg', false],
+      ['/img/equipes/n2f.jpg', false],
+      ['pas une adresse', false],
+    ])('%s : %p', (url, attendu) => expect(photoGameDayAutorisee(url, jeton)).toBe(attendu))
+
+    test('sans jeton du magasin, aucune photo déposée', () => {
+      expect(photoGameDayAutorisee(`${hote}/gameday/a.jpg`, undefined)).toBe(false)
+      expect(photoGameDayAutorisee(`${hote}/gameday/a.jpg`, 'jeton-invalide')).toBe(false)
+    })
   })
 
   test('couleur inconnue : bleu', () => {

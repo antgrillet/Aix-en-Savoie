@@ -5,9 +5,12 @@ import { MapPin, Mail, Clock, Navigation, ArrowRight } from 'lucide-react'
 import { ContactForm } from '@/components/forms/ContactForm'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
-import { ADRESSE_CLUB, getLieuDomicile, lienItineraire } from '@/lib/lieu-domicile'
+import { getLieuDomicile, lienItineraire } from '@/lib/lieu-domicile'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
+
+// Le lieu des matchs à domicile vient de la base : la page se régénère toutes les heures
+export const revalidate = 3600
 
 export const metadata = buildMetadata({
   title: 'Contact',
@@ -48,8 +51,6 @@ export default async function ContactPage() {
     getPageBackgroundImage('contact'),
     getLieuDomicile(),
   ])
-
-  const destination = lieuDomicile ?? ADRESSE_CLUB
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-zinc-900">
@@ -94,7 +95,8 @@ export default async function ContactPage() {
             <h2 className="mb-5 font-display text-2xl font-extrabold text-white sm:text-3xl">
               Envoyez-nous un message
             </h2>
-            <Suspense fallback={null}>
+            {/* Le formulaire lit l'adresse (sujet) : en attendant, un bloc de même hauteur évite une colonne vide */}
+            <Suspense fallback={<div aria-hidden="true" className="min-h-[600px] rounded-xl bg-white/[0.03]" />}>
               <ContactForm />
             </Suspense>
           </div>
@@ -136,7 +138,7 @@ export default async function ContactPage() {
             <InfoCard icon={Navigation} title="Où jouons-nous ?">
               <p>{lieuDomicile ?? 'Le lieu de chaque rencontre est indiqué au calendrier.'}</p>
               <a
-                href={lienItineraire(destination)}
+                href={lienItineraire(lieuDomicile ?? '')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-flex items-center gap-1 rounded-sm text-sm font-bold text-primary-400 transition-colors hover:text-primary-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"

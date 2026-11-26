@@ -41,8 +41,24 @@ export interface PageVisuel {
   colonnes: [LigneVisuel[], LigneVisuel[]]
 }
 
+/** Longueurs maximales des textes libres d'une affiche Game Day (page d'admin et API) */
+export const LONGUEUR_NOM = 24
+export const LONGUEUR_COMPETITION = 60
+export const LONGUEUR_SALLE = 50
+export const LONGUEUR_INFO = 40
+
 export const LIGNES_PAR_COLONNE = 5
 const LIGNES_PAR_PAGE = LIGNES_PAR_COLONNE * 2
+
+/** « U11 », « −11 » (signe moins) ou « –11 » (tiret) s'écrivent « -11 », comme dans la base */
+function normaliserCategorie(texte: string): string {
+  return texte.trim().toUpperCase().replace(/^[U−–]\s*(?=\d)/, '-')
+}
+
+/** Équipe jouée en plateau (-11, -9), d'après sa catégorie ou son nom, quelle que soit l'écriture du moins */
+export function estEquipePlateau(equipe: { nom: string; categorie: string }): boolean {
+  return estCategoriePlateau(normaliserCategorie(equipe.categorie)) || estCategoriePlateau(normaliserCategorie(equipe.nom))
+}
 
 /**
  * Code court d'une équipe, comme sur les visuels du club :
@@ -56,7 +72,7 @@ export function codeEquipe(nom: string): string {
   const jeune = brut.match(/^[-U−–]\s*(\d+)\s*(?:\.\s*(\d+))?\s*([MF])?$/)
   if (jeune) {
     const [, age, numero, genre] = jeune
-    const plateau = estCategoriePlateau(`-${age}`)
+    const plateau = estEquipePlateau({ nom: brut, categorie: '' })
     const lettre = genre === 'F' || (genre === 'M' && !plateau) ? genre : ''
     return `U${age}${numero ? `.${numero}` : ''}${lettre}`
   }
@@ -81,7 +97,7 @@ export function titreWeekend(lundi: string): string {
   return `WEEKEND DU ${debut}-${jd} ${MOIS[md - 1]}`
 }
 
-/** Logo FFHB en 512 px (la base garde l'adresse en 64 px) */
+/** Logo FFHB en 512 px (la base garde l'adresse en 64 px) ; le rendu revient à l'adresse d'origine si besoin */
 export function logoGrand(url: string | null): string | null {
   if (!url) return null
   return url.replace('/64/', '/512/')
@@ -122,29 +138,36 @@ export interface CompositionWeekend {
   pages: PageVisuel[]
   /** Résultat : rencontres jouées dont le score manque (à saisir avant de publier) */
   sansScore: { code: string; adversaire: string; date: Date }[]
+  /** Rencontres de la semaine jouées hors samedi-dimanche : elles ne sont pas sur les visuels */
+  horsWeekend: { cle: string; equipe: string; date: Date }[]
+}
+
+/** Samedi ou dimanche du week-end de la semaine `lundi`, à l'heure de Paris */
+export function estDuWeekend(date: Date, lundi: string): boolean {
+  const jour = jourParis(date)
+  return jour === ajouterJours(lundi, 5) || jour === ajouterJours(lundi, 6)
 }
 
 export function composerWeekend(matchs: MatchVisuel[], lundi: string, gabarit: Gabarit, maintenant = new Date()): CompositionWeekend {
-  const samedi = ajouterJours(lundi, 5)
-  const dimanche = ajouterJours(lundi, 6)
-  const duWeekend = matchs.filter((match) => {
-    const jour = jourParis(match.date)
-    return jour === samedi || jour === dimanche
-  })
-
   const parEquipe = new Map<number, MatchVisuel[]>()
-  for (const match of duWeekend) {
+  for (const match of matchs) {
     parEquipe.set(match.equipe.id, [...(parEquipe.get(match.equipe.id) ?? []), match])
   }
 
   const lignes: (LigneVisuel & { cote: Cote; ordre: number; date: number })[] = []
   const sansScore: CompositionWeekend['sansScore'] = []
+  const horsWeekend: CompositionWeekend['horsWeekend'] = []
 
   for (const matchsEquipe of parEquipe.values()) {
     const equipe = matchsEquipe[0].equipe
-    const plateau = estCategoriePlateau(equipe.categorie) || estCategoriePlateau(equipe.nom)
+    const plateau = estEquipePlateau(equipe)
     const code = codeEquipe(equipe.nom)
     for (const rencontre of regrouperRencontres(matchsEquipe, plateau)) {
+      // Les visuels ne couvrent que le samedi et le dimanche : les autres jours sont signalés à part
+      if (!estDuWeekend(rencontre.date, lundi)) {
+        horsWeekend.push({ cle: `${equipe.id}-${rencontre.cle}`, equipe: equipe.nom, date: rencontre.date })
+        continue
+      }
       const joue = rencontre.date.getTime() < maintenant.getTime()
       // La fédération publie rarement les scores des plateaux : la ligne reste, sans bilan
       const resultat =
@@ -180,7 +203,8 @@ export function composerWeekend(matchs: MatchVisuel[], lundi: string, gabarit: G
     }
   }
 
-  return { titre: titreWeekend(lundi), pages, sansScore }
+  horsWeekend.sort((a, b) => a.date.getTime() - b.date.getTime())
+  return { titre: titreWeekend(lundi), pages, sansScore, horsWeekend }
 }
 
 /** Texte prêt à coller sous la publication */
@@ -230,18 +254,43 @@ const SURNOMS: Record<string, string> = {
   BOURGETAIN: 'LE BOURGET',
 }
 const ARTICLES = new Set(['DE', 'DU', 'DES', 'LA', 'LE', 'LES', "D'", "L'"])
+/** Mots qui ne terminent pas un nom : « ST JULIEN EN » n'est pas un nom de club */
+const LIAISONS = new Set([...ARTICLES, 'EN', 'SUR', 'SOUS', 'AU', 'AUX', 'ET'])
+
+/** Trois mots, plus ceux qui suivent une liaison (« ST JULIEN EN GENEVOIS »), sans dépasser `LONGUEUR_NOM` */
+function abreger(mots: string[]): string {
+  const retenus: string[] = []
+  for (const mot of mots) {
+    const derniere = retenus[retenus.length - 1]
+    if (retenus.length >= 3 && !(derniere && LIAISONS.has(derniere))) break
+    if ([...retenus, mot].join(' ').length > LONGUEUR_NOM) break
+    retenus.push(mot)
+  }
+  while (retenus.length > 1 && LIAISONS.has(retenus[retenus.length - 1])) retenus.pop()
+  if (retenus.length) return retenus.join(' ')
+  // Un seul mot trop long : coupé au dernier trait d'union qui tient (« SAINT-MARTIN-D-HERES »)
+  const coupe = (mots[0] ?? '').slice(0, LONGUEUR_NOM + 1)
+  return coupe.length > LONGUEUR_NOM && coupe.lastIndexOf('-') > 0 ? coupe.slice(0, coupe.lastIndexOf('-')) : coupe.slice(0, LONGUEUR_NOM)
+}
 
 /** « ASSOCIATION SPORTIVE HANDBALL CLUB DE CHALON » → « CHALON », « ANNECY HANDBALL » → « ANNECY » */
 export function nomCourt(adversaire: string): string {
-  const mots = adversaire
-    .toUpperCase()
-    .replace(/[(),.]/g, ' ')
-    .split(/\s+/)
+  const mots: string[] = []
+  // L'article de tête ne tombe que s'il suivait un mot retiré : « CLUB DE LA FILLIERE » → FILLIERE,
+  // mais « LA MOTTE SERVOLEX » garde son article
+  let apresMotRetire = false
+  for (const mot of adversaire.toUpperCase().replace(/[(),.]/g, ' ').split(/\s+/)) {
+    if (!mot) continue
     // « U18 », « M13M », « 11 » : catégorie, pas nom de club
-    .filter((mot) => mot && !MOTS_VIDES.has(mot) && !/^\d+$/.test(mot) && !/^[UM]\d{1,2}[MFX]?$/.test(mot))
-  while (mots.length && ARTICLES.has(mots[0])) mots.shift()
+    if (MOTS_VIDES.has(mot) || /^\d+$/.test(mot) || /^[UM]\d{1,2}[MFX]?$/.test(mot)) {
+      apresMotRetire = true
+      continue
+    }
+    if (mots.length === 0 && apresMotRetire && ARTICLES.has(mot)) continue
+    mots.push(mot)
+  }
   while (mots.length && ARTICLES.has(mots[mots.length - 1])) mots.pop()
-  const nom = (mots.length ? mots : adversaire.toUpperCase().split(/\s+/)).slice(0, 3).join(' ')
+  const nom = abreger(mots.length ? mots : adversaire.toUpperCase().split(/\s+/).filter(Boolean))
   return SURNOMS[nom] ?? nom
 }
 
@@ -293,7 +342,9 @@ export function infoParDefaut(match: Pick<MatchGameDay, 'domicile' | 'competitio
   return match.domicile && /^nationale/i.test(libelleCompetition(match.competition)) ? 'ENTRÉE PAYANTE : 3€' : ''
 }
 
-const DEBUTS_DE_SALLE = /^(GYMNASE|SALLE|COMPLEXE|CENTRE|ESPACE|HALLE|PALAIS|MAISON|ARENA|STADE|DOJO|PALESTRE|CITÉ|LIEU)\b/
+// `\b` ne voit pas la fin de « CITÉ » (É n'est pas un caractère de mot en JavaScript) : on attend un espace ou la fin
+const DEBUTS_DE_SALLE =
+  /^(GYMNASE|SALLE|COMPLEXE|CENTRE|ESPACE|HALLE|HALL|PALAIS|MAISON|ARENA|STADE|DOJO|PALESTRE|CITÉ|CITE|COSEC|COLLÈGE|COLLEGE|LYCÉE|LYCEE|PARC|LIEU)(?=\s|$)/
 
 /** « La Verrerie, Chalon sur Saone » → « SALLE LA VERRERIE », « Gymnase des Prés Riants » inchangé */
 export function libelleSalle(lieu: string, domicile: boolean): string {
@@ -303,17 +354,45 @@ export function libelleSalle(lieu: string, domicile: boolean): string {
 
 export function composerGameDay(
   match: MatchGameDay,
-  options: { nomAdversaire?: string; competition?: string; info?: string } = {}
+  options: { nomAdversaire?: string; competition?: string; info?: string; salle?: string } = {}
 ): GameDay {
   const club = { nom: 'HBCA', logo: null, club: true }
-  const adverse = { nom: (options.nomAdversaire?.trim() || nomCourt(match.adversaire)).toUpperCase(), logo: logoGrand(match.logoAdversaire), club: false }
+  const adverse = {
+    nom: (options.nomAdversaire?.trim() || nomCourt(match.adversaire)).slice(0, LONGUEUR_NOM).toUpperCase(),
+    logo: logoGrand(match.logoAdversaire),
+    club: false,
+  }
   return {
-    competition: (options.competition?.trim() || libelleCompetition(match.competition)).toUpperCase(),
+    competition: (options.competition?.trim() || libelleCompetition(match.competition)).slice(0, LONGUEUR_COMPETITION).toUpperCase(),
     jour: [formatJourNumero.format(match.date).toUpperCase(), formatMois.format(match.date).toUpperCase()],
     heure: formatHeure.format(match.date).replace(':', 'H'),
-    salle: libelleSalle(match.lieu, match.domicile),
-    info: (options.info ?? infoParDefaut(match)).trim().toUpperCase(),
+    salle: (options.salle?.trim() || libelleSalle(match.lieu, match.domicile)).slice(0, LONGUEUR_SALLE).toUpperCase(),
+    info: (options.info ?? infoParDefaut(match)).trim().slice(0, LONGUEUR_INFO).toUpperCase(),
     gauche: match.domicile ? club : adverse,
     droite: match.domicile ? adverse : club,
+  }
+}
+
+/**
+ * Photo déposée par l'admin pour une affiche : seulement une adresse https du magasin Vercel Blob
+ * du site, dans le dossier gameday/. L'hôte se déduit du jeton `vercel_blob_rw_<storeId>_<secret>`
+ * (comme dans @vercel/blob) ; le jeton lui-même n'est jamais renvoyé ni journalisé.
+ */
+export function photoGameDayAutorisee(url: string, jeton: string | undefined): boolean {
+  const magasin = jeton?.split('_')[3]
+  if (!jeton?.startsWith('vercel_blob_rw_') || !magasin || !/^[A-Za-z0-9]+$/.test(magasin)) return false
+  try {
+    const adresse = new URL(url)
+    return (
+      adresse.protocol === 'https:' &&
+      adresse.hostname === `${magasin.toLowerCase()}.public.blob.vercel-storage.com` &&
+      adresse.port === '' &&
+      !adresse.username &&
+      !adresse.password &&
+      // L'URL est déjà normalisée : « /gameday/../x » est devenu « /x »
+      adresse.pathname.startsWith('/gameday/')
+    )
+  } catch {
+    return false
   }
 }
