@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma'
+import { filtreDateSaison } from '@/lib/saisons'
+import { getSaisonAffichee } from '@/lib/saison-courante'
 import { getHeroBackgroundImage } from '@/lib/settings'
 import { normalizeImagePath } from '@/lib/utils'
 import { buildMetadata } from '@/lib/seo'
@@ -28,6 +30,7 @@ export const metadata = buildMetadata({
 
 export default async function HomePage() {
   const now = new Date()
+  const saison = await getSaisonAffichee()
 
   const [heroBackgroundImage, featuredArticles] = await Promise.all([
     getHeroBackgroundImage(),
@@ -62,7 +65,7 @@ export default async function HomePage() {
     domicile: true,
     scoreEquipe: true,
     scoreAdversaire: true,
-    equipe: { select: { nom: true, categorie: true } },
+    equipe: { select: { nom: true, categorie: true, slug: true } },
   } as const
 
   const [upcomingAll, lastResultsAll] = await Promise.all([
@@ -82,6 +85,8 @@ export default async function HomePage() {
         equipeId: { in: featuredEquipeIds },
         published: true,
         termine: true,
+        // Saison affichée seulement : les résultats des saisons passées restent dans l'admin
+        date: filtreDateSaison(saison),
         scoreEquipe: { not: null },
         scoreAdversaire: { not: null },
       },
@@ -116,6 +121,7 @@ export default async function HomePage() {
   const heroNextMatch = nextMatchRaw
     ? {
         categorie: nextMatchRaw.equipe.categorie,
+        equipeSlug: nextMatchRaw.equipe.slug,
         adversaire: nextMatchRaw.adversaire,
         domicile: nextMatchRaw.domicile,
         isoDate: nextMatchRaw.date.toISOString(),

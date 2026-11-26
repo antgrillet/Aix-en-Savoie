@@ -5,22 +5,21 @@ import { Link2, Check } from 'lucide-react'
 import { Icon } from '@iconify/react/offline'
 import facebookIcon from '@iconify-icons/simple-icons/facebook'
 import linkedinIcon from '@iconify-icons/simple-icons/linkedin'
-import twitterIcon from '@iconify-icons/simple-icons/twitter'
 import { toast } from 'sonner'
 
 interface ShareButtonsProps {
-  title: string
   url: string
 }
 
-export function ShareButtons({ title, url }: ShareButtonsProps) {
+const boutonClass =
+  'grid size-10 place-items-center rounded-full border border-zinc-700 text-white transition-colors hover:border-primary-500 hover:bg-primary-500 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400'
+
+/** Partage en fin d'article : Facebook, LinkedIn et copie du lien. */
+export function ShareButtons({ url }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false)
 
-  const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-  }
+  const facebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+  const linkedin = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
 
   const copyToClipboard = async () => {
     try {
@@ -33,97 +32,35 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
     }
   }
 
-  const buttonClass = "flex items-center justify-center w-11 h-11 rounded-full bg-zinc-800 border border-zinc-700 hover:border-primary-500 hover:bg-primary-500 text-neutral-400 hover:text-white transition-all duration-200 hover:scale-110"
-
   return (
-    <>
-      <div className="hidden lg:flex fixed left-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-40">
-        <span className="text-xs text-neutral-400 font-semibold mb-1 text-center uppercase tracking-wide">
-          Partager
-        </span>
-
-        <a
-          href={shareLinks.twitter}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass}
-          aria-label="Partager sur Twitter"
-        >
-          <Icon icon={twitterIcon} className="w-5 h-5" />
-        </a>
-
-        <a
-          href={shareLinks.facebook}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass}
-          aria-label="Partager sur Facebook"
-        >
-          <Icon icon={facebookIcon} className="w-5 h-5" />
-        </a>
-
-        <a
-          href={shareLinks.linkedin}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass}
-          aria-label="Partager sur LinkedIn"
-        >
-          <Icon icon={linkedinIcon} className="w-5 h-5" />
-        </a>
-
-        <button
-          onClick={copyToClipboard}
-          className={buttonClass}
-          aria-label="Copier le lien"
-        >
-          {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
-        </button>
-      </div>
-
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-3 px-5 py-3 bg-zinc-800/95 backdrop-blur-sm rounded-full border border-zinc-700 shadow-2xl">
-          <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wide">Partager</span>
-
-          <a
-            href={shareLinks.twitter}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
-            aria-label="Partager sur Twitter"
-          >
-            <Icon icon={twitterIcon} className="w-4 h-4" />
-          </a>
-
-          <a
-            href={shareLinks.facebook}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
-            aria-label="Partager sur Facebook"
-          >
-            <Icon icon={facebookIcon} className="w-4 h-4" />
-          </a>
-
-          <a
-            href={shareLinks.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
-            aria-label="Partager sur LinkedIn"
-          >
-            <Icon icon={linkedinIcon} className="w-4 h-4" />
-          </a>
-
-          <button
-            onClick={copyToClipboard}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-500 text-neutral-400 hover:text-white transition-all"
-            aria-label="Copier le lien"
-          >
-            {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-    </>
+    <div className="flex items-center gap-2 text-neutral-400">
+      <span className="mr-1 font-mono text-xs uppercase tracking-[0.1em]">Partager</span>
+      <a
+        href={facebook}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={boutonClass}
+        aria-label="Partager sur Facebook (nouvel onglet)"
+      >
+        <Icon icon={facebookIcon} className="size-4" aria-hidden="true" />
+      </a>
+      <a
+        href={linkedin}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={boutonClass}
+        aria-label="Partager sur LinkedIn (nouvel onglet)"
+      >
+        <Icon icon={linkedinIcon} className="size-4" aria-hidden="true" />
+      </a>
+      <button
+        type="button"
+        onClick={copyToClipboard}
+        className={boutonClass}
+        aria-label={copied ? 'Lien copié' : 'Copier le lien'}
+      >
+        {copied ? <Check className="size-4" aria-hidden="true" /> : <Link2 className="size-4" aria-hidden="true" />}
+      </button>
+    </div>
   )
 }

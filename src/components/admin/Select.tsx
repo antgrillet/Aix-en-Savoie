@@ -22,7 +22,7 @@ export const SelectTrigger = React.forwardRef<
   <BaseSelectTrigger
     ref={ref}
     className={cn(
-      'h-11 gap-2 rounded-[3px] border-input bg-background px-3 text-left text-[0.9375rem] text-foreground transition-colors duration-150 ease-out hover:border-foreground focus:ring-0 data-[state=open]:border-foreground data-[placeholder]:text-[color:var(--adm-placeholder)] aria-[invalid=true]:border-destructive md:h-10 [&>svg]:shrink-0 [&>svg]:opacity-100',
+      'h-11 gap-2 rounded-lg border-input bg-background px-3 text-left text-[0.9375rem] text-foreground transition-colors duration-150 ease-out hover:border-[color:var(--adm-control)] focus:ring-0 data-[state=open]:border-[color:var(--adm-control)] data-[placeholder]:text-[color:var(--adm-placeholder)] aria-[invalid=true]:border-destructive md:h-10 [&>svg]:shrink-0 [&>svg]:opacity-100',
       className
     )}
     {...props}
@@ -34,7 +34,7 @@ export const SelectContent = React.forwardRef<
   React.ElementRef<typeof BaseSelectContent>,
   React.ComponentPropsWithoutRef<typeof BaseSelectContent>
 >(({ className, ...props }, ref) => (
-  <BaseSelectContent ref={ref} className={cn('rounded-[3px] border-foreground', className)} {...props} />
+  <BaseSelectContent ref={ref} className={cn('rounded-lg border-border', className)} {...props} />
 ))
 SelectContent.displayName = 'SelectContent'
 
@@ -44,7 +44,7 @@ export const SelectItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <BaseSelectItem
     ref={ref}
-    className={cn('min-h-11 rounded-[2px] pl-2.5 text-[0.9375rem] md:min-h-9', className)}
+    className={cn('min-h-11 rounded-md pl-2.5 text-[0.9375rem] md:min-h-9', className)}
     {...props}
   />
 ))

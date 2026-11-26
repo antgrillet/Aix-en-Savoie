@@ -24,6 +24,8 @@ export function PromoCard({
   brandColor = '#FF6B35',
 }: PromoCardProps) {
   const [copied, setCopied] = useState(false)
+  // Un code vide ou fait d'espaces équivaut à une offre sans code
+  const codeAffiche = code?.trim() || null
 
   const { isExpired, daysLeft } = useMemo(() => {
     if (expiration) {
@@ -37,10 +39,10 @@ export function PromoCard({
   }, [expiration])
 
   const copyToClipboard = async () => {
-    if (!code) return
+    if (!codeAffiche) return
 
     try {
-      await navigator.clipboard.writeText(code)
+      await navigator.clipboard.writeText(codeAffiche)
       setCopied(true)
       toast.success('Code copie dans le presse-papiers !')
       setTimeout(() => setCopied(false), 2000)
@@ -97,7 +99,7 @@ export function PromoCard({
         )}
 
         {/* Code section OR in-store mention */}
-        {code ? (
+        {codeAffiche ? (
           <div className="space-y-2">
             <p className="text-xs text-neutral-400 uppercase tracking-wide font-semibold">
               Votre code promo
@@ -107,7 +109,7 @@ export function PromoCard({
               className="w-full group flex items-center justify-between px-4 py-3 bg-zinc-800/60 border border-zinc-700 hover:border-primary-500 rounded-lg transition-all"
             >
               <span className="font-mono text-lg font-bold text-white tracking-wider">
-                {code}
+                {codeAffiche}
               </span>
               <div className="flex items-center gap-2 text-neutral-400 group-hover:text-primary-400 transition-colors">
                 {copied ? (

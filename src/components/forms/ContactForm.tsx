@@ -49,6 +49,11 @@ const CATEGORIES_JEUNES = [
   'Je ne sais pas encore',
 ]
 
+const FIELD_CLASS =
+  'mt-1.5 h-11 rounded-lg border-white/15 bg-white/5 px-3.5 text-base text-white placeholder:text-neutral-500 focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/60'
+
+const LABEL_CLASS = 'text-sm font-semibold text-white'
+
 function parseSujet(value: string | null): Sujet {
   switch (value) {
     case 'inscription':
@@ -155,7 +160,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 text-neutral-100">
+    <form onSubmit={handleSubmit} className="space-y-5 text-neutral-100">
       {/* Champ leurre contre les robots : hors écran, hors tabulation, ignoré des lecteurs d'écran */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor="leurre">Ne pas remplir ce champ</label>
@@ -163,7 +168,7 @@ export function ContactForm() {
       </div>
       {/* Choix du motif de contact */}
       <div>
-        <Label className="mb-3 block">Votre demande concerne</Label>
+        <Label className={`mb-3 block ${LABEL_CLASS}`}>Votre demande concerne</Label>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Motif de contact">
           {SUJETS.map((option) => (
             <button
@@ -174,10 +179,10 @@ export function ContactForm() {
                 resetExtraFields()
               }}
               aria-pressed={sujet === option.value}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+              className={`min-h-10 rounded-full border px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 ${
                 sujet === option.value
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-zinc-900/60 text-neutral-300 border border-zinc-700 hover:bg-zinc-800'
+                  ? 'border-primary-500 bg-primary-500 font-bold text-zinc-950'
+                  : 'border-white/20 text-neutral-200 hover:border-white/40 hover:bg-white/5'
               }`}
             >
               {option.label}
@@ -187,9 +192,9 @@ export function ContactForm() {
         <p className="text-sm text-neutral-400 mt-3">{activeSujet.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="nom">Nom *</Label>
+          <Label htmlFor="nom" className={LABEL_CLASS}>Nom *</Label>
           <Input
             id="nom"
             name="nom"
@@ -197,12 +202,12 @@ export function ContactForm() {
             required
             placeholder="Dupont"
             autoComplete="family-name"
-            className="mt-1"
+            className={FIELD_CLASS}
           />
         </div>
 
         <div>
-          <Label htmlFor="prenom">Prénom *</Label>
+          <Label htmlFor="prenom" className={LABEL_CLASS}>Prénom *</Label>
           <Input
             id="prenom"
             name="prenom"
@@ -210,13 +215,13 @@ export function ContactForm() {
             required
             placeholder="Jean"
             autoComplete="given-name"
-            className="mt-1"
+            className={FIELD_CLASS}
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="email">Email *</Label>
+        <Label htmlFor="email" className={LABEL_CLASS}>Email *</Label>
         <Input
           id="email"
           name="email"
@@ -224,27 +229,27 @@ export function ContactForm() {
           required
           placeholder="jean.dupont@example.com"
           autoComplete="email"
-          className="mt-1"
+          className={FIELD_CLASS}
         />
       </div>
 
       {/* Informations sur le futur licencié (parents) */}
       {sujet === 'inscription' && (
-        <div className="space-y-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-700">
+        <div className="space-y-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="licencie">Prénom du futur licencié</Label>
+              <Label htmlFor="licencie" className={LABEL_CLASS}>Prénom du futur licencié</Label>
               <Input
                 id="licencie"
                 name="licencie"
                 type="text"
                 placeholder="Léa"
                 autoComplete="off"
-                className="mt-1"
+                className={FIELD_CLASS}
               />
             </div>
             <div>
-              <Label htmlFor="age">Âge</Label>
+              <Label htmlFor="age" className={LABEL_CLASS}>Âge</Label>
               <Input
                 id="age"
                 name="age"
@@ -253,15 +258,15 @@ export function ContactForm() {
                 max={99}
                 placeholder="9"
                 autoComplete="off"
-                className="mt-1"
+                className={FIELD_CLASS}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="categorie">Catégorie envisagée</Label>
+            <Label htmlFor="categorie" className={LABEL_CLASS}>Catégorie envisagée</Label>
             <Select value={categorieSouhaitee} onValueChange={setCategorieSouhaitee}>
-              <SelectTrigger id="categorie" className="mt-1">
+              <SelectTrigger id="categorie" className={FIELD_CLASS}>
                 <SelectValue placeholder="Sélectionnez une catégorie" />
               </SelectTrigger>
               <SelectContent>
@@ -278,11 +283,11 @@ export function ContactForm() {
 
       {/* Informations joueur (adulte ou jeune souhaitant jouer) */}
       {sujet === 'jouer' && (
-        <div className="space-y-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-700">
+        <div className="space-y-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div>
-            <Label htmlFor="niveau">Niveau de pratique</Label>
+            <Label htmlFor="niveau" className={LABEL_CLASS}>Niveau de pratique</Label>
             <Select value={niveau} onValueChange={setNiveau}>
-              <SelectTrigger id="niveau" className="mt-1">
+              <SelectTrigger id="niveau" className={FIELD_CLASS}>
                 <SelectValue placeholder="Sélectionnez votre niveau" />
               </SelectTrigger>
               <SelectContent>
@@ -295,7 +300,7 @@ export function ContactForm() {
           </div>
 
           <div>
-            <Label className="mb-2 block">Postes préférés (plusieurs choix possibles)</Label>
+            <Label className={`mb-2 block ${LABEL_CLASS}`}>Postes préférés (plusieurs choix possibles)</Label>
             <div className="grid grid-cols-2 gap-3">
               {['Gardien', 'Ailier gauche', 'Arrière gauche', 'Demi-centre', 'Pivot', 'Arrière droit', 'Ailier droit'].map((position) => (
                 <div key={position} className="flex items-center space-x-3">
@@ -319,7 +324,7 @@ export function ContactForm() {
       )}
 
       <div>
-        <Label htmlFor="message">Message *</Label>
+        <Label htmlFor="message" className={LABEL_CLASS}>Message *</Label>
         <Textarea
           id="message"
           name="message"
@@ -331,7 +336,7 @@ export function ContactForm() {
               : 'Décrivez votre demande...'
           }
           autoComplete="off"
-          className="mt-1"
+          className={`${FIELD_CLASS} h-auto min-h-28 py-3`}
         />
       </div>
 
@@ -373,7 +378,7 @@ export function ContactForm() {
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="w-full"
+        className="h-12 w-full rounded-full bg-primary-500 text-base font-extrabold text-zinc-950 hover:bg-primary-400 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
         size="lg"
       >
         {isSubmitting ? (
@@ -384,7 +389,7 @@ export function ContactForm() {
         ) : (
           <>
             Envoyer le message
-            <Send className="w-4 h-4 ml-2" />
+            <Send aria-hidden="true" className="w-4 h-4" />
           </>
         )}
       </Button>

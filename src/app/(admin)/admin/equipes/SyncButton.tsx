@@ -142,7 +142,7 @@ const formatHeure = new Intl.DateTimeFormat('fr-FR', {
 
 interface Etat {
   label: string
-  /** Pointillé tant que rien n'est confirmé */
+  /** En cours tant que rien n'est confirmé (ambre) */
   provisoire: boolean
   erreur?: boolean
 }
@@ -173,11 +173,9 @@ export function SyncStatus() {
     <span role="status" className="mt-1.5 flex min-h-6 flex-wrap items-center gap-x-2 gap-y-1">
       <span>Matchs importés de FFHANDBALL</span>
       {etat && (
-        // Même marque montée d'un état à l'autre : le pointillé devient plein
         <StatusMark
-          tone={etat.provisoire ? 'dashed' : 'solid'}
+          tone={etat.erreur ? 'bad' : etat.provisoire ? 'warn' : 'ok'}
           icon={etat.erreur ? CircleAlert : undefined}
-          className={etat.erreur ? 'text-destructive' : undefined}
         >
           <span className="sr-only">Synchronisation : </span>
           {etat.label}

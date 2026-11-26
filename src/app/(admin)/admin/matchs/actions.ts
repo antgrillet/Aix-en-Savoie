@@ -5,10 +5,10 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-utils'
 import { lireMatchFormData } from '@/lib/validations/match'
+import { filtreDateSaison, saisonDe } from '@/lib/saisons'
 
 async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[]) {
   revalidatePath('/')
-  revalidatePath('/calendrier')
   revalidatePath('/equipes')
 
   const ids = [...new Set(equipeIds.filter((id): id is number => typeof id === 'number'))]
@@ -24,9 +24,11 @@ async function revalidateMatchsPublic(...equipeIds: (number | null | undefined)[
   }
 }
 
-export async function getMatchs() {
+/** Matchs d'une saison (année de début), ou de toutes si `null`. */
+export async function getMatchs(saison: number | null = null) {
   await requireAdmin()
   const matchs = await prisma.match.findMany({
+    where: saison === null ? undefined : { date: filtreDateSaison(saison) },
     include: {
       equipe: {
         select: {
@@ -42,6 +44,14 @@ export async function getMatchs() {
   })
 
   return matchs
+}
+
+/** Première et dernière saison qui ont des matchs, pour le sélecteur. */
+export async function getEtendueSaisons(): Promise<{ premiere: number; derniere: number } | null> {
+  await requireAdmin()
+  const { _min, _max } = await prisma.match.aggregate({ _min: { date: true }, _max: { date: true } })
+  if (!_min.date || !_max.date) return null
+  return { premiere: saisonDe(_min.date), derniere: saisonDe(_max.date) }
 }
 
 export async function getMatch(id: number) {

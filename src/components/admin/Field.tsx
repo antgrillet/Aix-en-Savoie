@@ -100,7 +100,7 @@ export function Field({
       {control}
 
       {error && (
-        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-[0.8125rem] font-medium text-destructive">
+        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-[0.875rem] font-medium text-destructive">
           <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </p>
@@ -119,7 +119,7 @@ export function Field({
  * ------------------------------------------------------------------------ */
 
 const controlBase =
-  'w-full rounded-[3px] border border-input bg-background text-base text-foreground transition-colors duration-150 ease-out hover:border-foreground focus-visible:border-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input aria-[invalid=true]:border-destructive md:text-[0.9375rem]'
+  'w-full rounded-lg border border-input bg-background text-base text-foreground transition-colors duration-150 ease-out hover:border-[color:var(--adm-control)] focus-visible:border-[color:var(--adm-control)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input aria-[invalid=true]:border-destructive md:text-[0.9375rem]'
 
 export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
   ({ className, type, ...props }, ref) => (
@@ -154,7 +154,7 @@ export const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      'peer relative grid size-5 shrink-0 place-content-center rounded-[2px] border before:absolute before:-inset-3 before:content-[""] border-foreground bg-background text-background transition-colors duration-150 ease-out hover:border-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-foreground',
+      'peer relative grid size-5 shrink-0 place-content-center rounded-[5px] border before:absolute before:-inset-3 before:content-[""] border-[color:var(--adm-control)] bg-background text-[color:var(--adm-ink)] transition-colors duration-150 ease-out hover:border-[color:var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary',
       className
     )}
     {...props}
@@ -173,12 +173,12 @@ export const Switch = React.forwardRef<
   <SwitchPrimitive.Root
     ref={ref}
     className={cn(
-      'peer relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-[3px] border before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-[""] border-foreground bg-background transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-foreground',
+      'peer relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-[""] border-transparent bg-[#d9d5cb] transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[color:var(--adm-ok)]',
       className
     )}
     {...props}
   >
-    <SwitchPrimitive.Thumb className="pointer-events-none block size-4 translate-x-[3px] rounded-[1px] bg-foreground transition-transform duration-150 ease-out data-[state=checked]:translate-x-[23px] data-[state=checked]:bg-background" />
+    <SwitchPrimitive.Thumb className="pointer-events-none block size-[1.125rem] translate-x-[2px] rounded-full bg-white transition-transform duration-150 ease-out data-[state=checked]:translate-x-[22px]" />
   </SwitchPrimitive.Root>
 ))
 Switch.displayName = 'Switch'
@@ -202,7 +202,7 @@ function ChoiceRow({
   children,
 }: ChoiceRowProps & { children: React.ReactNode }) {
   return (
-    <div className={cn('flex min-h-14 items-center gap-4 border-b border-border py-2.5', className)}>
+    <div className={cn('flex min-h-14 items-center gap-4 border-b border-[color:var(--adm-line-2)] py-2.5 last:border-b-0', className)}>
       <div className="min-w-0 flex-1">
         <label htmlFor={id} className="block cursor-pointer text-[0.9375rem] font-semibold leading-snug">
           {label}

@@ -2,12 +2,18 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Calendar, MapPin, Clock, Trophy, User } from 'lucide-react'
+import { ArrowLeft, User } from 'lucide-react'
 import { normalizeImagePath } from '@/lib/utils'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, excerptFromHtml } from '@/lib/seo'
 import { assainirHtml } from '@/lib/html'
-import { formatDateHeure, formatJourMoisChiffres } from '@/lib/dates'
+import { filtreDateSaison, libelleSaison } from '@/lib/saisons'
+import { getSaisonAffichee } from '@/lib/saison-courante'
+import { calculerReperes, logosParClub } from '@/components/team-page/reperes'
+import { ReperesEquipe } from '@/components/team-page/ReperesEquipe'
+import { CalendrierEquipe } from '@/components/team-page/CalendrierEquipe'
+import { ClassementEquipe } from '@/components/team-page/ClassementEquipe'
+import { EntrainementsEquipe, RejoindreEquipe } from '@/components/team-page/EntrainementsEquipe'
 
 export const revalidate = 1800
 
@@ -48,6 +54,7 @@ export async function generateMetadata({ params }: EquipePageProps) {
 
 export default async function EquipePage({ params }: EquipePageProps) {
   const { slug } = await params
+  const saison = await getSaisonAffichee()
 
   const equipe = await prisma.equipe.findUnique({
     where: { slug, published: true },
@@ -56,6 +63,7 @@ export default async function EquipePage({ params }: EquipePageProps) {
       matchs: {
         where: {
           published: true,
+          date: filtreDateSaison(saison),
         },
         orderBy: {
           date: 'asc',
@@ -73,12 +81,12 @@ export default async function EquipePage({ params }: EquipePageProps) {
     notFound()
   }
 
-  // Séparer les matchs à venir et les matchs passés
-  const now = new Date()
-  const upcomingMatches = equipe.matchs.filter(
-    (match) => match.date >= now && !match.termine
-  )
-  const allMatches = equipe.matchs
+  const reperes = calculerReperes(equipe.matchs, equipe.classement, new Date())
+  const logos = logosParClub(equipe.matchs)
+  const aClassement = equipe.classement.length > 0
+  const colonnes = aClassement
+    ? 'md:grid-cols-2 lg:grid-cols-[1.25fr_1fr_0.9fr]'
+    : 'md:grid-cols-[1.4fr_1fr]'
 
   return (
     <div className="pt-24 min-h-screen bg-zinc-900 relative">
@@ -89,313 +97,88 @@ export default async function EquipePage({ params }: EquipePageProps) {
           { name: equipe.nom, url: `/equipes/${equipe.slug}` },
         ]}
       />
-      {/* Background Image avec overlay */}
-      {equipe.banniere && (
-        <div className="fixed inset-0 z-0">
+      {/* Fond : bannière très assombrie si l'admin en a mis une, sinon halo orange */}
+      {equipe.banniere ? (
+        <div className="fixed inset-0 z-0" aria-hidden>
           <Image
             src={normalizeImagePath(equipe.banniere, '')}
-            alt={`Background ${equipe.nom}`}
+            alt=""
             fill
+            sizes="100vw"
             className="object-cover"
           />
-          {/* Overlay gradient équilibré */}
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 via-zinc-900/55 to-zinc-900/80" />
+          <div className="absolute inset-0 bg-zinc-900/90" />
         </div>
+      ) : (
+        <div
+          aria-hidden
+          className="fixed inset-0 z-0 bg-zinc-900 bg-[radial-gradient(circle_at_top_right,var(--color-primary-900)_0%,transparent_55%)]"
+        />
       )}
 
-      {/* Fond statique si pas de bannière */}
-      {!equipe.banniere && (
-        <div className="fixed inset-0 z-0 bg-zinc-900 bg-[radial-gradient(circle_at_top_right,var(--color-primary-900)_0%,transparent_55%)]" />
-      )}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+        <Link
+          href="/equipes"
+          className="mb-5 inline-flex items-center text-sm text-neutral-300 transition-colors hover:text-primary-400"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+          Retour aux équipes
+        </Link>
 
-      {/* Content wrapper */}
-      <div className="relative z-10">
-        {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link
-            href="/equipes"
-            className="inline-flex items-center text-neutral-300 hover:text-primary-500 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux équipes
-          </Link>
-        </div>
-
-        {/* Team Header */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="max-w-7xl mx-auto">
-          {/* Featured Image */}
-          <div className="relative h-96 rounded-2xl overflow-hidden mb-8">
-            <Image
-              src={normalizeImagePath(equipe.photo, '/img/equipes/default.jpg')}
-              alt={equipe.nom}
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-
-          {/* Meta */}
-          <div className="mb-6">
-            <span className="inline-block px-4 py-2 bg-primary-500 text-white rounded-full font-semibold">
-              {equipe.categorie}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-display font-bold mb-8 text-white">
-            {equipe.nom}
-          </h1>
-
-          {/* Entraîneur */}
-          {equipe.entraineur && (
-            <div className="inline-flex items-center gap-3 mb-8 bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl px-5 py-3">
-              <User className="w-5 h-5 text-primary-500" />
-              <span className="text-neutral-300">Entraîneur</span>
-              <span className="font-semibold text-primary-500">{equipe.entraineur}</span>
-            </div>
-          )}
-
-          {/* Description */}
-          <div
-            className="prose prose-lg prose-invert max-w-none mb-12 [&_*]:text-neutral-200 [&_p]:text-neutral-200 [&_strong]:text-white [&_em]:text-neutral-300 text-neutral-200"
-            dangerouslySetInnerHTML={{ __html: assainirHtml(equipe.description) }}
+        {/* Bandeau photo étroit */}
+        <header className="relative mb-5 flex min-h-[220px] items-end overflow-hidden rounded-2xl">
+          <Image
+            src={normalizeImagePath(equipe.photo, '/img/equipes/default.jpg')}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1280px) 1216px, 100vw"
+            className="object-cover"
+            style={{ objectPosition: 'center 28%' }}
           />
-
-          {/* Training Schedule & Upcoming Matches - 2 colonnes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Training Schedule */}
-            {equipe.entrainements.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Calendar className="w-5 h-5 text-primary-500" />
-                  Horaires d'entraînement
-                </h2>
-                <div className="space-y-3">
-                  {equipe.entrainements.map((entrainement, index) => (
-                    <div
-                      key={index}
-                      className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar className="w-4 h-4 text-primary-500" />
-                        <span className="font-semibold text-white">{entrainement.jour}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-neutral-300">
-                        <Clock className="w-4 h-4" />
-                        <span>{entrainement.horaire}</span>
-                      </div>
-                      {entrainement.lieu && (
-                        <div className="flex items-center gap-2 text-sm text-neutral-300 mt-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{entrainement.lieu}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upcoming Matches */}
-            {upcomingMatches.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Trophy className="w-5 h-5 text-primary-500" />
-                  Prochains matchs
-                </h2>
-                <div className="space-y-3">
-                  {upcomingMatches.slice(0, 5).map((match) => (
-                    <div
-                      key={match.id}
-                      className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50 hover:border-primary-500/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {match.logoAdversaire && (
-                          <div className="w-8 h-8 relative flex-shrink-0">
-                            <Image
-                              src={match.logoAdversaire}
-                              alt={match.adversaire}
-                              fill
-                              className="object-contain"
-                              unoptimized
-                            />
-                          </div>
-                        )}
-                        <span className="font-semibold text-white">{match.adversaire}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-neutral-300">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          {formatDateHeure(match.date)}
-                        </span>
-                        <span
-                          className={`ml-auto px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            match.domicile
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-blue-500/20 text-blue-400'
-                          }`}
-                        >
-                          {match.domicile ? 'Domicile' : 'Extérieur'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-b from-zinc-950/5 from-25% to-zinc-950/90"
+          />
+          <div className="relative flex w-full flex-col gap-3 px-5 pb-5 pt-16 sm:px-8 sm:pb-6 md:flex-row md:items-end md:justify-between">
+            <div className="min-w-0">
+              <span className="inline-block rounded-full bg-primary-500 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide text-zinc-950">
+                {equipe.categorie}
+              </span>
+              <h1 className="mt-2 break-words font-display text-3xl font-black uppercase leading-none tracking-tight text-white sm:text-4xl lg:text-5xl">
+                {equipe.nom}
+              </h1>
+            </div>
+            {equipe.entraineur && (
+              <p className="flex items-start gap-1.5 text-sm text-neutral-200 sm:text-base md:max-w-[50%] md:text-right">
+                <User className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                <span>
+                  Entraîneur{' '}
+                  <span className="font-semibold text-primary-400">{equipe.entraineur}</span>
+                </span>
+              </p>
             )}
           </div>
+        </header>
 
-          {/* Calendrier complet & Classement - 2 colonnes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Full Calendar */}
-            {allMatches.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Calendar className="w-5 h-5 text-primary-500" />
-                  Calendrier complet
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-700">
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Date
-                        </th>
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Adversaire
-                        </th>
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Score
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allMatches.map((match, index) => (
-                        <tr
-                          key={match.id}
-                          className={`border-b border-zinc-700/50 hover:bg-zinc-900/50 transition-colors ${
-                            index % 2 === 0 ? 'bg-transparent' : 'bg-zinc-900/30'
-                          }`}
-                        >
-                          <td className="py-2 px-2 text-xs text-neutral-300">
-                            {formatJourMoisChiffres(match.date)}
-                            <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-semibold ${
-                              match.domicile
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {match.domicile ? 'Dom.' : 'Ext.'}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2">
-                            <div className="flex items-center gap-2">
-                              {match.logoAdversaire && (
-                                <div className="w-6 h-6 relative flex-shrink-0">
-                                  <Image
-                                    src={match.logoAdversaire}
-                                    alt={match.adversaire}
-                                    fill
-                                    className="object-contain"
-                                    unoptimized
-                                  />
-                                </div>
-                              )}
-                              <span className="text-sm text-white">{match.adversaire}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            {match.termine &&
-                            match.scoreEquipe !== null &&
-                            match.scoreAdversaire !== null ? (
-                              <span
-                                className={`font-bold text-sm ${
-                                  match.scoreEquipe > match.scoreAdversaire
-                                    ? 'text-green-500'
-                                    : match.scoreEquipe < match.scoreAdversaire
-                                    ? 'text-red-500'
-                                    : 'text-yellow-500'
-                                }`}
-                              >
-                                {match.scoreEquipe} - {match.scoreAdversaire}
-                              </span>
-                            ) : (
-                              <span className="text-neutral-400 text-xs">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+        {/* Description */}
+        <div
+          className="prose prose-invert mb-6 max-w-4xl text-base text-neutral-200 sm:text-lg [&_*]:text-neutral-200 [&_em]:text-neutral-300 [&_p]:text-neutral-200 [&_strong]:text-white"
+          dangerouslySetInnerHTML={{ __html: assainirHtml(equipe.description) }}
+        />
 
-            {/* Classement */}
-            {equipe.classement.length > 0 && (
-              <div className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 rounded-xl p-6">
-                <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2 text-white">
-                  <Trophy className="w-5 h-5 text-primary-500" />
-                  Classement de la poule
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-zinc-700">
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Pos
-                        </th>
-                        <th className="text-left py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Équipe
-                        </th>
-                        <th className="text-center py-2 px-2 font-semibold text-neutral-300 text-sm">
-                          Pts
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {equipe.classement.map((team) => {
-                        const isOurTeam = team.club.toUpperCase().includes('HBC AIX') ||
-                                         team.club.toUpperCase().includes('AIX EN SAVOIE')
-                        return (
-                          <tr
-                            key={team.id}
-                            className={`border-b border-zinc-700/50 transition-colors ${
-                              isOurTeam
-                                ? 'bg-primary-500/20 font-bold'
-                                : 'hover:bg-zinc-900/50'
-                            }`}
-                          >
-                            <td className="py-2 px-2 text-center">
-                              <span
-                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm ${
-                                  isOurTeam
-                                    ? 'bg-primary-500 text-white'
-                                    : team.position <= 3
-                                    ? 'bg-zinc-700 text-white font-semibold'
-                                    : 'text-neutral-300'
-                                }`}
-                              >
-                                {team.position}
-                              </span>
-                            </td>
-                            <td className={`py-2 px-2 text-sm ${isOurTeam ? 'text-primary-400' : 'text-white'}`}>
-                              {team.club}
-                            </td>
-                            <td className="py-2 px-2 text-center font-semibold text-white text-sm">
-                              {team.points}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+        <ReperesEquipe reperes={reperes} />
+
+        <div className={`mt-5 grid grid-cols-1 items-start gap-5 ${colonnes}`}>
+          <CalendrierEquipe matchs={equipe.matchs} libelleSaison={libelleSaison(saison)} />
+          {aClassement && <ClassementEquipe lignes={equipe.classement} logos={logos} />}
+          <div className={`grid gap-5 ${aClassement ? 'md:col-span-2 md:grid-cols-2 lg:col-span-1 lg:grid-cols-1' : ''}`}>
+            {equipe.entrainements.length > 0 && (
+              <EntrainementsEquipe entrainements={equipe.entrainements} />
             )}
+            <RejoindreEquipe nom={equipe.nom} />
           </div>
         </div>
-      </div>
       </div>
     </div>
   )

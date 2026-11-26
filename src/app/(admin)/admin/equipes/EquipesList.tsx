@@ -209,7 +209,7 @@ export function EquipesList({ initialEquipes }: EquipesListProps) {
         <div
           role="group"
           aria-label="Équipes sélectionnées"
-          className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-foreground py-2"
+          className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-[color:var(--adm-orange-edge)] bg-[color:var(--adm-orange-wash)] px-4 py-2"
         >
           <p className="mr-auto py-1 pr-2 font-semibold">
             <span className="adm-num-sm">{selectionCount}</span> équipe{pluriel(selectionCount)}{' '}

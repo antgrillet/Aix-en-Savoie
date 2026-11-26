@@ -32,7 +32,7 @@ interface RowActionsProps {
 }
 
 const itemClasses =
-  'min-h-11 cursor-pointer gap-2.5 rounded-[2px] px-2.5 text-[0.9375rem] font-medium md:min-h-9'
+  'min-h-11 cursor-pointer gap-2.5 rounded-md px-2.5 text-[0.9375rem] font-medium md:min-h-9'
 
 /** Menu d'actions d'une ligne de liste, navigable au clavier */
 export function RowActions({ label, items }: RowActionsProps) {
@@ -43,7 +43,7 @@ export function RowActions({ label, items }: RowActionsProps) {
           <MoreVertical aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-52 rounded-[3px] border-foreground p-1">
+      <DropdownMenuContent align="end" className="min-w-52 rounded-lg border-border p-1">
         {items.map((item, index) => {
           if (item === 'separator') {
             return <DropdownMenuSeparator key={`separator-${index}`} className="bg-border" />

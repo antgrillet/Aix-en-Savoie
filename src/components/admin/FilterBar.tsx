@@ -11,6 +11,8 @@ interface ListCountProps {
   total?: number
   singular: string
   plural: string
+  /** Périmètre du compte : « saison 2026-2027 » */
+  scope?: string
   className?: string
 }
 
@@ -18,7 +20,7 @@ interface ListCountProps {
  * Annonce le compte de la liste, en chiffres tabulaires, à droite. Lu aussi
  * par les lecteurs d'écran quand un filtre change le résultat.
  */
-export function ListCount({ shown, total, singular, plural, className }: ListCountProps) {
+export function ListCount({ shown, total, singular, plural, scope, className }: ListCountProps) {
   const filtered = total !== undefined && total !== shown
   const reference = filtered ? total : shown
 
@@ -32,6 +34,7 @@ export function ListCount({ shown, total, singular, plural, className }: ListCou
         </>
       )}{' '}
       {reference > 1 ? plural : singular}
+      {scope && <> · {scope}</>}
     </p>
   )
 }
@@ -99,14 +102,14 @@ export function SearchField({ value, onChange, label, placeholder, className }: 
         onChange={(event) => onChange(event.target.value)}
         aria-label={label}
         placeholder={placeholder ?? label}
-        className="h-11 w-full rounded-[3px] border border-input bg-background pl-9 pr-10 text-base text-foreground transition-colors duration-150 ease-out hover:border-foreground focus-visible:border-foreground md:h-10 md:text-[0.9375rem] [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-11 w-full rounded-lg border border-input bg-background pl-9 pr-10 text-base text-foreground transition-colors duration-150 ease-out hover:border-[color:var(--adm-control)] focus-visible:border-[color:var(--adm-control)] md:h-10 md:text-[0.9375rem] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {value !== '' && (
         <button
           type="button"
           onClick={() => onChange('')}
           aria-label="Effacer la recherche"
-          className="absolute right-0 top-0 grid size-11 place-content-center rounded-[3px] text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground md:size-10"
+          className="absolute right-0 top-0 grid size-11 place-content-center rounded-lg text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground md:size-10"
         >
           <X className="size-4" aria-hidden="true" />
         </button>

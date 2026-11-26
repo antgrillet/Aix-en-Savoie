@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/admin/Button'
@@ -13,6 +14,7 @@ import { RowActions } from '@/components/admin/RowActions'
 import { SimpleSelect } from '@/components/admin/Select'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { StatusMark } from '@/components/admin/StatusMark'
+import { libelleSaison } from '@/lib/saisons'
 import { deleteMatch } from './actions'
 
 interface Match {
@@ -37,6 +39,12 @@ interface MatchsListProps {
   initialMatchs: Match[]
   /** Heure du rendu serveur (ms) : sépare les matchs à venir des scores en attente */
   maintenant: number
+  /** Saison filtrée (« 2026 ») ou « toutes » */
+  saison: string
+  /** Saisons proposées, de la plus récente à la plus ancienne */
+  saisons: number[]
+  /** Saison que voit le site public */
+  saisonAffichee: number
 }
 
 const FUSEAU_CLUB = 'Europe/Paris'
@@ -70,15 +78,25 @@ function nomRencontre(match: Match) {
 /** Score du match, ou la raison pour laquelle il n'y en a pas encore */
 function Score({ match, maintenant }: { match: Match; maintenant: number }) {
   if (match.termine && match.scoreEquipe !== null && match.scoreAdversaire !== null) {
+    const ecart = match.scoreEquipe - match.scoreAdversaire
+    const issue =
+      ecart > 0
+        ? { libelle: 'Victoire', tone: 'ok' as const }
+        : ecart < 0
+          ? { libelle: 'Défaite', tone: 'bad' as const }
+          : { libelle: 'Nul', tone: 'neutral' as const }
     return (
-      <span className="adm-num-sm whitespace-nowrap">
-        {match.scoreEquipe} – {match.scoreAdversaire}
+      <span className="flex flex-wrap items-center gap-2">
+        <span className="adm-num-sm whitespace-nowrap">
+          {match.scoreEquipe} – {match.scoreAdversaire}
+        </span>
+        <StatusMark tone={issue.tone}>{issue.libelle}</StatusMark>
       </span>
     )
   }
 
   if (match.termine) {
-    return <StatusMark tone="dashed">Joué, sans score</StatusMark>
+    return <StatusMark tone="neutral">Joué, sans score</StatusMark>
   }
 
   if (new Date(match.date).getTime() > maintenant) {
@@ -88,7 +106,18 @@ function Score({ match, maintenant }: { match: Match; maintenant: number }) {
   return <StatusMark tone="action">Score en attente</StatusMark>
 }
 
-export function MatchsList({ initialMatchs, maintenant }: MatchsListProps) {
+export function MatchsList({ initialMatchs, maintenant, saison, saisons, saisonAffichee }: MatchsListProps) {
+  const router = useRouter()
+  const saisonOptions = [
+    ...saisons.map((s) => ({
+      value: String(s),
+      label: s === saisonAffichee ? `${libelleSaison(s)} (sur le site)` : libelleSaison(s),
+    })),
+    { value: 'toutes', label: 'Toutes les saisons' },
+  ]
+  const changerSaison = (valeur: string) => {
+    router.push(valeur === String(saisonAffichee) ? '/admin/matchs' : `/admin/matchs?saison=${valeur}`)
+  }
   const [matchs, setMatchs] = useState(initialMatchs)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -190,7 +219,7 @@ export function MatchsList({ initialMatchs, maintenant }: MatchsListProps) {
       phone: 'marks',
       className: 'w-24',
       cell: (match) => (
-        <StatusMark tone={match.domicile ? 'fill' : 'solid'}>
+        <StatusMark tone={match.domicile ? 'ink' : 'neutral'}>
           {match.domicile ? 'Domicile' : 'Extérieur'}
         </StatusMark>
       ),
@@ -220,8 +249,21 @@ export function MatchsList({ initialMatchs, maintenant }: MatchsListProps) {
           total: matchs.length,
           singular: 'match',
           plural: 'matchs',
+          scope:
+            saison === 'toutes'
+              ? 'toutes saisons'
+              : Number(saison) === saisonAffichee
+                ? `saison ${libelleSaison(saisonAffichee)}, celle du site`
+                : `saison ${libelleSaison(Number(saison))}`,
         }}
       >
+        <SimpleSelect
+          value={saison}
+          onValueChange={changerSaison}
+          options={saisonOptions}
+          aria-label="Saison"
+          className="md:w-60"
+        />
         <SimpleSelect
           value={selectedEquipeId}
           onValueChange={setSelectedEquipeId}
@@ -265,7 +307,7 @@ export function MatchsList({ initialMatchs, maintenant }: MatchsListProps) {
             </EmptyState>
           ) : (
             <EmptyState
-              title="Aucun match pour l'instant"
+              title={saison === 'toutes' ? "Aucun match pour l'instant" : `Aucun match en ${libelleSaison(Number(saison))}`}
               action={
                 <Button asChild>
                   <Link href="/admin/matchs/new">
@@ -293,7 +335,7 @@ export function MatchsList({ initialMatchs, maintenant }: MatchsListProps) {
         title="Supprimer ce match ?"
         description={
           matchASupprimer
-            ? `${nomRencontre(matchASupprimer)}, ${formatJourLong.format(new Date(matchASupprimer.date))}. Cette action est irréversible : le match et les inscriptions de bénévoles qui y sont rattachées seront définitivement supprimés.`
+            ? `${nomRencontre(matchASupprimer)}, ${formatJourLong.format(new Date(matchASupprimer.date))}. Cette action est irréversible : le match sera définitivement supprimé.`
             : 'Cette action est irréversible. Le match sera définitivement supprimé.'
         }
         confirmLabel="Supprimer le match"

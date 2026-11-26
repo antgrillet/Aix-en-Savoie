@@ -43,7 +43,7 @@ export function MessageView({ message }: { message: ContactMessage }) {
         <article className="min-w-0 max-w-[58ch]">
           {hasMarks && (
             <p className="mb-4 flex flex-wrap items-center gap-1.5">
-              {message.experience && <StatusMark tone="fill">Souhaite rejoindre une équipe</StatusMark>}
+              {message.experience && <StatusMark tone="action">Souhaite rejoindre une équipe</StatusMark>}
               {message.archived && <StatusBadge status="archived" />}
             </p>
           )}

@@ -51,7 +51,6 @@ export async function POST(
   }
 
   revalidatePath('/')
-  revalidatePath('/calendrier')
   revalidatePath('/equipes')
   revalidatePath(`/equipes/${equipe.slug}`)
 

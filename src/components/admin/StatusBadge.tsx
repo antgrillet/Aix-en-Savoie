@@ -7,12 +7,12 @@ interface StatusBadgeProps {
 }
 
 const STATUSES: Record<StatusBadgeProps['status'], { label: string; tone: StatusTone }> = {
-  published: { label: 'Publié', tone: 'solid' },
-  draft: { label: 'Brouillon', tone: 'dashed' },
-  read: { label: 'Lu', tone: 'solid' },
+  published: { label: 'Publié', tone: 'ok' },
+  draft: { label: 'Brouillon', tone: 'neutral' },
+  read: { label: 'Lu', tone: 'neutral' },
   unread: { label: 'Non lu', tone: 'action' },
-  archived: { label: 'Archivé', tone: 'solid' },
-  featured: { label: 'Vedette', tone: 'fill' },
+  archived: { label: 'Archivé', tone: 'neutral' },
+  featured: { label: 'Vedette', tone: 'ink' },
 }
 
 /**

@@ -1,90 +1,71 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
-
-export interface CategoryOption {
+export interface GroupeOption {
   value: string
   label: string
 }
 
 interface TeamsFiltersProps {
-  categories: CategoryOption[]
-  activeCategory: string
-  onCategoryChange: (category: string) => void
+  groupes: GroupeOption[]
+  activeGroupe: string
+  onGroupeChange: (groupe: string) => void
 }
 
-/** Libellés « parents » pour les catégories fédérales, du plus jeune au plus âgé. */
-const CATEGORY_LABELS: Record<string, string> = {
-  Découverte: 'Baby Hand',
-  Départemental: '-13 ans / -11 ans',
-  Excellence: '-15 ans',
-  Elite: '-18 ans',
-  Prénationale: 'Prénationale',
-  N2F: 'Nationale 2 Féminine',
-  N2M: 'Nationale 2 Masculine',
-  Mixte: 'Loisirs',
+/**
+ * Groupe d'âge d'une équipe, lu dans son nom puis sa catégorie
+ * (« -18.1M », « -15 Excellence », « U13 »). Sans âge : seniors, ou loisirs.
+ */
+export function getGroupe(nom: string, categorie: string): string {
+  for (const texte of [nom, categorie]) {
+    const age = texte.match(/(?:^|[\s(])(?:-|U)\s?(\d{1,2})(?!\d)/i)
+    if (age) return `-${age[1]}`
+  }
+  if (/loisir/i.test(`${nom} ${categorie}`)) return 'loisirs'
+  return 'seniors'
 }
 
-/** Ordre d'affichage : des plus jeunes vers les seniors. */
-const CATEGORY_ORDER = [
-  'Découverte',
-  'Départemental',
-  'Excellence',
-  'Elite',
-  'Prénationale',
-  'N2F',
-  'N2M',
-  'Mixte',
-]
+const LIBELLES: Record<string, string> = { seniors: 'Seniors', loisirs: 'Loisirs' }
 
-export function getCategoryLabel(categorie: string) {
-  return CATEGORY_LABELS[categorie] ?? categorie
+/** Ordre d'affichage : seniors, puis des plus âgés aux plus jeunes, puis loisirs. */
+function rangGroupe(groupe: string) {
+  if (groupe === 'seniors') return -100
+  if (groupe === 'loisirs') return 100
+  return Number(groupe) // « -18 » → -18, « -9 » → -9
 }
 
-export function buildCategoryOptions(categories: string[]): CategoryOption[] {
-  const unique = Array.from(new Set(categories.filter(Boolean)))
-
-  unique.sort((a, b) => {
-    const indexA = CATEGORY_ORDER.indexOf(a)
-    const indexB = CATEGORY_ORDER.indexOf(b)
-    if (indexA === -1 && indexB === -1) return a.localeCompare(b, 'fr')
-    if (indexA === -1) return 1
-    if (indexB === -1) return -1
-    return indexA - indexB
-  })
-
-  return unique.map((value) => ({ value, label: getCategoryLabel(value) }))
+export function buildGroupeOptions(groupes: string[]): GroupeOption[] {
+  return Array.from(new Set(groupes))
+    .sort((a, b) => rangGroupe(a) - rangGroupe(b))
+    .map((value) => ({ value, label: LIBELLES[value] ?? value }))
 }
 
-export function TeamsFilters({ categories, activeCategory, onCategoryChange }: TeamsFiltersProps) {
-  const shouldReduceMotion = useReducedMotion()
-  const options: CategoryOption[] = [{ value: 'all', label: 'Toutes' }, ...categories]
+export function TeamsFilters({ groupes, activeGroupe, onGroupeChange }: TeamsFiltersProps) {
+  const options: GroupeOption[] = [{ value: 'all', label: 'Toutes' }, ...groupes]
 
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl p-6 shadow-xl mb-8">
-      <h3 className="text-lg text-white font-display font-semibold mb-4">Catégories</h3>
-      <div className="flex flex-wrap gap-3" role="group" aria-label="Filtrer les équipes par catégorie">
-        {options.map((category) => {
-          const isActive = activeCategory === category.value
-          return (
-            <motion.button
-              key={category.value}
-              type="button"
-              onClick={() => onCategoryChange(category.value)}
-              aria-pressed={isActive}
-              className={`px-4 py-2 font-medium rounded-lg shadow-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 ${
-                isActive
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-zinc-800 text-white hover:bg-zinc-700'
-              }`}
-              whileHover={shouldReduceMotion ? undefined : { scale: 1.04 }}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.96 }}
-            >
-              {category.label}
-            </motion.button>
-          )
-        })}
-      </div>
+    <div
+      className="mb-8 flex flex-wrap gap-2.5"
+      role="group"
+      aria-label="Filtrer les équipes par catégorie d'âge"
+    >
+      {options.map((option) => {
+        const isActive = activeGroupe === option.value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onGroupeChange(option.value)}
+            aria-pressed={isActive}
+            className={`min-h-11 rounded-full border px-4 font-mono text-sm uppercase tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-[18px] ${
+              isActive
+                ? 'border-primary-500 bg-primary-500 font-bold text-zinc-950'
+                : 'border-white/20 text-zinc-200 hover:border-white/40 hover:bg-white/5'
+            }`}
+          >
+            {option.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -97,7 +97,7 @@ export function SortableEquipes({
   }
 
   return (
-    <div>
+    <div className="adm-panel overflow-hidden">
       {/* Grand écran : tableau */}
       <DndContext id="equipes-tableau" {...dnd}>
         <table className="adm-table hidden md:table">
@@ -153,7 +153,7 @@ export function SortableEquipes({
 
       {/* Téléphone : lignes empilées */}
       <div className="md:hidden">
-        <div className="flex min-h-11 items-center gap-3 border-b border-foreground">
+        <div className="flex min-h-11 items-center gap-3 border-b border-border px-4">
           <Checkbox
             id="equipes-tout-selectionner"
             checked={allSelected}
@@ -164,7 +164,7 @@ export function SortableEquipes({
           </label>
         </div>
         <DndContext id="equipes-lignes" {...dnd}>
-          <ul className="adm-rows" aria-label="Équipes">
+          <ul className="adm-rows px-4" aria-label="Équipes">
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               {equipes.map((equipe) => (
                 <PhoneRow
@@ -200,7 +200,7 @@ function Marks({ equipe }: { equipe: EquipeRow }) {
     <span className="flex flex-wrap items-center gap-1.5 md:flex-nowrap">
       <StatusBadge status={equipe.published ? 'published' : 'draft'} />
       {equipe.featured && (
-        <StatusMark tone="fill" icon={Home}>
+        <StatusMark tone="ink" icon={Home}>
           Accueil
         </StatusMark>
       )}
@@ -220,7 +220,7 @@ function TableRow({ equipe, isSelected, onToggleSelect, actions }: RowProps) {
     <tr
       ref={setNodeRef}
       style={style}
-      className={cn(isDragging && 'relative z-10 bg-background [&>td]:border-foreground')}
+      className={cn(isDragging && 'relative z-10 bg-background shadow-[0_8px_24px_-6px_rgb(31_30_27/0.25)]')}
     >
       <td>
         <Checkbox

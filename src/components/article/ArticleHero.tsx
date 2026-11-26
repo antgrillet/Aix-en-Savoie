@@ -1,70 +1,46 @@
 import Image from 'next/image'
-import { Calendar, Clock, Eye } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import Link from 'next/link'
+import { formatDateLongue } from '@/lib/dates'
 
 interface ArticleHeroProps {
   title: string
   categorie: string
   date: Date
   image: string
-  views: number
   readingTime: number
 }
 
-export function ArticleHero({
-  title,
-  categorie,
-  date,
-  image,
-  views,
-  readingTime,
-}: ArticleHeroProps) {
+/** En-tête de l'article : catégorie, titre, date, temps de lecture et photo. */
+export function ArticleHero({ title, categorie, date, image, readingTime }: ArticleHeroProps) {
   return (
-    <div className="relative w-full h-[340px] md:h-[520px] overflow-hidden mb-12">
-      <Image
-        src={image}
-        alt={title}
-        fill
-        priority
-        className="object-cover"
-        sizes="100vw"
-      />
+    <header>
+      <Link
+        href={`/actus?categorie=${encodeURIComponent(categorie)}`}
+        className="inline-block rounded-full bg-primary-500 px-3.5 py-1 text-[13px] font-extrabold uppercase leading-normal tracking-wide text-zinc-950 transition-colors hover:bg-primary-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400"
+      >
+        {categorie}
+      </Link>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-black/60 to-transparent" />
+      <h1 className="mt-3.5 mb-3 font-display text-3xl font-black leading-[1.08] tracking-tight text-white break-words sm:text-4xl lg:text-[44px]">
+        {title}
+      </h1>
 
-      <div className="absolute inset-0 flex flex-col justify-end">
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12">
-          <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-500 rounded-full text-sm font-semibold text-white mb-4">
-              {categorie}
-            </div>
+      <p className="font-mono text-xs uppercase tracking-[0.1em] text-neutral-400">
+        <time dateTime={date.toISOString()}>{formatDateLongue(date)}</time>
+        <span aria-hidden="true"> · </span>
+        {readingTime} min de lecture
+      </p>
 
-            <h1 className="font-display font-bold text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-              {title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm md:text-base text-neutral-300">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary-500" />
-                <time dateTime={date.toISOString()}>
-                  {format(date, 'dd MMMM yyyy', { locale: fr })}
-                </time>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary-500" />
-                <span>{readingTime} min de lecture</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-primary-500" />
-                <span>{views} vues</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="relative mt-5 mb-7 aspect-[3/2] overflow-hidden rounded-[14px] bg-zinc-800 sm:aspect-[16/10]">
+        <Image
+          src={image}
+          alt=""
+          fill
+          preload
+          className="object-cover"
+          sizes="(min-width: 1024px) 700px, 100vw"
+        />
       </div>
-    </div>
+    </header>
   )
 }

@@ -1,8 +1,12 @@
 import { PageHeader } from '@/components/admin/PageHeader'
 import { HeroBackgroundForm } from './HeroBackgroundForm'
 import { PageBackgroundForm } from './PageBackgroundForm'
-import { CalendrierPasswordForm } from './CalendrierPasswordForm'
-import { getHeroBackground, getPageBackground, getCalendrierPassword } from './actions'
+import { SaisonForm } from './SaisonForm'
+import { ArbitrageReglagesForm } from './ArbitrageReglagesForm'
+import { getReglagesArbitrageAdmin } from '../arbitrage/actions'
+import { SITE_URL } from '@/lib/seo'
+import { getSaisonFixee, saisonAutomatique } from '@/lib/saison-courante'
+import { getHeroBackground, getPageBackground } from './actions'
 
 export const metadata = {
   title: 'Paramètres - Admin',
@@ -19,27 +23,34 @@ export default async function ParametresPage() {
     newsBackground,
     teamsBackground,
     contactBackground,
-    calendrierPassword,
+    saisonFixee,
+    reglagesArbitrage,
   ] = await Promise.all([
     getHeroBackground(),
     getPageBackground('partenaires'),
     getPageBackground('actus'),
     getPageBackground('equipes'),
     getPageBackground('contact'),
-    getCalendrierPassword(),
+    getSaisonFixee(),
+    getReglagesArbitrageAdmin(),
   ])
 
   return (
     <div>
       <PageHeader
         title="Paramètres"
-        description="L'accès au calendrier des bénévoles et les images de fond du site. Chaque réglage s'enregistre séparément."
+        description="La saison affichée, les réglages de l'arbitrage et les images de fond du site. Chaque réglage s'enregistre séparément."
       />
 
       {/* Une section par réglage : le trait de l'en-tête tient lieu de premier filet */}
       <div>
-        {/* Le mot de passe reste sur le serveur : la page ne reçoit que son existence */}
-        <CalendrierPasswordForm isDefined={calendrierPassword !== ''} />
+        <SaisonForm saisonFixee={saisonFixee} saisonAutomatique={saisonAutomatique()} />
+
+        <ArbitrageReglagesForm
+          lienPublic={`${SITE_URL}/arbitrage`}
+          emailComptable={reglagesArbitrage.emailComptable}
+          bareme={reglagesArbitrage.bareme}
+        />
 
         <HeroBackgroundForm initialImage={heroBackgroundSetting?.value || ''} />
 

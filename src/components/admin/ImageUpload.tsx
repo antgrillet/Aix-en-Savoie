@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { CircleAlert, Loader2, Trash2, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/admin/Button'
-import { Contour } from '@/components/admin/Contour'
 
 interface ImageUploadProps {
   value?: string
@@ -100,9 +99,8 @@ export function ImageUpload({
     <div className={cn('space-y-2', className)}>
       {value ? (
         <div className="space-y-2">
-          <div className="relative h-56 w-full overflow-hidden rounded-[3px] text-foreground sm:h-64">
+          <div className="relative h-56 w-full overflow-hidden rounded-lg border border-border sm:h-64">
             <Image src={value} alt={previewAlt} fill sizes="(min-width: 1024px) 640px, 100vw" className="object-cover" />
-            <Contour />
           </div>
           <Button
             id={id}
@@ -132,12 +130,13 @@ export function ImageUpload({
           aria-busy={isUploading || undefined}
           aria-describedby={[describedBy, error ? errorId : undefined].filter(Boolean).join(' ') || undefined}
           className={cn(
-            'group relative grid min-h-40 w-full place-content-center justify-items-center gap-1.5 rounded-[3px] px-6 py-8 text-center transition-colors duration-150 ease-out disabled:cursor-not-allowed',
-            isDragging ? 'text-primary' : 'text-foreground',
+            'group relative grid min-h-40 w-full place-content-center justify-items-center gap-1.5 rounded-lg border px-6 py-8 text-center transition-colors duration-150 ease-out disabled:cursor-not-allowed',
+            isDragging
+              ? 'border-primary bg-[color:var(--adm-orange-wash)] text-[color:var(--adm-orange-ink)]'
+              : 'border-border bg-muted text-foreground hover:border-[color:var(--adm-control)]',
             disabled && 'opacity-50'
           )}
         >
-          <Contour dashed={!isDragging} />
           {isUploading ? (
             <>
               <Loader2 className="size-6 animate-spin" aria-hidden="true" />
@@ -166,7 +165,7 @@ export function ImageUpload({
       />
 
       {error && (
-        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-[0.8125rem] font-medium text-destructive">
+        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-[0.875rem] font-medium text-destructive">
           <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </p>

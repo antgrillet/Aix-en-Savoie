@@ -1,340 +1,330 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ArrowRight, Plus } from 'lucide-react'
-import type { ATraiter } from '@/components/admin/a-traiter'
-import { Button } from '@/components/admin/Button'
+import { SyncButton, SyncProvider } from '@/app/(admin)/admin/equipes/SyncButton'
+import type { EtatSynchro } from '@/components/admin/etat-synchro'
 import { EmptyState } from '@/components/admin/EmptyState'
 import { PageHeader, Section } from '@/components/admin/PageHeader'
-import { StatusBadge } from '@/components/admin/StatusBadge'
-import { StatusMark } from '@/components/admin/StatusMark'
-
-const FUSEAU_CLUB = 'Europe/Paris'
-
-const formatJour = new Intl.DateTimeFormat('fr-FR', {
-  timeZone: FUSEAU_CLUB,
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-})
-
-const formatHeure = new Intl.DateTimeFormat('fr-FR', {
-  timeZone: FUSEAU_CLUB,
-  hour: '2-digit',
-  minute: '2-digit',
-})
-
-const formatDateCourte = new Intl.DateTimeFormat('fr-FR', {
-  timeZone: FUSEAU_CLUB,
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
+import { StatusDot, StatusMark, type StatusTone } from '@/components/admin/StatusMark'
+import { formatHeure, formatJourCourt, ilYa, pluriel } from '@/components/admin/temps'
+import type { Urgence } from '@/components/admin/urgences'
 
 const formatNombre = new Intl.NumberFormat('fr-FR')
 
-function pluriel(nombre: number, singulier: string, plurielle: string) {
-  return nombre > 1 ? plurielle : singulier
+export interface MatchWeekend {
+  id: number
+  date: Date
+  adversaire: string
+  lieu: string
+  equipe: { nom: string; categorie: string }
+  competition: string | null
 }
 
-const lienSection = 'adm-link inline-flex min-h-11 items-center text-[0.8125rem] font-medium md:min-h-8'
+export interface MessageRecent {
+  id: number
+  nom: string
+  prenom: string
+  extrait: string
+  read: boolean
+  createdAt: Date
+}
 
 export interface DashboardViewProps {
-  aTraiter: ATraiter
-  articlesCount: number
-  equipesCount: number
-  matchsUpcoming: number
-  partenairesCount: number
-  inscriptionsCount: number
-  totalViews: number
-  upcomingMatches: {
-    id: number
-    adversaire: string
-    date: Date
-    domicile: boolean
-    equipe: { nom: string }
-  }[]
-  recentArticles: {
-    id: number
-    titre: string
-    categorie: string
-    createdAt: Date
-    published: boolean
-  }[]
-  popularArticles: { id: number; titre: string; views: number }[]
-  recentInscriptions: { id: number; nom: string; prenom: string; createdAt: Date }[]
+  maintenant: Date
+  /** « 28 et 29 novembre » */
+  titreWeekend: string
+  saison: string
+  urgences: Urgence[]
+  domicile: MatchWeekend[]
+  exterieur: number
+  synchro: EtatSynchro
+  messages: MessageRecent[]
+  messagesNonLus: number
+}
+
+/* --------------------------------------------------------------------------
+ * Urgences : une carte par tâche, la plus pressante en premier et plus grosse
+ * ------------------------------------------------------------------------ */
+
+function CarteUrgence({ urgence, premiere }: { urgence: Urgence; premiere: boolean }) {
+  const enAvant = premiere && (urgence.bloquant || urgence.urgent)
+  return (
+    <li className="flex">
+      <Link
+        href={urgence.href}
+        className="adm-urgence group w-full"
+        data-urgent={urgence.urgent ? '' : undefined}
+        data-bloquant={urgence.bloquant ? '' : undefined}
+      >
+        <span className="flex items-baseline gap-3 sm:block">
+          <span
+            className={cn(
+              enAvant ? 'adm-num-xl' : 'adm-num-lg',
+              urgence.bloquant && 'text-[color:var(--adm-bad)]',
+              urgence.urgent && 'text-[color:var(--adm-orange-ink)]'
+            )}
+          >
+            {formatNombre.format(urgence.nombre)}
+          </span>
+          <span className="block font-semibold leading-snug group-hover:underline sm:mt-1">
+            {urgence.libelle}
+          </span>
+        </span>
+        <span className="adm-meta block">{urgence.detail}</span>
+        <span className="mt-auto pt-2.5">
+          <StatusMark tone={urgence.echeance.tone}>{urgence.echeance.texte}</StatusMark>
+        </span>
+      </Link>
+    </li>
+  )
+}
+
+/* --------------------------------------------------------------------------
+ * Week-end au gymnase : les matchs à domicile
+ * ------------------------------------------------------------------------ */
+
+function WeekendGymnase({ domicile, exterieur }: { domicile: MatchWeekend[]; exterieur: number }) {
+  const lieux = [...new Set(domicile.map((match) => match.lieu.split(',')[0].trim()).filter(Boolean))]
+  return (
+    <Section
+      title="Ce week-end au gymnase"
+      count={
+        domicile.length > 0
+          ? `${domicile.length} ${pluriel(domicile.length, 'match', 'matchs')} à domicile${lieux.length === 1 ? ` · ${lieux[0]}` : ''}`
+          : undefined
+      }
+      action={
+        <Link href="/admin/matchs" className="adm-more">
+          Matchs <ArrowRight className="size-3.5" aria-hidden="true" />
+        </Link>
+      }
+    >
+      {domicile.length === 0 ? (
+        <EmptyState inset title="Aucun match à domicile ce week-end">
+          {exterieur > 0
+            ? `${exterieur} ${pluriel(exterieur, 'match', 'matchs')} à l'extérieur.`
+            : 'Aucun match enregistré sur ce week-end.'}
+        </EmptyState>
+      ) : (
+        <ul className="adm-rows px-4">
+          {domicile.map((match) => (
+            <li key={match.id} className="relative py-3">
+              <p className="min-w-0 leading-snug">
+                <span className="adm-meta block first-letter:uppercase">
+                  {formatJourCourt(match.date)} · {formatHeure(match.date)}
+                </span>
+                <Link href={`/admin/matchs/${match.id}`} className="adm-row-link font-semibold">
+                  {match.equipe.nom} <span className="font-normal text-muted-foreground">contre</span> {match.adversaire}
+                </Link>
+                <span className="adm-meta block truncate">{match.competition || match.equipe.categorie}</span>
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  )
+}
+
+/* --------------------------------------------------------------------------
+ * Synchronisation FFHandball : le dernier passage et son journal
+ * ------------------------------------------------------------------------ */
+
+function toneJournal(status: string): StatusTone {
+  if (status === 'error') return 'bad'
+  if (status === 'warning') return 'warn'
+  return 'ok'
+}
+
+function resumeJournal(ligne: EtatSynchro['journal'][number]): string {
+  if (ligne.status === 'error') return ligne.message
+  const changes = ligne.crees + ligne.modifies
+  return changes === 0
+    ? 'aucun changement'
+    : `${changes} ${pluriel(changes, 'match créé ou modifié', 'matchs créés ou modifiés')}`
+}
+
+function Synchronisation({ synchro, maintenant }: { synchro: EtatSynchro; maintenant: Date }) {
+  const { passage } = synchro
+  // Les lignes « aucun changement » se répètent : seules les erreurs et les changements s'affichent
+  const notables = synchro.journal
+    .filter((ligne) => ligne.status !== 'success' || ligne.crees + ligne.modifies > 0)
+    .slice(0, 5)
+  const chiffres = [
+    { nombre: passage.equipes, libelle: pluriel(passage.equipes, 'équipe lue', 'équipes lues') },
+    { nombre: passage.modifies, libelle: pluriel(passage.modifies, 'match modifié', 'matchs modifiés') },
+    {
+      nombre: passage.erreurs,
+      libelle: pluriel(passage.erreurs, 'en erreur', 'en erreur'),
+      tone: passage.erreurs > 0 ? 'text-[color:var(--adm-bad)]' : undefined,
+    },
+  ]
+
+  return (
+    <SyncProvider>
+      <section id="synchro" className="adm-panel scroll-mt-20">
+        <div className="adm-panel-head">
+          <h2 className="adm-h2">Synchronisation FFHandball</h2>
+          <div className="ml-auto">
+            <SyncButton />
+          </div>
+        </div>
+        <p className="flex items-center gap-2 px-[1.125rem] pt-3 text-[0.875rem]">
+          <StatusDot tone={synchro.tone} />
+          <span className="first-letter:uppercase">{synchro.derniere ? synchro.libelle : 'Jamais synchronisé'}</span>
+        </p>
+        {synchro.derniere && (
+          <dl className="grid grid-cols-3 gap-3 border-b border-[color:var(--adm-line-2)] px-[1.125rem] py-3">
+            {chiffres.map((chiffre) => (
+              <div key={chiffre.libelle} className="flex flex-col-reverse">
+                <dt className="adm-meta">{chiffre.libelle}</dt>
+                <dd className={cn('adm-num-md', chiffre.tone)}>{formatNombre.format(chiffre.nombre)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {synchro.derniere &&
+          (notables.length === 0 ? (
+            <p className="adm-meta px-[1.125rem] py-3">Dernier passage : aucun changement, aucune erreur.</p>
+          ) : (
+            <ol aria-label="Journal de synchronisation" className="adm-rows px-[1.125rem] pb-1">
+              {notables.map((ligne) => {
+                const tone = toneJournal(ligne.status)
+                return (
+                  <li key={ligne.id} className="flex gap-3 py-2 text-[0.875rem]">
+                    <time dateTime={ligne.date.toISOString()} className="w-[5.5rem] shrink-0 text-muted-foreground">
+                      {ilYa(ligne.date, maintenant).replace(/^il y a /, '')}
+                    </time>
+                    <span className="line-clamp-2 min-w-0 flex-1">
+                      <span className="font-semibold">{ligne.equipe}</span>
+                      {' · '}
+                      <span
+                        className={cn(
+                          tone === 'bad' && 'text-[color:var(--adm-bad)]',
+                          tone === 'warn' && 'text-[color:var(--adm-warn)]',
+                          tone === 'ok' && 'text-muted-foreground'
+                        )}
+                      >
+                        {tone === 'bad' ? 'Erreur : ' : tone === 'warn' ? 'Avertissement : ' : ''}
+                        {resumeJournal(ligne)}
+                      </span>
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          ))}
+      </section>
+    </SyncProvider>
+  )
+}
+
+/* --------------------------------------------------------------------------
+ * Derniers messages
+ * ------------------------------------------------------------------------ */
+
+function DerniersMessages({
+  messages,
+  nonLus,
+  maintenant,
+}: {
+  messages: MessageRecent[]
+  nonLus: number
+  maintenant: Date
+}) {
+  return (
+    <Section
+      title="Messages"
+      count={nonLus > 0 ? `${formatNombre.format(nonLus)} ${pluriel(nonLus, 'non lu', 'non lus')}` : undefined}
+      action={
+        <Link href="/admin/messages" className="adm-more">
+          Tout voir <ArrowRight className="size-3.5" aria-hidden="true" />
+        </Link>
+      }
+    >
+      {messages.length === 0 ? (
+        <p className="adm-meta px-[1.125rem] py-4">Aucun message reçu par le formulaire de contact.</p>
+      ) : (
+        <ul className="adm-rows">
+          {messages.map((message) => (
+            <li key={message.id} className="relative flex items-center gap-3 px-[1.125rem] py-2.5">
+              <StatusDot tone={message.read ? 'neutral' : 'action'} className={cn(message.read && 'bg-transparent ring-1 ring-[color:var(--adm-line)]')} />
+              <span className="min-w-0 flex-1 leading-snug">
+                <Link
+                  href={`/admin/messages/${message.id}`}
+                  className={cn('adm-row-link block truncate hover:underline', !message.read && 'font-semibold')}
+                >
+                  {message.prenom} {message.nom}
+                </Link>
+                <span className="adm-meta block truncate">
+                  {ilYa(message.createdAt, maintenant)} · {message.extrait}
+                </span>
+              </span>
+              <StatusMark tone={message.read ? 'neutral' : 'action'} className="shrink-0">
+                {message.read ? 'Lu' : 'Non lu'}
+              </StatusMark>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  )
 }
 
 /**
- * Tableau de bord : ce qui attend une action d'abord, puis les listes, puis
- * les totaux sur une seule bande. La page (`admin/page.tsx`) fait les lectures,
- * cette vue ne fait qu'afficher.
+ * Tableau de bord : l'urgent en haut et en gros, classé par échéance ; puis le
+ * week-end au gymnase, l'état de la synchro et les derniers messages. La page
+ * (`admin/page.tsx`) fait les lectures, cette vue ne fait qu'afficher.
  */
 export function DashboardView({
-  aTraiter,
-  articlesCount,
-  equipesCount,
-  matchsUpcoming,
-  partenairesCount,
-  inscriptionsCount,
-  totalViews,
-  upcomingMatches,
-  recentArticles,
-  popularArticles,
-  recentInscriptions,
+  maintenant,
+  titreWeekend,
+  saison,
+  urgences,
+  domicile,
+  exterieur,
+  synchro,
+  messages,
+  messagesNonLus,
 }: DashboardViewProps) {
-  // Ce qui attend une action, du plus pressant au moins pressant
-  const taches = [
-    {
-      nombre: aTraiter.messagesNonLus,
-      libelle: pluriel(aTraiter.messagesNonLus, 'message non lu', 'messages non lus'),
-      detail: 'Reçus par le formulaire de contact du site.',
-      href: '/admin/messages',
-    },
-    {
-      nombre: aTraiter.scoresEnAttente,
-      libelle: pluriel(aTraiter.scoresEnAttente, 'score en attente', 'scores en attente'),
-      detail:
-        'Matchs joués ces 30 derniers jours sans résultat : relancez la synchronisation ou saisissez le score.',
-      href: '/admin/resultats',
-    },
-    {
-      nombre: aTraiter.postesAPourvoir,
-      libelle: pluriel(
-        aTraiter.postesAPourvoir,
-        'poste de bénévole à pourvoir',
-        'postes de bénévoles à pourvoir'
-      ),
-      detail: `Sur ${aTraiter.matchsARenforcer} ${pluriel(aTraiter.matchsARenforcer, 'match', 'matchs')} à domicile à venir.`,
-      href: '/admin/inscriptions',
-    },
-    {
-      nombre: aTraiter.brouillons,
-      libelle: pluriel(aTraiter.brouillons, 'article en brouillon', 'articles en brouillon'),
-      detail: 'Écrits, pas encore visibles sur le site.',
-      href: '/admin/articles?statut=draft',
-    },
-    {
-      nombre: aTraiter.equipesSansLien,
-      libelle: pluriel(
-        aTraiter.equipesSansLien,
-        'équipe sans lien FFHANDBALL',
-        'équipes sans lien FFHANDBALL'
-      ),
-      detail: 'Sans ce lien, leurs matchs ne se synchronisent pas.',
-      href: '/admin/equipes',
-    },
-  ].filter((tache) => tache.nombre > 0)
-
-  const totaux = [
-    { nombre: articlesCount, libelle: pluriel(articlesCount, 'article', 'articles') },
-    { nombre: equipesCount, libelle: pluriel(equipesCount, 'équipe', 'équipes') },
-    { nombre: matchsUpcoming, libelle: pluriel(matchsUpcoming, 'match à venir', 'matchs à venir') },
-    {
-      nombre: partenairesCount,
-      libelle: pluriel(partenairesCount, 'partenaire publié', 'partenaires publiés'),
-    },
-    {
-      nombre: inscriptionsCount,
-      libelle: pluriel(inscriptionsCount, 'inscription de bénévole', 'inscriptions de bénévoles'),
-    },
-    {
-      nombre: totalViews,
-      libelle: pluriel(totalViews, "vue d'article", "vues d'articles"),
-    },
-    // Tant qu'aucune vue n'est comptée, le chiffre et le classement n'apprennent rien
-  ].filter((total) => total.libelle !== "vue d'article" || total.nombre > 0)
-  const vuesComptees = totalViews > 0
+  const total = domicile.length + exterieur
+  const sousTitre = [
+    total === 0
+      ? 'Aucun match ce week-end'
+      : `${domicile.length} ${pluriel(domicile.length, 'match', 'matchs')} à domicile · ${exterieur} à l'extérieur`,
+    `saison ${saison}, celle que voit le public`,
+  ].join(' · ')
 
   return (
     <div>
-      <PageHeader
-        title="Tableau de bord"
-        actions={
-          <Button asChild>
-            <Link href="/admin/articles/new">
-              <Plus aria-hidden="true" />
-              Nouvel article
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={`Week-end du ${titreWeekend}`} description={sousTitre} />
 
-      <Section title="À traiter" count={taches.length > 0 ? taches.length : undefined}>
-        {taches.length === 0 ? (
-          <EmptyState title="Rien n'attend">
-            <p>
-              Les messages non lus, les scores manquants, les postes de bénévoles à pourvoir et les
-              brouillons apparaîtront ici dès qu'ils demanderont une action.
+      <section aria-labelledby="titre-a-traiter" className="mb-5">
+        <h2 id="titre-a-traiter" className="sr-only">
+          À traiter
+        </h2>
+        {urgences.length === 0 ? (
+          <div className="adm-panel flex items-center gap-3 px-5 py-4">
+            <StatusMark tone="ok">À jour</StatusMark>
+            <p className="adm-meta">
+              Rien n'attend : messages, scores et brouillons apparaîtront ici dès qu'ils demanderont une action.
             </p>
-          </EmptyState>
-        ) : (
-          <ul className="adm-rows">
-            {taches.map((tache) => (
-              <li key={tache.href}>
-                <Link href={tache.href} className="group flex min-h-[4.5rem] items-center gap-4 py-3 sm:gap-6">
-                  <span className="adm-num-lg w-14 shrink-0 text-primary sm:w-16">
-                    {formatNombre.format(tache.nombre)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold leading-snug group-hover:underline">
-                      {tache.libelle}
-                    </span>
-                    <span className="adm-meta block">{tache.detail}</span>
-                  </span>
-                  <ArrowRight
-                    className="size-5 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-1 motion-reduce:transition-none"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <div className="mt-10 grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-2">
-        <Section
-          title="Prochains matchs"
-          action={
-            <Link href="/admin/matchs" className={lienSection}>
-              Tous les matchs
-            </Link>
-          }
-        >
-          {upcomingMatches.length === 0 ? (
-            <p className="adm-meta py-5">
-              Aucun match publié à venir. Ils arrivent avec la synchronisation FFHANDBALL, ou
-              s'ajoutent à la main depuis « Matchs ».
-            </p>
-          ) : (
-            <ul className="adm-rows">
-              {upcomingMatches.map((match) => (
-                <li key={match.id}>
-                  <Link href={`/admin/matchs/${match.id}`} className="group flex min-h-14 items-center gap-4 py-2">
-                    <span className="w-[5.5rem] shrink-0 leading-tight">
-                      <span className="block text-[0.8125rem] font-semibold">
-                        {formatJour.format(match.date)}
-                      </span>
-                      <span className="adm-meta block">{formatHeure.format(match.date)}</span>
-                    </span>
-                    <span className="min-w-0 flex-1 font-medium group-hover:underline max-md:line-clamp-2 md:truncate">
-                      {match.equipe.nom} – {match.adversaire}
-                    </span>
-                    <StatusMark tone={match.domicile ? 'fill' : 'solid'}>
-                      {match.domicile ? 'Domicile' : 'Extérieur'}
-                    </StatusMark>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section
-          title="Derniers articles"
-          action={
-            <Link href="/admin/articles" className={lienSection}>
-              Tous les articles
-            </Link>
-          }
-        >
-          {recentArticles.length === 0 ? (
-            <p className="adm-meta py-5">
-              Aucun article pour l'instant. « Nouvel article », en haut de la page, crée le premier.
-            </p>
-          ) : (
-            <ul className="adm-rows">
-              {recentArticles.map((article) => (
-                <li key={article.id}>
-                  <Link href={`/admin/articles/${article.id}`} className="group flex min-h-14 items-center gap-4 py-2">
-                    <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block font-medium group-hover:underline max-md:line-clamp-2 md:truncate">{article.titre}</span>
-                      <span className="adm-meta block truncate">
-                        {article.categorie} · {formatDateCourte.format(article.createdAt)}
-                      </span>
-                    </span>
-                    <StatusBadge status={article.published ? 'published' : 'draft'} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-      </div>
-
-      <dl
-        aria-label="Totaux du site"
-        className="mt-10 grid grid-cols-3 gap-y-4 border-y-2 border-foreground py-4 md:grid-flow-col md:auto-cols-fr md:grid-cols-none"
-      >
-        {totaux.map((total) => (
-          <div
-            key={total.libelle}
-            className="flex flex-col-reverse justify-end gap-1 border-l border-border px-3 max-md:[&:nth-child(3n+1)]:border-l-0 max-md:[&:nth-child(3n+1)]:pl-0 md:px-4 md:first:border-l-0 md:first:pl-0"
-          >
-            <dt className="adm-micro">{total.libelle}</dt>
-            <dd className="adm-num-md">{formatNombre.format(total.nombre)}</dd>
           </div>
-        ))}
-      </dl>
-
-      <div
-        className={cn(
-          'mt-10 grid grid-cols-1 gap-x-10 gap-y-10',
-          // Seule, la liste des inscriptions prend toute la largeur
-          vuesComptees && 'lg:grid-cols-2'
+        ) : (
+          <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
+            {urgences.map((urgence, index) => (
+              <CarteUrgence key={urgence.id} urgence={urgence} premiere={index === 0} />
+            ))}
+          </ol>
         )}
-      >
-        {vuesComptees && (
-          <Section title="Articles les plus lus">
-            {popularArticles.length === 0 ? (
-              <p className="adm-meta py-5">Aucun article publié pour l'instant.</p>
-            ) : (
-              <ol className="adm-rows">
-                {popularArticles.map((article) => (
-                  <li key={article.id}>
-                    <Link href={`/admin/articles/${article.id}`} className="group flex min-h-12 items-center gap-4 py-2">
-                      <span className="min-w-0 flex-1 font-medium group-hover:underline max-md:line-clamp-2 md:truncate">
-                        {article.titre}
-                      </span>
-                      <span className="shrink-0 text-[0.8125rem]">
-                        <span className="adm-num-sm">{formatNombre.format(article.views)}</span>{' '}
-                        <span className="text-muted-foreground">{pluriel(article.views, 'vue', 'vues')}</span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Section>
-        )}
+      </section>
 
-        <Section
-          title="Dernières inscriptions"
-          action={
-            <Link href="/admin/inscriptions" className={lienSection}>
-              Toutes les inscriptions
-            </Link>
-          }
-        >
-          {recentInscriptions.length === 0 ? (
-            <p className="adm-meta py-5">
-              Aucune inscription pour l'instant. Elles arrivent par le calendrier du site.
-            </p>
-          ) : (
-            <ul className="adm-rows">
-              {recentInscriptions.map((inscription) => (
-                <li key={inscription.id} className="flex min-h-12 items-center gap-4 py-2">
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {inscription.prenom} {inscription.nom}
-                  </span>
-                  <span className="adm-meta shrink-0">
-                    {formatDateCourte.format(inscription.createdAt)} · {formatHeure.format(inscription.createdAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        <WeekendGymnase domicile={domicile} exterieur={exterieur} />
+        <div className="flex min-w-0 flex-col gap-4">
+          <Synchronisation synchro={synchro} maintenant={maintenant} />
+          <DerniersMessages messages={messages} nonLus={messagesNonLus} maintenant={maintenant} />
+        </div>
       </div>
     </div>
   )

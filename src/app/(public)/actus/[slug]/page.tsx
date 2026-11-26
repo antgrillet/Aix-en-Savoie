@@ -8,6 +8,8 @@ import { Breadcrumb } from '@/components/article/Breadcrumb'
 import { ArticleHero } from '@/components/article/ArticleHero'
 import { ShareButtons } from '@/components/article/ShareButtons'
 import { ReadAlso } from '@/components/article/ReadAlso'
+import { ArticleContext, type EquipeContexte } from '@/components/article/ArticleContext'
+import { trouverEquipeLiee } from '@/components/article/equipe-liee'
 import { getServerSession } from '@/lib/auth-utils'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata, SITE_URL } from '@/lib/seo'
@@ -68,27 +70,81 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound()
   }
 
-  const similarArticles = await prisma.article.findMany({
-    where: {
-      published: true,
-      categorie: article.categorie,
-      NOT: {
-        id: article.id,
+  const articleSelect = {
+    id: true,
+    titre: true,
+    slug: true,
+    image: true,
+    date: true,
+  } as const
+
+  const [similarArticles, equipes] = await Promise.all([
+    prisma.article.findMany({
+      where: {
+        published: true,
+        categorie: article.categorie,
+        NOT: { id: article.id },
       },
-    },
-    take: 5,
-    orderBy: {
-      date: 'desc',
-    },
-    select: {
-      id: true,
-      titre: true,
-      slug: true,
-      image: true,
-      date: true,
-      resume: true,
-    },
-  })
+      take: 3,
+      orderBy: { date: 'desc' },
+      select: articleSelect,
+    }),
+    prisma.equipe.findMany({
+      where: { published: true },
+      orderBy: { ordre: 'asc' },
+      select: { id: true, nom: true, categorie: true, slug: true },
+    }),
+  ])
+
+  // « Lire aussi » : même catégorie d'abord, complété par les derniers articles
+  const lireAussi =
+    similarArticles.length >= 3
+      ? similarArticles
+      : [
+          ...similarArticles,
+          ...(await prisma.article.findMany({
+            where: {
+              published: true,
+              id: { notIn: [article.id, ...similarArticles.map((a) => a.id)] },
+            },
+            take: 3 - similarArticles.length,
+            orderBy: { date: 'desc' },
+            select: articleSelect,
+          })),
+        ]
+
+  // Équipe dont parle l'article (déduite du titre et des tags) et son prochain match
+  const equipeLiee = trouverEquipeLiee(article, equipes)
+  let equipe: EquipeContexte | null = null
+  if (equipeLiee) {
+    const [classement, prochainMatch] = await Promise.all([
+      prisma.classement.findMany({
+        where: { equipeId: equipeLiee.id },
+        select: { club: true, position: true },
+      }),
+      prisma.match.findFirst({
+        where: {
+          equipeId: equipeLiee.id,
+          published: true,
+          termine: false,
+          date: { gte: new Date() },
+        },
+        orderBy: { date: 'asc' },
+        select: { adversaire: true, date: true, domicile: true },
+      }),
+    ])
+    const notreLigne = classement.find((ligne) => {
+      const club = ligne.club.toUpperCase()
+      return club.includes('HBC AIX') || club.includes('AIX EN SAVOIE')
+    })
+    equipe = {
+      nom: equipeLiee.nom,
+      slug: equipeLiee.slug,
+      categorie: equipeLiee.categorie,
+      position: notreLigne?.position ?? null,
+      prochainMatch,
+    }
+  }
 
   const readingTime = calculateReadingTime(article.contenu)
   const articleUrl = `${process.env.NEXT_PUBLIC_BASE_URL || SITE_URL}/actus/${article.slug}`
@@ -119,39 +175,28 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </div>
       )}
 
-      <div className={`min-h-screen bg-zinc-900 ${!article.published && isAdmin ? 'pt-32' : 'pt-24'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <Breadcrumb
-              items={[
-                { label: 'Accueil', href: '/' },
-                { label: 'Actualités', href: '/actus' },
-                { label: article.categorie, href: `/actus?categorie=${article.categorie}` },
-              ]}
-              currentPage={article.titre}
-            />
-          </div>
-        </div>
+      <div className={`min-h-screen bg-zinc-900 pb-20 ${!article.published && isAdmin ? 'pt-32' : 'pt-28 md:pt-36'}`}>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <Breadcrumb
+            items={[
+              { label: 'Accueil', href: '/' },
+              { label: 'Actualités', href: '/actus' },
+            ]}
+          />
 
-        <ArticleHero
-          title={article.titre}
-          categorie={article.categorie}
-          date={article.date}
-          image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
-          views={article.views}
-          readingTime={readingTime}
-        />
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <article className="min-w-0 opacity-0 animate-fadeIn">
+              <ArticleHero
+                title={article.titre}
+                categorie={article.categorie}
+                date={article.date}
+                image={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+                readingTime={readingTime}
+              />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ShareButtons title={article.titre} url={articleUrl} />
-
-          <article className="max-w-4xl mx-auto pb-20">
-            <div className="max-w-[680px] mx-auto">
-              <div className="mb-10 opacity-0 animate-fadeIn">
-                <p className="text-xl md:text-2xl text-neutral-300 leading-[1.65] font-serif italic border-l-4 border-primary-500 pl-6 py-4 break-words">
-                  {article.resume}
-                </p>
-              </div>
+              <p className="mb-6 whitespace-pre-line text-lg font-medium leading-[1.55] text-white break-words md:text-[22px]">
+                {article.resume}
+              </p>
 
               <div
                 className="article-content article-content-invert prose prose-lg prose-invert max-w-none opacity-0 animate-fadeIn [animation-delay:150ms] break-words
@@ -174,26 +219,28 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 dangerouslySetInnerHTML={{ __html: assainirHtml(article.contenu) }}
               />
 
-              {article.tags && article.tags.length > 0 && (
-                <div className="mt-12 pt-8 border-t border-zinc-700 opacity-0 animate-fadeIn [animation-delay:300ms]">
-                  <div className="flex flex-wrap gap-2">
+              <footer className="mt-8 flex flex-col gap-4">
+                {article.tags && article.tags.length > 0 && (
+                  <ul className="flex flex-wrap gap-x-3 gap-y-1" aria-label="Mots-clés">
                     {article.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-4 py-2 bg-zinc-800/60 text-neutral-400 text-sm rounded border border-zinc-700 hover:border-primary-500 hover:text-primary-500 transition-colors cursor-default"
-                      >
+                      <li key={tag} className="font-mono text-xs text-primary-400">
                         #{tag}
-                      </span>
+                      </li>
                     ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                  </ul>
+                )}
+                <ShareButtons url={articleUrl} />
+              </footer>
+            </article>
 
-            <div className="opacity-0 animate-fadeIn [animation-delay:450ms]">
-              <ReadAlso articles={similarArticles} />
-            </div>
-          </article>
+            <aside
+              aria-label="Autour de cet article"
+              className="flex min-w-0 flex-col gap-5 opacity-0 animate-fadeIn [animation-delay:150ms]"
+            >
+              <ArticleContext date={article.date} equipe={equipe} />
+              <ReadAlso articles={lireAussi} />
+            </aside>
+          </div>
         </div>
       </div>
     </>

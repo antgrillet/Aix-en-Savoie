@@ -351,3 +351,88 @@ model Inscription {
   @@index([role])
   @@map("inscriptions")
 }
+
+// ============================================
+// NOTES D'ARBITRAGE (indemnités des arbitres)
+// ============================================
+
+enum StatutNoteArbitrage {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+}
+
+model NoteArbitrage {
+  id                   Int                 @id @default(autoincrement())
+
+  // Rencontre
+  dateMatch            DateTime            @db.Date
+  heureMatch           String
+  categorie            String
+  equipeLocale         String
+  equipeVisiteur       String
+  salle                String
+
+  // Arbitre
+  nom                  String
+  prenom               String
+  licence              String
+  adresse              String
+  telephone            String
+  email                String
+
+  // Coordonnées bancaires (facultatives : le club a souvent déjà le RIB)
+  titulaireCompte      String?
+  iban                 String?
+  bic                  String?
+
+  // Frais, en centimes d'euro (le barème en centimes par kilomètre)
+  indemniteCentimes    Int
+  kilometres           Int
+  baremeKmCentimes     Int
+  fraisAnnexesCentimes Int
+  /// Total demandé par l'arbitre, gardé tel quel si le bureau ajuste les frais
+  totalDemandeCentimes Int
+
+  statut               StatutNoteArbitrage @default(EN_ATTENTE)
+
+  // Validation ou refus par le bureau
+  traiteePar           String?
+  traiteeParId         String?
+  traiteeLe            DateTime?
+  commentaire          String?             @db.Text
+  motifRefus           String?             @db.Text
+  /// Signature dessinée du validateur, en PNG
+  signature            Bytes?
+
+  // Transmission au comptable
+  envoiComptableLe     DateTime?
+  envoiComptableA      String?
+  envoiComptableErreur String?
+
+  justificatifs        JustificatifArbitrage[]
+
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([statut])
+  @@index([createdAt(sort: Desc)])
+  @@map("notes_arbitrage")
+}
+
+/// Ticket de péage, de parking… gardé en base : il ne doit jamais être public.
+model JustificatifArbitrage {
+  id        Int           @id @default(autoincrement())
+  noteId    Int
+  nom       String
+  type      String
+  taille    Int
+  contenu   Bytes
+
+  note      NoteArbitrage @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+
+  @@index([noteId])
+  @@map("justificatifs_arbitrage")
+}

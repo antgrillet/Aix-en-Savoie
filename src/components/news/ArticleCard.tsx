@@ -1,81 +1,59 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { Calendar, ArrowRight } from 'lucide-react'
-import { cardHover } from '@/lib/animations'
 import { normalizeImagePath } from '@/lib/utils'
-
-interface Article {
-  id: number
-  titre: string
-  categorie: string
-  date: Date
-  image: string
-  resume: string
-  slug: string
-}
+import { formatNewsDate, type NewsArticle } from './types'
 
 interface ArticleCardProps {
-  article: Article
+  article: NewsArticle
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
-    <motion.div
-      variants={cardHover}
-      initial="rest"
-      whileHover="hover"
-      whileTap="tap"
-      className="h-full"
+    <Link
+      href={`/actus/${article.slug}`}
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition-colors duration-300 hover:border-primary-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
     >
-      <Link href={`/actus/${article.slug}`} className="group block h-full">
-        <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300 flex flex-col">
-          {/* Image */}
-          <div className="relative h-48 overflow-hidden flex-shrink-0">
-            <Image
-              src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
-              alt={article.titre}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-110 filter brightness-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute top-4 left-4">
-              <span className="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-bold uppercase rounded">
-                {article.categorie}
-              </span>
-            </div>
-          </div>
+      <article className="flex h-full flex-col">
+        <div className="relative h-[200px] shrink-0 overflow-hidden bg-zinc-800">
+          <Image
+            src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover object-[center_30%] transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
+          <span className="absolute left-3.5 top-3.5 rounded-full bg-primary-500 px-3.5 py-1 text-[13px] font-extrabold uppercase leading-normal tracking-[0.02em] text-zinc-950">
+            {article.categorie}
+          </span>
+        </div>
 
-          {/* Content */}
-          <div className="p-6 flex flex-col flex-1">
-            <div className="flex items-center gap-2 text-neutral-300 text-sm mb-3">
-              <Calendar className="w-4 h-4" />
-              <time dateTime={new Date(article.date).toISOString()}>
-                {new Date(article.date).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </time>
-            </div>
+        <div className="flex flex-1 flex-col px-5 pb-5 pt-[18px]">
+          <time
+            dateTime={new Date(article.date).toISOString()}
+            className="font-mono text-xs uppercase tracking-[0.1em] text-neutral-400"
+          >
+            {formatNewsDate(article.date)}
+          </time>
 
-            <h3 className="font-display font-bold text-xl mb-3 text-white group-hover:text-primary-500 transition-colors line-clamp-2">
-              {article.titre}
-            </h3>
+          <h3 className="my-2 font-display text-[21px] font-extrabold leading-tight tracking-[-0.015em] text-white transition-colors group-hover:text-primary-400">
+            {article.titre}
+          </h3>
 
-            <p className="text-neutral-300 text-sm line-clamp-3 mb-4 whitespace-pre-line flex-1">
-              {article.resume}
-            </p>
+          <p className="mb-3 line-clamp-3 whitespace-pre-line text-sm leading-relaxed text-neutral-300">
+            {article.resume}
+          </p>
 
-            <div className="flex items-center text-primary-500 font-semibold text-sm group-hover:gap-2 transition-all mt-auto">
-              Lire la suite
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </article>
-      </Link>
-    </motion.div>
+          <span className="mt-auto text-sm font-bold text-primary-400">
+            Lire la suite{' '}
+            <span
+              aria-hidden
+              className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transition-none"
+            >
+              &rarr;
+            </span>
+          </span>
+        </div>
+      </article>
+    </Link>
   )
 }

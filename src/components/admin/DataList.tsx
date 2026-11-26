@@ -35,12 +35,14 @@ interface DataListProps<T> {
   /** Rendu quand `items` est vide (`EmptyState`) */
   empty?: React.ReactNode
   className?: string
+  /** Sans panneau : la liste est déjà dans une `Section` */
+  bare?: boolean
 }
 
 /**
- * Liste à filets. Tableau à partir de `md`, lignes empilées en dessous : la
- * même définition de colonnes sert les deux. Pas de carte, pas de fond : un
- * filet entre les lignes, noir au survol.
+ * Liste dans un panneau blanc. Tableau à partir de `md`, lignes empilées en
+ * dessous : la même définition de colonnes sert les deux. Un filet clair entre
+ * les lignes, fond teinté au survol.
  */
 export function DataList<T>({
   caption,
@@ -51,10 +53,12 @@ export function DataList<T>({
   actions,
   empty,
   className,
+  bare,
 }: DataListProps<T>) {
   if (items.length === 0) {
     return <div className={className}>{empty}</div>
   }
+
 
   const titleColumn = columns.find((column) => column.phone === 'title') ?? columns[0]
   const metaColumns = columns.filter(
@@ -63,7 +67,7 @@ export function DataList<T>({
   const markColumns = columns.filter((column) => column !== titleColumn && column.phone === 'marks')
 
   return (
-    <div className={className}>
+    <div className={cn(!bare && 'adm-panel', 'overflow-hidden', className)}>
       {/* Grand écran : tableau */}
       <table className="adm-table hidden md:table">
         <caption className="sr-only">{caption}</caption>
@@ -106,7 +110,7 @@ export function DataList<T>({
       </table>
 
       {/* Téléphone : lignes empilées */}
-      <ul className="adm-rows border-t border-foreground md:hidden" aria-label={caption}>
+      <ul className="adm-rows px-4 md:hidden" aria-label={caption}>
         {items.map((item) => (
           <li key={getKey(item)} className="relative flex gap-3 py-3">
             {media && <div className="shrink-0 pt-0.5">{media(item)}</div>}
@@ -161,7 +165,7 @@ export function Thumb({ src, alt = '', fit = 'cover', className }: ThumbProps) {
   return (
     <span
       className={cn(
-        'relative grid size-12 place-content-center overflow-hidden rounded-[2px] border border-border bg-background text-muted-foreground',
+        'relative grid size-12 place-content-center overflow-hidden rounded-lg border border-border bg-background text-muted-foreground',
         className
       )}
     >

@@ -1,75 +1,78 @@
 import { prisma } from '@/lib/prisma'
+import { bornesWeekend } from '@/lib/dates'
+import { getSaisonAffichee } from '@/lib/saison-courante'
+import { libelleSaison } from '@/lib/saisons'
 import { getATraiter } from '@/components/admin/a-traiter'
 import { DashboardView } from '@/components/admin/DashboardView'
+import { getEtatSynchro } from '@/components/admin/etat-synchro'
+import { classerUrgences } from '@/components/admin/urgences'
 
 export const dynamic = 'force-dynamic'
 
+const TZ = 'Europe/Paris'
+const jourDuMois = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric' })
+const jourEtMois = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric', month: 'long' })
+const mois = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, month: 'long' })
+
+/** « 28 et 29 novembre », « 31 janvier et 1er février » : le samedi et le dimanche. */
+function titreWeekend(vendredi: Date): string {
+  const samedi = new Date(vendredi.getTime() + 36 * 60 * 60 * 1000)
+  const dimanche = new Date(vendredi.getTime() + 60 * 60 * 60 * 1000)
+  const premier = (date: Date) => (jourDuMois.format(date) === '1' ? '1er' : jourDuMois.format(date))
+  if (mois.format(samedi) === mois.format(dimanche)) {
+    return `${premier(samedi)} et ${premier(dimanche)} ${mois.format(dimanche)}`
+  }
+  return `${jourEtMois.format(samedi).replace(/^1 /, '1er ')} et ${jourEtMois.format(dimanche).replace(/^1 /, '1er ')}`
+}
+
 export default async function AdminDashboard() {
   const maintenant = new Date()
+  const { debut, fin } = bornesWeekend(maintenant)
 
-  const [
-    aTraiter,
-    articlesCount,
-    equipesCount,
-    matchsUpcoming,
-    partenairesCount,
-    inscriptionsCount,
-    totalViews,
-    upcomingMatches,
-    recentArticles,
-    popularArticles,
-    recentInscriptions,
-  ] = await Promise.all([
+  const [aTraiter, synchro, saison, matchsWeekend, messages, messagesNonLus] = await Promise.all([
     getATraiter(),
-    prisma.article.count(),
-    prisma.equipe.count(),
-    prisma.match.count({ where: { date: { gte: maintenant }, termine: false } }),
-    prisma.partenaire.count({ where: { published: true } }),
-    prisma.inscription.count(),
-    prisma.article.aggregate({ _sum: { views: true } }),
+    getEtatSynchro(),
+    getSaisonAffichee(),
     prisma.match.findMany({
-      where: { date: { gte: maintenant }, termine: false, published: true },
-      take: 5,
+      where: { date: { gte: debut, lte: fin }, published: true },
       orderBy: { date: 'asc' },
       select: {
         id: true,
-        adversaire: true,
         date: true,
+        adversaire: true,
+        lieu: true,
         domicile: true,
-        equipe: { select: { nom: true } },
+        competition: true,
+        equipe: { select: { nom: true, categorie: true } },
       },
     }),
-    prisma.article.findMany({
-      take: 5,
+    prisma.contactMessage.findMany({
+      where: { archived: false },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, titre: true, categorie: true, createdAt: true, published: true },
+      take: 4,
+      select: { id: true, nom: true, prenom: true, message: true, read: true, createdAt: true },
     }),
-    prisma.article.findMany({
-      where: { published: true },
-      take: 5,
-      orderBy: { views: 'desc' },
-      select: { id: true, titre: true, views: true },
-    }),
-    prisma.inscription.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, nom: true, prenom: true, createdAt: true },
-    }),
+    prisma.contactMessage.count({ where: { read: false, archived: false } }),
   ])
+
+  const domicile = matchsWeekend
+    .filter((match) => match.domicile)
+    .map(({ domicile: _domicile, ...match }) => match)
 
   return (
     <DashboardView
-      aTraiter={aTraiter}
-      articlesCount={articlesCount}
-      equipesCount={equipesCount}
-      matchsUpcoming={matchsUpcoming}
-      partenairesCount={partenairesCount}
-      inscriptionsCount={inscriptionsCount}
-      totalViews={totalViews._sum.views ?? 0}
-      upcomingMatches={upcomingMatches}
-      recentArticles={recentArticles}
-      popularArticles={popularArticles}
-      recentInscriptions={recentInscriptions}
+      maintenant={maintenant}
+      titreWeekend={titreWeekend(debut)}
+      saison={libelleSaison(saison)}
+      urgences={classerUrgences(aTraiter, maintenant)}
+      domicile={domicile}
+      exterieur={matchsWeekend.length - domicile.length}
+      synchro={synchro}
+      messages={messages.map(({ message, ...reste }) => ({
+        ...reste,
+        extrait: message.replace(/\s+/g, ' ').slice(0, 90),
+      }))}
+      messagesNonLus={messagesNonLus}
     />
   )
 }

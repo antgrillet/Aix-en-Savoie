@@ -1,14 +1,18 @@
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Contour } from '@/components/admin/Contour'
 
 /**
- * - `solid`  : contour plein. État confirmé (publié, lu, terminé).
- * - `dashed` : contour pointillé. État provisoire (brouillon, en attente, optionnel).
- * - `action` : bloc orange. Attend une action (non lu, à compléter).
- * - `fill`   : bloc noir. Fait marquant confirmé (à la une, domicile).
+ * Couleur d'état. Toujours avec un mot : la couleur seule ne dit rien à qui
+ * ne la distingue pas.
+ *
+ * - `ok`      : vert. Fait (publié, victoire, complet, défini).
+ * - `bad`     : rouge. Bloquant (défaite, urgent, erreur).
+ * - `action`  : orange du club. À traiter (non lu, score à saisir, incomplet).
+ * - `warn`    : ambre. À surveiller (synchro ancienne, avertissement).
+ * - `neutral` : gris. Sans enjeu (brouillon, à venir, extérieur, archivé).
+ * - `ink`     : noir du logo. Fait marquant (domicile, à la une).
  */
-export type StatusTone = 'solid' | 'dashed' | 'action' | 'fill'
+export type StatusTone = 'ok' | 'bad' | 'action' | 'warn' | 'neutral' | 'ink'
 
 interface StatusMarkProps {
   tone?: StatusTone
@@ -17,19 +21,17 @@ interface StatusMarkProps {
   children: React.ReactNode
 }
 
-/**
- * Marque de statut. Garder le même élément monté quand l'état change (même
- * `key`, seul `tone` varie) : le passage de `dashed` à `solid` trace alors le
- * contour, le pointillé devient plein.
- */
-export function StatusMark({ tone = 'solid', icon: Icon, className, children }: StatusMarkProps) {
-  const traced = tone === 'solid' || tone === 'dashed'
-
+/** Pastille d'état : fond teinté, texte de la même couleur, coins ronds. */
+export function StatusMark({ tone = 'neutral', icon: Icon, className, children }: StatusMarkProps) {
   return (
     <span className={cn('adm-mark', className)} data-tone={tone}>
-      {traced && <Contour dashed={tone === 'dashed'} />}
       {Icon && <Icon aria-hidden="true" />}
       {children}
     </span>
   )
+}
+
+/** Point d'état, à côté d'un texte qui dit l'état */
+export function StatusDot({ tone = 'neutral', className }: { tone?: StatusTone; className?: string }) {
+  return <span aria-hidden="true" className={cn('adm-dot', className)} data-tone={tone} />
 }

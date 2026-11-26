@@ -21,7 +21,6 @@ const leftNavigation: NavigationItem[] = [
 const mainNavigation: NavigationItem[] = [
   { name: 'Nos actus', href: '/actus' },
   { name: 'Nos équipes', href: '/equipes' },
-  { name: 'Espace bénévoles', href: '/calendrier' },
   { name: 'Nos partenaires', href: '/partenaires' },
   { name: 'Contact', href: '/contact' },
 ]

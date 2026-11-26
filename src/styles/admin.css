@@ -1,67 +1,87 @@
 /* ==========================================================================
- * LE TRACÉ — thème de l'administration du HBC Aix-en-Savoie
+ * BUREAU — thème de l'administration du HBC Aix-en-Savoie
  *
- * Deux encres (noir, blanc) et l'orange du logo. La ligne est le seul outil
- * de structure et son style porte l'état :
- *   trait plein 2 px noir = structure, état confirmé (publié)
- *   pointillé             = provisoire (brouillon, optionnel, en attente)
- *   orange                = ce qui s'actionne ou attend une action
- *   rouge                 = suppression et erreur, rien d'autre
+ * Un outil de gestion clair : fond chaud, panneaux blancs, et la couleur ne
+ * sert qu'à dire un état, toujours accompagnée d'un mot :
+ *   vert   = fait (publié, victoire, complet, synchro réussie)
+ *   rouge  = bloquant (erreur, défaite, urgent, suppression)
+ *   orange = à traiter (l'orange du club : non lu, score à saisir, incomplet)
+ *   ambre  = à surveiller (synchro ancienne, avertissement)
+ *   gris   = neutre (brouillon, à venir, extérieur)
+ * L'urgent se règle par la position et la taille : en haut, en gros.
  *
  * Tout est posé sur `:root:has([data-admin])` : les surcouches Radix (dialogue,
  * menu, liste déroulante, toasts) sont rendues dans `body`, hors de l'arbre
  * admin, et doivent recevoir les mêmes jetons.
  *
  * Tout vit dans des couches de cascade : les utilitaires Tailwind gardent le
- * dernier mot. Les seuls `!important` sont le focus clavier et l'interdiction
- * d'ombre, qui ne doivent pas pouvoir être défaits par une classe oubliée.
+ * dernier mot. Le seul `!important` est le focus clavier.
  * ========================================================================== */
 
 @layer theme, base, components, utilities;
 
 @layer base {
   :root:has([data-admin]) {
+    /* --- Surfaces -------------------------------------------------------- */
+    --adm-bg: #f3f2ee; /* fond chaud de la page */
+    --adm-paper: #ffffff; /* panneaux */
+    --adm-sunken: #f7f5f0; /* bandeau de jour, en-tête de tableau, survol */
+    --adm-line: #e4e1da; /* bord de panneau, de champ */
+    --adm-line-2: #efede7; /* filet entre deux lignes */
+
     /* --- Encres ---------------------------------------------------------- */
-    --adm-ink: #222221; /* noir du logo */
-    --adm-paper: #ffffff;
-    --adm-orange: #d77f29; /* orange du logo : fonds, grands chiffres, focus */
-    --adm-orange-ink: #a35a14; /* petit texte orangé sur blanc (5,2:1) */
-    --adm-text-2: #5f5f5c; /* texte secondaire sur blanc (6,4:1) */
-    --adm-placeholder: #6b6b68; /* 5,3:1 */
-    --adm-rule: #d9d9d6; /* filet de séparation */
-    --adm-control: #8a8a86; /* contour de champ au repos (3,5:1) */
-    --adm-red: #b42318; /* erreur, suppression (6,6:1) */
-    --adm-on-ink-2: #c2c2c0; /* texte secondaire sur noir (8,9:1) */
-    --adm-red-on-ink: #ff8a75; /* erreur sur noir (6,9:1) */
+    --adm-ink: #1f1e1b; /* texte */
+    --adm-logo: #222221; /* noir du logo : pastille « Domicile », avatar */
+    --adm-text-2: #5c5852; /* texte secondaire (6,6:1 sur blanc, 5,9:1 sur le fond) */
+    --adm-placeholder: #6b6760; /* 5,4:1 */
+    --adm-control: #a8a398; /* bord de champ au survol, case */
 
-    /* --- Lignes ---------------------------------------------------------- */
-    --adm-line: 2px; /* trait plein de structure */
-    --adm-hair: 1px; /* filet */
-    --adm-dash: 6px; /* tiret = intervalle, comme la ligne des 9 m */
-    --adm-arc: 3.5rem; /* rayon de l'arc de zone (quart de cercle) */
-    --adm-dash-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 1' preserveAspectRatio='none'%3E%3Crect width='1' height='1'/%3E%3C/svg%3E");
+    /* --- Orange du club -------------------------------------------------- */
+    --adm-orange: #e8731a; /* fonds, barres, focus ; texte noir dessus (6,6:1) */
+    --adm-orange-ink: #9a4308; /* texte orangé (6,3:1 sur sa teinte douce) */
+    --adm-orange-soft: #fdebdc;
+    --adm-orange-edge: #f3c9a6; /* bord d'une urgence */
+    --adm-orange-wash: #fffaf5; /* fond d'une ligne ou d'une carte à traiter */
 
-    /* --- Échelle typographique fixe (rem) -------------------------------- */
-    --adm-text-xs: 0.75rem; /* 12 : compteurs, mentions */
-    --adm-text-sm: 0.8125rem; /* 13 : texte secondaire, aides */
+    /* --- États ----------------------------------------------------------- */
+    --adm-ok: #15803d;
+    --adm-ok-soft: #e3f4e8;
+    --adm-bad: #b42318;
+    --adm-bad-soft: #fce8e6;
+    --adm-warn: #8a5a00;
+    --adm-warn-soft: #fbf0d4;
+    --adm-chip: #eceae4;
+    --adm-chip-ink: #3d3a35;
+
+    /* Sur fond noir (page de connexion) */
+    --adm-on-ink-2: #c2c2c0;
+    --adm-red-on-ink: #ff8a75;
+
+    /* Compatibilité avec les anciens noms */
+    --adm-red: var(--adm-bad);
+    --adm-rule: var(--adm-line);
+
+    /* --- Échelle typographique (rem). Rien de courant sous 14 px. -------- */
+    --adm-text-xs: 0.8125rem; /* 13 : pastilles, en-têtes de colonne */
+    --adm-text-sm: 0.875rem; /* 14 : texte secondaire, aides */
     --adm-text-md: 0.9375rem; /* 15 : corps */
-    --adm-text-lg: 1.125rem; /* 18 : titre de section */
-    --adm-text-title: 1.75rem; /* 28 : titre de page */
+    --adm-text-lg: 1.0625rem; /* 17 : titre de panneau */
+    --adm-text-title: 2rem; /* 32 : titre de page */
 
-    /* --- Rampe de chiffres (trois tailles, pas une de plus) --------------- */
-    --adm-num-lg: 2.5rem; /* 40 : ce qui attend une action */
-    --adm-num-md: 1.5rem; /* 24 : totaux */
+    /* --- Chiffres -------------------------------------------------------- */
+    --adm-num-xl: 2.5rem; /* 40 : l'urgence du moment */
+    --adm-num-lg: 2.25rem; /* 36 : ce qui attend une action */
+    --adm-num-md: 1.5rem; /* 24 : totaux, scores */
     --adm-num-sm: 0.9375rem; /* 15 : chiffres en ligne */
 
     /* --- Gabarit --------------------------------------------------------- */
-    --adm-rail: 232px;
+    --adm-rail: 240px;
     --adm-topbar: 3.5rem;
     --adm-tabbar: 3.75rem;
-    --adm-pad-x: 2.5rem; /* marge latérale de la surface de travail */
+    --adm-pad-x: 2rem;
     --adm-pad-b: 2.5rem;
     --adm-ease: cubic-bezier(0.16, 1, 0.3, 1);
     --adm-fast: 150ms;
-    --adm-trace: 180ms;
 
     /* --- Jetons shadcn redéfinis ----------------------------------------- */
     --background: var(--adm-paper);
@@ -72,49 +92,48 @@
     --popover-foreground: var(--adm-ink);
     --primary: var(--adm-orange);
     --primary-foreground: var(--adm-ink);
-    --secondary: var(--adm-paper);
+    --secondary: var(--adm-chip);
     --secondary-foreground: var(--adm-ink);
-    --muted: var(--adm-paper); /* aucune surface grise */
+    --muted: var(--adm-sunken);
     --muted-foreground: var(--adm-text-2);
-    --accent: var(--adm-ink); /* survol et élément de menu actif : bloc noir */
-    --accent-foreground: var(--adm-paper);
-    --destructive: var(--adm-red);
-    --border: var(--adm-rule);
-    --input: var(--adm-control);
+    --accent: var(--adm-sunken); /* survol et élément de menu actif */
+    --accent-foreground: var(--adm-ink);
+    --destructive: var(--adm-bad);
+    --border: var(--adm-line);
+    --input: var(--adm-line);
     --ring: var(--adm-orange);
 
-    /* Rayon vif : toutes les marches du thème retombent entre 2 et 4 px */
-    --radius: 3px;
-    --radius-xs: 2px;
-    --radius-sm: 2px;
-    --radius-md: 3px;
-    --radius-lg: 4px;
-    --radius-xl: 4px;
-    --radius-2xl: 4px;
-    --radius-3xl: 4px;
-    --radius-4xl: 4px;
+    --radius: 8px;
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 12px;
+    --radius-3xl: 12px;
+    --radius-4xl: 12px;
 
     color-scheme: light;
-    accent-color: var(--adm-ink);
+    accent-color: var(--adm-orange);
     caret-color: var(--adm-orange);
     scrollbar-color: var(--adm-control) transparent;
   }
 
   @media (max-width: 1023.98px) {
     :root:has([data-admin]) {
-      --adm-arc: 2.5rem;
-      --adm-pad-x: 2rem;
+      --adm-pad-x: 1.5rem;
     }
   }
 
   @media (max-width: 767.98px) {
     :root:has([data-admin]) {
       --adm-pad-x: 1rem;
+      --adm-text-title: 1.75rem;
     }
   }
 
   :root:has([data-admin]) body {
-    background-color: var(--adm-ink);
+    background-color: var(--adm-bg);
     font-size: var(--adm-text-md);
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
@@ -137,7 +156,7 @@
   }
 
   :root:has([data-admin]) ::selection {
-    background-color: var(--adm-orange);
+    background-color: var(--adm-orange-soft);
     color: var(--adm-ink);
   }
 
@@ -151,8 +170,7 @@
     text-decoration-thickness: 1px;
   }
 
-  /* Focus clavier : un seul anneau, partout, y compris dans les surcouches et
-     dans les sections qui n'ont pas encore été refaites. */
+  /* Focus clavier : un seul anneau, partout, y compris dans les surcouches. */
   :root:has([data-admin])
     :focus-visible:not(
       [role='menu'],
@@ -163,20 +181,6 @@
     ) {
     outline: 2px solid var(--adm-orange) !important;
     outline-offset: 2px !important;
-  }
-
-  /* Une seule élévation : seules les surcouches (hors de l'arbre admin)
-     portent une ombre. */
-  [data-admin] *,
-  [data-admin] *::before,
-  [data-admin] *::after {
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-
-  /* Dans une surcouche, l'ombre appartient au panneau, pas à ce qu'il contient */
-  :root:has([data-admin]) :is([role='dialog'], [role='alertdialog'], [role='menu'], [role='listbox']) * {
-    box-shadow: none !important;
   }
 
   [data-admin] {
@@ -191,8 +195,8 @@
   .adm-title {
     font-family: var(--adm-font-condensed, var(--font-sans));
     font-size: var(--adm-text-title);
-    font-weight: 600;
-    line-height: 1.1;
+    font-weight: 700;
+    line-height: 1.05;
     letter-spacing: 0;
     text-wrap: balance;
   }
@@ -215,13 +219,17 @@
     color: var(--adm-text-2);
   }
 
+  /* En-tête de colonne, groupe de navigation : petites capitales espacées */
   .adm-micro {
-    font-size: var(--adm-text-xs);
-    line-height: 1.35;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--adm-text-2);
   }
 
-  /* Rampe de chiffres : Barlow Condensed, tabulaires */
+  .adm-num-xl,
   .adm-num-lg,
   .adm-num-md,
   .adm-num-sm {
@@ -232,13 +240,16 @@
     line-height: 1;
   }
 
+  .adm-num-xl {
+    font-size: var(--adm-num-xl);
+  }
+
   .adm-num-lg {
     font-size: var(--adm-num-lg);
   }
 
   .adm-num-md {
     font-size: var(--adm-num-md);
-    font-weight: 600;
   }
 
   .adm-num-sm {
@@ -247,7 +258,7 @@
     line-height: inherit;
   }
 
-  /* Lien dans le texte : encre noire soulignée, jamais orange en petit corps */
+  /* Lien dans le texte */
   .adm-link {
     color: var(--adm-ink);
     text-decoration-line: underline;
@@ -257,95 +268,156 @@
 
   .adm-link:hover {
     text-decoration-color: var(--adm-ink);
-    text-decoration-thickness: 2px;
   }
 
-  /* ------------------------------------------------------------------------
-   * Grammaire de lignes
-   * ---------------------------------------------------------------------- */
+  /* Lien d'en-tête de panneau : « Tout voir → » */
+  .adm-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 2.75rem;
+    color: var(--adm-orange-ink);
+    font-size: var(--adm-text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+  }
 
-  /* Filet horizontal : plein par défaut, pointillé si provisoire */
+  .adm-more:hover {
+    text-decoration: underline;
+  }
+
+  @media (min-width: 768px) {
+    .adm-more {
+      min-height: 2rem;
+    }
+  }
+
+  /* Filet horizontal */
   .adm-rule {
     display: block;
-    height: var(--adm-line);
+    height: 1px;
     border: 0;
-    background-color: currentColor;
-  }
-
-  .adm-rule--hair {
-    height: var(--adm-hair);
-    color: var(--adm-rule);
-  }
-
-  .adm-rule--dashed {
-    -webkit-mask: var(--adm-dash-mask) repeat-x left center /
-      calc(var(--adm-dash) * 2) 100%;
-    mask: var(--adm-dash-mask) repeat-x left center /
-      calc(var(--adm-dash) * 2) 100%;
-  }
-
-  /* Contour tracé autour d'un bloc (parent en position: relative).
-     Plein = confirmé ; `data-dashed` = provisoire. Le passage de l'un à
-     l'autre est la signature : le pointillé devient plein. */
-  .adm-contour {
-    --adm-contour-dash: var(--adm-dash);
-    position: absolute;
-    inset: calc(var(--adm-line) / 2);
-    width: calc(100% - var(--adm-line));
-    height: calc(100% - var(--adm-line));
-    overflow: visible;
-    pointer-events: none;
-  }
-
-  .adm-contour rect {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: var(--adm-line);
-    stroke-dasharray: calc(var(--adm-contour-dash) * 2) 0;
-    transition: stroke-dasharray var(--adm-trace) var(--adm-ease);
-  }
-
-  .adm-contour[data-dashed] rect {
-    stroke-dasharray: var(--adm-contour-dash) var(--adm-contour-dash);
+    background-color: var(--adm-line);
   }
 
   /* ------------------------------------------------------------------------
-   * Marque de statut
+   * Panneaux
+   * ---------------------------------------------------------------------- */
+  .adm-panel {
+    background-color: var(--adm-paper);
+    border: 1px solid var(--adm-line);
+    border-radius: 12px;
+  }
+
+  .adm-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 1.125rem;
+    border-bottom: 1px solid var(--adm-line-2);
+  }
+
+  /* ------------------------------------------------------------------------
+   * Pastille d'état : une couleur ET un mot
    * ---------------------------------------------------------------------- */
   .adm-mark {
-    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.3125rem;
-    height: 1.5rem;
-    padding: 0 0.5rem;
-    border-radius: 2px;
+    min-height: 1.5rem;
+    padding: 0.125rem 0.5625rem;
+    border-radius: 999px;
+    background-color: var(--adm-chip);
+    color: var(--adm-chip-ink);
     font-size: var(--adm-text-xs);
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.15;
     white-space: nowrap;
-    color: var(--adm-ink);
   }
 
-  .adm-mark .adm-contour {
-    --adm-contour-dash: 4px;
-  }
-
-  .adm-mark > svg:not(.adm-contour) {
-    width: 0.75rem;
-    height: 0.75rem;
+  .adm-mark > svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
     flex: none;
   }
 
-  /* orange = attend une action */
+  .adm-mark[data-tone='ok'] {
+    background-color: var(--adm-ok-soft);
+    color: var(--adm-ok);
+  }
+
+  .adm-mark[data-tone='bad'] {
+    background-color: var(--adm-bad-soft);
+    color: var(--adm-bad);
+  }
+
+  .adm-mark[data-tone='warn'] {
+    background-color: var(--adm-warn-soft);
+    color: var(--adm-warn);
+  }
+
   .adm-mark[data-tone='action'] {
+    background-color: var(--adm-orange-soft);
+    color: var(--adm-orange-ink);
+  }
+
+  .adm-mark[data-tone='ink'] {
+    background-color: var(--adm-logo);
+    color: var(--adm-paper);
+  }
+
+  /* Point d'état (synchro, message non lu) */
+  .adm-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: none;
+    border-radius: 50%;
+    background-color: var(--adm-control);
+  }
+
+  .adm-dot[data-tone='ok'] {
+    background-color: var(--adm-ok);
+  }
+
+  .adm-dot[data-tone='bad'] {
+    background-color: var(--adm-bad);
+  }
+
+  .adm-dot[data-tone='warn'] {
+    background-color: #c98a00;
+  }
+
+  .adm-dot[data-tone='action'] {
     background-color: var(--adm-orange);
   }
 
-  /* bloc plein = fait marquant confirmé (à la une, domicile) */
-  .adm-mark[data-tone='fill'] {
-    background-color: var(--adm-ink);
-    color: var(--adm-paper);
+  /* Échéance d'une carte « à traiter » */
+  .adm-urgence {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--adm-line);
+    border-radius: 12px;
+    background-color: var(--adm-paper);
+    transition: border-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-urgence:hover {
+    border-color: var(--adm-control);
+  }
+
+  .adm-urgence[data-urgent] {
+    border-color: var(--adm-orange-edge);
+    background-color: var(--adm-orange-wash);
+  }
+
+  .adm-urgence[data-bloquant] {
+    border-color: #f1b8b2;
+    background-color: #fffafa;
   }
 
   /* ------------------------------------------------------------------------
@@ -357,7 +429,7 @@
     left: 0.5rem;
     z-index: 60;
     padding: 0.5rem 0.75rem;
-    border-radius: 3px;
+    border-radius: 8px;
     background-color: var(--adm-orange);
     color: var(--adm-ink);
     font-weight: 600;
@@ -368,73 +440,62 @@
     transform: none;
   }
 
-  /* Le coin de la surface de travail, taillé par l'arc de zone */
-  .adm-arc-corner {
-    position: fixed;
-    top: var(--adm-topbar);
-    left: 0;
-    z-index: 30;
-    width: var(--adm-arc);
-    height: var(--adm-arc);
-    color: var(--adm-ink);
-    pointer-events: none;
+  .adm-nav-group {
+    padding: 1rem 0.75rem 0.375rem;
   }
 
-  @media (min-width: 1024px) {
-    .adm-arc-corner {
-      top: 0;
-      left: var(--adm-rail);
-    }
-  }
-
-  .adm-rail {
-    scrollbar-color: var(--adm-control) transparent;
-  }
-
-  /* Entrée de navigation : bloc orange plein pour la section courante */
   .adm-nav-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     min-height: 2.5rem;
     padding: 0 0.75rem;
-    border: var(--adm-hair) solid transparent;
-    border-radius: 3px;
-    color: var(--adm-paper);
+    border-radius: 8px;
+    color: #3d3a35;
     font-weight: 500;
-    transition:
-      border-color var(--adm-fast) var(--adm-ease),
-      background-color var(--adm-fast) var(--adm-ease);
+    transition: background-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-nav-item > svg {
+    color: var(--adm-text-2);
   }
 
   .adm-nav-item:hover {
-    border-color: var(--adm-on-ink-2);
-  }
-
-  .adm-nav-item:active {
-    background-color: var(--adm-paper);
-    color: var(--adm-ink);
+    background-color: var(--adm-sunken);
   }
 
   .adm-nav-item[aria-current='page'] {
-    border-color: var(--adm-orange);
-    background-color: var(--adm-orange);
-    color: var(--adm-ink);
+    background-color: var(--adm-orange-soft);
+    color: var(--adm-orange-ink);
     font-weight: 600;
   }
 
-  .adm-nav-count {
-    margin-left: auto;
-    font-family: var(--adm-font-condensed, var(--font-sans));
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--adm-orange);
+  .adm-nav-item[aria-current='page'] > svg {
+    color: var(--adm-orange-ink);
   }
 
-  .adm-nav-item[aria-current='page'] .adm-nav-count,
-  .adm-nav-item:active .adm-nav-count {
+  /* Compteur de section : orange = à traiter, gris = à surveiller */
+  .adm-nav-count {
+    margin-left: auto;
+    min-width: 1.5rem;
+    padding: 0.125rem 0.4375rem;
+    border-radius: 999px;
+    background-color: var(--adm-orange);
     color: var(--adm-ink);
+    font-size: var(--adm-text-xs);
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .adm-nav-count[data-tone='neutral'] {
+    background-color: var(--adm-chip);
+    color: var(--adm-chip-ink);
+  }
+
+  .adm-nav-count[data-tone='bad'] {
+    background-color: var(--adm-bad-soft);
+    color: var(--adm-bad);
   }
 
   /* Barre d'onglets du téléphone */
@@ -446,47 +507,68 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.1875rem;
+    gap: 0.25rem;
     min-height: 3rem;
-    border-radius: 3px;
-    color: var(--adm-paper);
-    font-size: 0.6875rem;
+    border-radius: 8px;
+    color: #3d3a35;
+    font-size: 0.75rem;
     font-weight: 500;
     line-height: 1;
-    transition: background-color var(--adm-fast) var(--adm-ease);
   }
 
   .adm-tab:active {
-    background-color: var(--adm-paper);
-    color: var(--adm-ink);
+    background-color: var(--adm-sunken);
   }
 
   .adm-tab[aria-current='page'],
   .adm-tab[data-current] {
-    background-color: var(--adm-orange);
-    color: var(--adm-ink);
-    font-weight: 600;
+    color: var(--adm-orange-ink);
+    font-weight: 700;
+  }
+
+  .adm-tab[aria-current='page'] > svg,
+  .adm-tab[data-current] > svg {
+    color: var(--adm-orange);
   }
 
   .adm-tab-count {
     position: absolute;
-    top: 0.25rem;
-    left: calc(50% + 0.5rem);
-    font-family: var(--adm-font-condensed, var(--font-sans));
-    font-size: 0.8125rem;
+    top: 0.125rem;
+    left: calc(50% + 0.375rem);
+    min-width: 1.125rem;
+    padding: 0.125rem 0.3125rem;
+    border-radius: 999px;
+    background-color: var(--adm-orange);
+    color: var(--adm-ink);
+    font-size: 0.6875rem;
     font-weight: 700;
     line-height: 1;
-    color: var(--adm-orange);
+    text-align: center;
   }
 
-  .adm-tab[aria-current='page'] .adm-tab-count,
-  .adm-tab[data-current] .adm-tab-count,
-  .adm-tab:active .adm-tab-count {
-    color: var(--adm-ink);
+  /* Bouton de l'en-tête (saison, synchro, compte) */
+  .adm-top-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--adm-line);
+    border-radius: 8px;
+    background-color: var(--adm-paper);
+    color: #3d3a35;
+    font-size: var(--adm-text-sm);
+    white-space: nowrap;
+    transition: border-color var(--adm-fast) var(--adm-ease);
+  }
+
+  .adm-top-btn:hover,
+  .adm-top-btn[data-state='open'] {
+    border-color: var(--adm-control);
   }
 
   /* ------------------------------------------------------------------------
-   * Listes à filets
+   * Listes
    * ---------------------------------------------------------------------- */
   .adm-table {
     width: 100%;
@@ -495,11 +577,13 @@
   }
 
   .adm-table th {
-    height: 2.25rem;
-    padding: 0 0.75rem 0 0;
-    border-bottom: var(--adm-hair) solid var(--adm-ink);
-    font-size: var(--adm-text-sm);
+    height: 2.5rem;
+    padding: 0 0.875rem;
+    border-bottom: 1px solid var(--adm-line);
+    font-size: 0.75rem;
     font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     color: var(--adm-text-2);
     white-space: nowrap;
     vertical-align: middle;
@@ -507,28 +591,42 @@
 
   .adm-table td {
     height: 3.5rem;
-    padding: 0.5rem 0.75rem 0.5rem 0;
-    border-bottom: var(--adm-hair) solid var(--adm-rule);
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--adm-line-2);
     vertical-align: middle;
-    transition: border-color var(--adm-fast) var(--adm-ease);
   }
 
-  .adm-table th:last-child,
-  .adm-table td:last-child {
-    padding-right: 0;
+  .adm-table tbody tr:last-child td {
+    border-bottom: 0;
   }
 
   .adm-table tbody tr:hover td {
-    border-bottom-color: var(--adm-ink);
+    background-color: #faf9f6;
+  }
+
+  .adm-table tr[data-attention] td {
+    background-color: var(--adm-orange-wash);
+  }
+
+  /* Bandeau de jour dans un tableau */
+  .adm-table tr.adm-day td {
+    height: auto;
+    padding: 0.5rem 0.875rem;
+    background-color: var(--adm-sunken);
+    border-bottom: 1px solid var(--adm-line);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #3d3a35;
   }
 
   .adm-rows > * {
-    border-bottom: var(--adm-hair) solid var(--adm-rule);
-    transition: border-color var(--adm-fast) var(--adm-ease);
+    border-bottom: 1px solid var(--adm-line-2);
   }
 
-  .adm-rows > *:hover {
-    border-bottom-color: var(--adm-ink);
+  .adm-rows > *:last-child {
+    border-bottom: 0;
   }
 
   /* Lien principal d'une ligne : sur téléphone, toute la ligne est la cible */
@@ -540,34 +638,79 @@
     }
   }
 
+  /* Filtres segmentés à compteur */
+  .adm-seg {
+    display: inline-flex;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--adm-line);
+    border-radius: 9px;
+    background-color: var(--adm-paper);
+  }
+
+  .adm-seg > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-right: 1px solid var(--adm-line);
+    color: #3d3a35;
+    font-size: var(--adm-text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .adm-seg > *:last-child {
+    border-right: 0;
+  }
+
+  .adm-seg > *:hover {
+    background-color: var(--adm-sunken);
+  }
+
+  .adm-seg > [aria-current='page'],
+  .adm-seg > [aria-pressed='true'] {
+    background-color: var(--adm-logo);
+    color: var(--adm-paper);
+  }
+
+  .adm-seg small {
+    font-size: var(--adm-text-xs);
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  @media (min-width: 768px) {
+    .adm-seg > * {
+      min-height: 2.25rem;
+    }
+  }
+
   /* ------------------------------------------------------------------------
-   * Formulaires : un trait entre les sections, celui de l'en-tête au-dessus
-   * de la première
+   * Formulaires
    * ---------------------------------------------------------------------- */
-  .adm-form-section__body {
-    padding-top: 1.25rem;
+  .adm-form-section {
+    background-color: var(--adm-paper);
+    border: 1px solid var(--adm-line);
+    border-radius: 12px;
+    padding: 1.25rem;
   }
 
-  .adm-form-section:first-child > .adm-rule {
-    display: none;
-  }
-
-  .adm-form-section:first-child > .adm-form-section__body {
-    padding-top: 0;
+  @media (min-width: 768px) {
+    .adm-form-section {
+      padding: 1.5rem;
+    }
   }
 
   /* ------------------------------------------------------------------------
-   * Squelettes : ce qui charge est provisoire, donc en pointillé
+   * Squelettes
    * ---------------------------------------------------------------------- */
   .adm-skel {
     display: block;
-    height: var(--adm-line);
-    color: var(--adm-control);
-    background-color: currentColor;
-    -webkit-mask: var(--adm-dash-mask) repeat-x left center /
-      calc(var(--adm-dash) * 2) 100%;
-    mask: var(--adm-dash-mask) repeat-x left center /
-      calc(var(--adm-dash) * 2) 100%;
+    height: 0.75rem;
+    border-radius: 6px;
+    background-color: #ebe8e1;
     animation: adm-skel 1.2s ease-in-out infinite alternate;
   }
 
@@ -576,7 +719,7 @@
       opacity: 1;
     }
     to {
-      opacity: 0.35;
+      opacity: 0.45;
     }
   }
 
@@ -584,7 +727,7 @@
    * Éditeur de texte
    * ---------------------------------------------------------------------- */
   .adm-editor:focus-within {
-    border-color: var(--adm-ink);
+    border-color: var(--adm-control);
     outline: 2px solid var(--adm-orange);
     outline-offset: 2px;
   }
@@ -598,9 +741,8 @@
   }
 
   /* ------------------------------------------------------------------------
-   * Connexion : le tracé du terrain se dessine une fois
+   * Connexion : le tracé du terrain se dessine une fois, sur fond noir
    * ---------------------------------------------------------------------- */
-  /* Encre blanche atténuée : sur cet écran, seuls le bouton et le focus sont orange */
   .adm-court {
     color: rgb(255 255 255 / 0.62);
   }
@@ -608,11 +750,10 @@
   .adm-court__line {
     fill: none;
     stroke: currentColor;
-    stroke-width: var(--adm-line);
+    stroke-width: 2px;
     vector-effect: non-scaling-stroke;
   }
 
-  /* Le masque suit la même géométrie et se dévoile le long du trait */
   .adm-court__draw {
     fill: none;
     stroke: #fff;
@@ -632,12 +773,11 @@
     }
   }
 
-  /* Contenu posé sur l'encre noire (connexion) : texte blanc, texte secondaire
-     et rouge d'erreur éclaircis pour garder le contraste */
   .adm-on-ink {
     --adm-text-2: var(--adm-on-ink-2);
     --muted-foreground: var(--adm-on-ink-2);
     --destructive: var(--adm-red-on-ink);
+    --foreground: var(--adm-logo);
     color: var(--adm-paper);
   }
 
@@ -650,22 +790,18 @@
     text-decoration-color: currentColor;
   }
 
-  /* Champs sur fond noir (connexion) : l'auto-remplissage du navigateur ne
-     doit pas repeindre le champ */
   .adm-on-ink input:-webkit-autofill {
     -webkit-text-fill-color: var(--adm-ink);
     caret-color: var(--adm-orange);
   }
 
   /* ------------------------------------------------------------------------
-   * Mouvement réduit : les états changent sans transition
+   * Mouvement réduit
    * ---------------------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
-    .adm-contour rect,
     .adm-nav-item,
-    .adm-tab,
-    .adm-table td,
-    .adm-rows > *,
+    .adm-urgence,
+    .adm-top-btn,
     .adm-link {
       transition: none;
     }

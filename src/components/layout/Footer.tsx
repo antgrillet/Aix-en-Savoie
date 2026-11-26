@@ -86,15 +86,6 @@ export function Footer() {
                   Contact
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/calendrier"
-                  className="group inline-flex items-center text-neutral-300 hover:text-orange-500 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-orange-500 transition-[width,margin] duration-300 mr-0 group-hover:mr-2" />
-                  Espace bénévoles
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -163,13 +154,17 @@ export function Footer() {
             <p className="text-neutral-400 text-sm">
               &copy; {currentYear} HBC Aix-en-Savoie. Tous droits réservés.
             </p>
-            <div className="flex items-center gap-6 text-sm text-neutral-400">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-neutral-400">
               <Link href="/mentions-legales" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Mentions légales
               </Link>
-              <span>•</span>
+              <span aria-hidden="true">•</span>
               <Link href="/politique-confidentialite" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
                 Politique de confidentialité
+              </Link>
+              <span aria-hidden="true">•</span>
+              <Link href="/arbitrage" className="hover:text-orange-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm">
+                Espace arbitres
               </Link>
             </div>
           </div>

@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-utils'
 import { deleteImage } from '@/lib/blob'
-import { updateHeroBackgroundImage, getSetting, updatePageBackgroundImage, getPageBackgroundImage } from '@/lib/settings'
+import { updateHeroBackgroundImage, getSetting, updatePageBackgroundImage, getPageBackgroundImage, updateSetting } from '@/lib/settings'
+import { lireSaison } from '@/lib/saisons'
+import { CLE_SAISON_AFFICHEE } from '@/lib/saison-courante'
 import { prisma } from '@/lib/prisma'
 import { imageDeFondSchema, pageAvecFondSchema } from '@/lib/validations/setting'
 
@@ -104,41 +106,19 @@ export async function removePageBackground(pageDemandee: string) {
   revalidatePath('/admin/parametres')
 }
 
-// Calendrier password
-export async function getCalendrierPassword() {
-  await requireAdmin()
-
-  const setting = await prisma.setting.findUnique({
-    where: { key: 'calendrier_password' },
-  })
-
-  return setting?.value || ''
-}
-
-export async function updateCalendrierPassword(formData: FormData) {
+// Saison affichée sur le site
+export async function updateSaisonAffichee(valeur: string) {
   const session = await requireAdmin()
 
-  const password = formData.get('password') as string
-
-  if (!password) {
-    throw new Error('Mot de passe requis')
+  // « auto » : la saison suit le calendrier (bascule le 1er août)
+  let enregistree = ''
+  if (valeur !== 'auto') {
+    const saison = lireSaison(valeur)
+    if (saison === null) throw new Error('Saison invalide')
+    enregistree = String(saison)
   }
 
-  await prisma.setting.upsert({
-    where: { key: 'calendrier_password' },
-    create: {
-      key: 'calendrier_password',
-      value: password,
-      type: 'string',
-      description: 'Mot de passe pour accéder au calendrier interactif',
-      updatedBy: session.user.id,
-    },
-    update: {
-      value: password,
-      updatedBy: session.user.id,
-    },
-  })
+  await updateSetting(CLE_SAISON_AFFICHEE, enregistree, session.user.id)
 
-  revalidatePath('/calendrier')
-  revalidatePath('/admin/parametres')
+  revalidatePath('/', 'layout')
 }

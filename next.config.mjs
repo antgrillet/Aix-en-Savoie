@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Le PDF des notes d'arbitrage lit le logo sur le disque du serveur
+  outputFileTracingIncludes: {
+    '/admin/arbitrage/**': ['./public/img/home/logo.png'],
+    '/api/admin/arbitrage/**': ['./public/img/home/logo.png'],
+  },
   images: {
     // Only hosts the site actually serves images from: uploads and opponent logos.
     remotePatterns: [
@@ -13,6 +18,10 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
+  },
+  async redirects() {
+    // L'espace bénévoles a été retiré du site (novembre 2026)
+    return [{ source: '/calendrier', destination: '/', permanent: false }]
   },
   async headers() {
     return [

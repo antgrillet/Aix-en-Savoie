@@ -645,7 +645,7 @@ export function PartenaireForm({ action, initialData }: PartenaireFormProps) {
             checked={promoActive}
             onCheckedChange={setPromoActive}
             aside={
-              <StatusMark tone={promoActive ? 'solid' : 'dashed'}>
+              <StatusMark tone={promoActive ? 'ok' : 'neutral'}>
                 {promoActive ? 'Active' : 'Inactive'}
               </StatusMark>
             }

@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Squelettes de chargement. Ce qui charge est provisoire : des lignes en
- * pointillé à la place du texte, jamais de bloc gris ni de roue au milieu
+ * Squelettes de chargement : des barres claires à la place du texte, dans le
+ * même panneau que la liste ou le formulaire attendu. Jamais de roue au milieu
  * du contenu.
  */
 
@@ -27,11 +27,11 @@ interface ListSkeletonProps {
 /** Lignes d'une liste en cours de chargement */
 export function ListSkeleton({ rows = 6, media, className }: ListSkeletonProps) {
   return (
-    <div role="status" className={className}>
+    <div role="status" className={cn('adm-panel adm-rows px-4', className)}>
       <span className="sr-only">Chargement…</span>
       {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className="flex h-14 items-center gap-4 border-b border-border">
-          {media && <span aria-hidden="true" className="size-10 shrink-0 rounded-[2px] border border-border" />}
+        <div key={index} className="flex h-14 items-center gap-4">
+          {media && <span aria-hidden="true" className="size-10 shrink-0 rounded-md bg-muted" />}
           <div className="flex-1 space-y-2.5">
             <SkeletonLine className={ROW_WIDTHS[index % ROW_WIDTHS.length]} />
             <SkeletonLine className="w-1/4" />
@@ -46,12 +46,12 @@ export function ListSkeleton({ rows = 6, media, className }: ListSkeletonProps) 
 /** Champs d'un formulaire en cours de chargement */
 export function FormSkeleton({ fields = 5, className }: { fields?: number; className?: string }) {
   return (
-    <div role="status" className={cn('max-w-[40rem] space-y-6', className)}>
+    <div role="status" className={cn('adm-panel max-w-[60rem] space-y-6 p-6', className)}>
       <span className="sr-only">Chargement…</span>
       {Array.from({ length: fields }, (_, index) => (
         <div key={index} className="space-y-3">
           <SkeletonLine className="w-28" />
-          <div aria-hidden="true" className="h-10 rounded-[3px] border border-border" />
+          <div aria-hidden="true" className="h-10 max-w-[40rem] rounded-lg border border-border" />
         </div>
       ))}
     </div>
@@ -61,9 +61,9 @@ export function FormSkeleton({ fields = 5, className }: { fields?: number; class
 /** En-tête de page en cours de chargement */
 export function PageHeaderSkeleton() {
   return (
-    <div aria-hidden="true" className="mb-6 flex h-[4.25rem] items-end justify-between border-b-2 border-foreground pb-5">
+    <div aria-hidden="true" className="mb-5 flex h-[4.25rem] items-end justify-between pb-1">
       <div className="space-y-4">
-        <SkeletonLine className="w-48" />
+        <SkeletonLine className="h-7 w-48" />
         <SkeletonLine className="w-72 max-w-[60vw]" />
       </div>
     </div>

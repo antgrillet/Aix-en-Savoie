@@ -31,7 +31,7 @@ export const formatDateHeure = (date: Date) =>
 export const formatJourMoisChiffres = (date: Date) => format(date, { day: '2-digit', month: '2-digit' })
 
 /** Année, mois (1-12), jour et jour de la semaine (0 = dimanche) à Paris. */
-function partiesParis(date: Date) {
+export function partiesParis(date: Date) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: FUSEAU_CLUB,
     year: 'numeric',
@@ -73,7 +73,7 @@ function decalageParis(instant: Date): number {
 }
 
 /** Instant correspondant à minuit, heure de Paris, pour une date civile. */
-function minuitParis(annee: number, mois: number, jour: number): Date {
+export function minuitParis(annee: number, mois: number, jour: number): Date {
   const approx = Date.UTC(annee, mois - 1, jour)
   const premier = new Date(approx - decalageParis(new Date(approx)))
   // Second passage pour les nuits de changement d'heure.

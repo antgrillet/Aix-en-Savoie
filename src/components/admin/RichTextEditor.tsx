@@ -210,7 +210,7 @@ export function RichTextEditor({
 
   if (!editor) {
     // Réserve la place de l'éditeur le temps qu'il se monte
-    return <div aria-hidden="true" className={cn('h-[28rem] rounded-[3px] border border-border', className)} />
+    return <div aria-hidden="true" className={cn('h-[28rem] rounded-lg border border-border', className)} />
   }
 
   const addLink = () => {
@@ -237,7 +237,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'adm-editor overflow-hidden rounded-[3px] border bg-background transition-colors duration-150 ease-out hover:border-foreground',
+        'adm-editor overflow-hidden rounded-lg border bg-background transition-colors duration-150 ease-out hover:border-[color:var(--adm-control)]',
         invalid ? 'border-destructive' : 'border-input',
         className
       )}

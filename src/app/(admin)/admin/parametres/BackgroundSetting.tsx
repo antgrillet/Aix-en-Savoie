@@ -111,7 +111,7 @@ export function BackgroundSetting({
         <>
           {description}
           <span className="mt-2 block">
-            <StatusMark tone={saved ? 'solid' : 'dashed'}>{saved ? 'En place' : 'Aucune image'}</StatusMark>
+            <StatusMark tone={saved ? 'ok' : 'neutral'}>{saved ? 'En place' : 'Aucune image'}</StatusMark>
           </span>
         </>
       }

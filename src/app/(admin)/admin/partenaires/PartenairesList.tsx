@@ -63,7 +63,7 @@ function Marques({ partenaire }: { partenaire: Partenaire }) {
     <span className="flex flex-wrap items-center gap-1.5">
       <StatusBadge status={partenaire.published ? 'published' : 'draft'} />
       {partenaire.partenaire_majeur && (
-        <StatusMark tone="fill" icon={Star}>
+        <StatusMark tone="ink" icon={Star}>
           Majeur
         </StatusMark>
       )}
@@ -211,14 +211,16 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
     )
     return [
       { value: 'all', label: 'Toutes catégories' },
-      ...categories.map((categorie) => ({ value: categorie, label: categorie })),
+      ...categories.map((categorie) => ({
+        value: categorie,
+        label: categorie,
+      })),
     ]
   }, [initialPartenaires])
 
   const filteredPartenaires = useMemo(() => {
     return partenaires.filter((partenaire) => {
-      const matchesSearch =
-        search === '' || partenaire.nom.toLowerCase().includes(search.toLowerCase())
+      const matchesSearch = search === '' || partenaire.nom.toLowerCase().includes(search.toLowerCase())
       const matchesCategory = categoryFilter === 'all' || partenaire.categorie === categoryFilter
       const matchesStatus =
         statusFilter === 'all' ||
@@ -262,9 +264,7 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
   const handleTogglePublished = async (partenaire: Partenaire) => {
     try {
       await togglePublished(partenaire.id)
-      setPartenaires(
-        partenaires.map((p) => (p.id === partenaire.id ? { ...p, published: !p.published } : p))
-      )
+      setPartenaires(partenaires.map((p) => (p.id === partenaire.id ? { ...p, published: !p.published } : p)))
       toast.success(partenaire.published ? 'Partenaire repassé en brouillon' : 'Partenaire publié')
     } catch {
       toast.error("Le statut n'a pas pu être modifié. Réessayez dans un instant.")
@@ -344,9 +344,20 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
   }
 
   const actionsFor = (partenaire: Partenaire): (RowAction | 'separator')[] => [
-    { label: 'Modifier', icon: Pencil, href: `/admin/partenaires/${partenaire.id}` },
+    {
+      label: 'Modifier',
+      icon: Pencil,
+      href: `/admin/partenaires/${partenaire.id}`,
+    },
     ...(partenaire.site
-      ? [{ label: 'Voir le site du partenaire', icon: ExternalLink, href: partenaire.site, external: true }]
+      ? [
+          {
+            label: 'Voir le site du partenaire',
+            icon: ExternalLink,
+            href: partenaire.site,
+            external: true,
+          },
+        ]
       : []),
     {
       label: partenaire.published ? 'Dépublier' : 'Publier',
@@ -423,8 +434,8 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
             }
           >
             <p>
-              Un partenaire, c'est un nom, un logo et quelques lignes de présentation. Une fois publié,
-              il apparaît sur la page Partenaires du site, et sur l'accueil s'il est partenaire majeur.
+              Un partenaire, c'est un nom, un logo et quelques lignes de présentation. Une fois publié, il
+              apparaît sur la page Partenaires du site, et sur l'accueil s'il est partenaire majeur.
             </p>
           </EmptyState>
         )
@@ -432,65 +443,70 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
         <>
           {/* Grand écran : tableau, lignes à sélectionner et à réordonner */}
           <div className="hidden md:block">
-            <DndContext
-              id="partenaires-ordre"
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-              accessibility={{ announcements, screenReaderInstructions: INSTRUCTIONS_DEPLACEMENT }}
-            >
-              <table className="adm-table">
-                <caption className="sr-only">Partenaires</caption>
-                <thead>
-                  <tr>
-                    <th scope="col" className="w-9">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleSelectAll}
-                        aria-label="Sélectionner tous les partenaires affichés"
-                      />
-                    </th>
-                    <th scope="col" className="w-12">
-                      <span className="sr-only">Déplacer</span>
-                    </th>
-                    <th scope="col" className="w-16">
-                      <span className="sr-only">Logo</span>
-                    </th>
-                    <th scope="col">Nom</th>
-                    <th scope="col" className="hidden lg:table-cell">
-                      Catégorie
-                    </th>
-                    <th scope="col" className="hidden xl:table-cell">
-                      Type
-                    </th>
-                    <th scope="col">Statut</th>
-                    <th scope="col" className="hidden text-right lg:table-cell">
-                      Ordre
-                    </th>
-                    <th scope="col" className="w-12">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <SortableContext
-                    items={filteredPartenaires.map((p) => p.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {filteredPartenaires.map((partenaire) => (
-                      <SortableRow
-                        key={partenaire.id}
-                        partenaire={partenaire}
-                        actions={actionsFor(partenaire)}
-                        isSelected={selection.includes(partenaire.id)}
-                        onToggleSelect={() => toggleSelectOne(partenaire.id)}
-                        canReorder={!hasActiveFilters}
-                      />
-                    ))}
-                  </SortableContext>
-                </tbody>
-              </table>
-            </DndContext>
+            <div className="adm-panel overflow-hidden">
+              <DndContext
+                id="partenaires-ordre"
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                accessibility={{
+                  announcements,
+                  screenReaderInstructions: INSTRUCTIONS_DEPLACEMENT,
+                }}
+              >
+                <table className="adm-table">
+                  <caption className="sr-only">Partenaires</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" className="w-9">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="Sélectionner tous les partenaires affichés"
+                        />
+                      </th>
+                      <th scope="col" className="w-12">
+                        <span className="sr-only">Déplacer</span>
+                      </th>
+                      <th scope="col" className="w-16">
+                        <span className="sr-only">Logo</span>
+                      </th>
+                      <th scope="col">Nom</th>
+                      <th scope="col" className="hidden lg:table-cell">
+                        Catégorie
+                      </th>
+                      <th scope="col" className="hidden xl:table-cell">
+                        Type
+                      </th>
+                      <th scope="col">Statut</th>
+                      <th scope="col" className="hidden text-right lg:table-cell">
+                        Ordre
+                      </th>
+                      <th scope="col" className="w-12">
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <SortableContext
+                      items={filteredPartenaires.map((p) => p.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {filteredPartenaires.map((partenaire) => (
+                        <SortableRow
+                          key={partenaire.id}
+                          partenaire={partenaire}
+                          actions={actionsFor(partenaire)}
+                          isSelected={selection.includes(partenaire.id)}
+                          onToggleSelect={() => toggleSelectOne(partenaire.id)}
+                          canReorder={!hasActiveFilters}
+                        />
+                      ))}
+                    </SortableContext>
+                  </tbody>
+                </table>
+              </DndContext>
+            </div>
 
             <p className="adm-meta mt-3 max-w-[75ch]">
               {hasActiveFilters
@@ -500,7 +516,7 @@ export function PartenairesList({ initialPartenaires }: PartenairesListProps) {
           </div>
 
           {/* Téléphone : lignes empilées */}
-          <ul className="adm-rows border-t border-foreground md:hidden" aria-label="Partenaires">
+          <ul className="adm-panel adm-rows px-4 md:hidden" aria-label="Partenaires">
             {filteredPartenaires.map((partenaire) => (
               <PhoneRow key={partenaire.id} partenaire={partenaire} actions={actionsFor(partenaire)} />
             ))}

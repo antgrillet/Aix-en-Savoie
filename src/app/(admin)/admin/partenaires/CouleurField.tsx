@@ -37,7 +37,7 @@ export function CouleurField({ initialValue }: CouleurFieldProps) {
             setTexte(event.target.value.toUpperCase())
           }}
           aria-label="Choisir la couleur de marque dans la palette"
-          className="h-11 w-14 shrink-0 cursor-pointer rounded-[3px] border border-input bg-background p-1 transition-colors duration-150 ease-out hover:border-foreground md:h-10"
+          className="h-11 w-14 shrink-0 cursor-pointer rounded-lg border border-input bg-background p-1 transition-colors duration-150 ease-out hover:border-[color:var(--adm-control)] md:h-10"
         />
         <Input
           id="couleurTexte"

@@ -1,10 +1,10 @@
 import {
-  ClipboardList,
   Handshake,
   LayoutDashboard,
   Medal,
   MessageSquare,
   Newspaper,
+  Receipt,
   Settings,
   Trophy,
   Users,
@@ -17,14 +17,17 @@ export type AdminSectionId =
   | 'equipes'
   | 'matchs'
   | 'resultats'
-  | 'inscriptions'
   | 'partenaires'
   | 'messages'
+  | 'arbitrage'
   | 'parametres'
+
+/** Couleur du compteur : orange = à traiter, rouge = bloquant, gris = à surveiller */
+export type CountTone = 'action' | 'bad' | 'neutral'
 
 export interface AdminSection {
   id: AdminSectionId
-  /** Libellé complet (rail, feuille « Plus », titres) */
+  /** Libellé complet (barre latérale, feuille « Plus », titres) */
   name: string
   /** Libellé court de la barre d'onglets du téléphone */
   tabName?: string
@@ -32,19 +35,48 @@ export interface AdminSection {
   icon: LucideIcon
   /** Présent dans la barre d'onglets du téléphone ; le reste passe par « Plus » */
   tab?: boolean
+  countTone?: CountTone
 }
 
-export const ADMIN_SECTIONS: AdminSection[] = [
-  { id: 'tableau', name: 'Tableau de bord', tabName: 'Accueil', href: '/admin', icon: LayoutDashboard, tab: true },
-  { id: 'articles', name: 'Articles', href: '/admin/articles', icon: Newspaper, tab: true },
-  { id: 'equipes', name: 'Équipes', href: '/admin/equipes', icon: Users },
-  { id: 'matchs', name: 'Matchs', href: '/admin/matchs', icon: Trophy, tab: true },
-  { id: 'resultats', name: 'Résultats', href: '/admin/resultats', icon: Medal },
-  { id: 'inscriptions', name: 'Inscriptions', href: '/admin/inscriptions', icon: ClipboardList },
-  { id: 'partenaires', name: 'Partenaires', href: '/admin/partenaires', icon: Handshake },
-  { id: 'messages', name: 'Messages', href: '/admin/messages', icon: MessageSquare, tab: true },
-  { id: 'parametres', name: 'Paramètres', href: '/admin/parametres', icon: Settings },
+export interface AdminGroup {
+  title: string
+  sections: AdminSection[]
+}
+
+/** La navigation, rangée par moment d'usage : le week-end d'abord, le club en dernier. */
+export const ADMIN_GROUPS: AdminGroup[] = [
+  {
+    title: 'Ce week-end',
+    sections: [
+      { id: 'tableau', name: 'Tableau de bord', tabName: 'Accueil', href: '/admin', icon: LayoutDashboard, tab: true },
+      { id: 'resultats', name: 'Résultats', href: '/admin/resultats', icon: Medal, tab: true, countTone: 'action' },
+    ],
+  },
+  {
+    title: 'Calendrier',
+    sections: [
+      { id: 'matchs', name: 'Matchs', href: '/admin/matchs', icon: Trophy },
+      { id: 'equipes', name: 'Équipes', href: '/admin/equipes', icon: Users, countTone: 'bad' },
+    ],
+  },
+  {
+    title: 'Site public',
+    sections: [
+      { id: 'articles', name: 'Articles', href: '/admin/articles', icon: Newspaper, countTone: 'neutral' },
+      { id: 'partenaires', name: 'Partenaires', href: '/admin/partenaires', icon: Handshake },
+      { id: 'messages', name: 'Messages', href: '/admin/messages', icon: MessageSquare, tab: true, countTone: 'action' },
+    ],
+  },
+  {
+    title: 'Club',
+    sections: [
+      { id: 'arbitrage', name: 'Arbitrage', href: '/admin/arbitrage', icon: Receipt, countTone: 'action' },
+      { id: 'parametres', name: 'Paramètres', href: '/admin/parametres', icon: Settings },
+    ],
+  },
 ]
+
+export const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap((group) => group.sections)
 
 /** Nombre d'éléments qui attendent une action, par section */
 export type AdminCounts = Partial<Record<AdminSectionId, number>>

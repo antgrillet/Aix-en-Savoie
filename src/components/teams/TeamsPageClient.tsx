@@ -2,48 +2,12 @@
 
 import { useCallback, useMemo } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { TeamCardDetailed } from './TeamCardDetailed'
-import { TeamsFilters, buildCategoryOptions } from './TeamsFilters'
-
-interface Entrainement {
-  id: number
-  jour: string
-  horaire: string
-  lieu?: string | null
-}
-
-interface Classement {
-  id: number
-  position: number
-  club: string
-  points: number
-}
-
-interface Match {
-  id: number
-  adversaire: string
-  date: Date
-  lieu: string | null
-  domicile: boolean
-  logoAdversaire: string | null
-}
-
-interface Equipe {
-  id: number
-  nom: string
-  categorie: string
-  description: string
-  entraineur: string
-  matches: string | null
-  photo: string
-  slug: string
-  entrainements: Entrainement[]
-  classement: Classement[]
-  matchs: Match[]
-}
+import { TeamsGrid } from './TeamsGrid'
+import { TeamsFilters, buildGroupeOptions, getGroupe } from './TeamsFilters'
+import type { EquipeListe } from './types'
 
 interface TeamsPageClientProps {
-  equipes: Equipe[]
+  equipes: EquipeListe[]
 }
 
 export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
@@ -51,28 +15,35 @@ export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const activeCategory = searchParams.get('categorie') ?? 'all'
-
-  const categories = useMemo(
-    () => buildCategoryOptions(equipes.map((equipe) => equipe.categorie)),
+  const equipesAvecGroupe = useMemo(
+    () => equipes.map((equipe) => ({ equipe, groupe: getGroupe(equipe.nom, equipe.categorie) })),
     [equipes]
   )
 
-  const filteredEquipes = useMemo(
-    () =>
-      activeCategory === 'all'
-        ? equipes
-        : equipes.filter((equipe) => equipe.categorie === activeCategory),
-    [equipes, activeCategory]
+  const groupes = useMemo(
+    () => buildGroupeOptions(equipesAvecGroupe.map(({ groupe }) => groupe)),
+    [equipesAvecGroupe]
   )
 
-  const handleCategoryChange = useCallback(
-    (category: string) => {
+  // Un paramètre inconnu (ancien lien, faute de frappe) retombe sur « Toutes ».
+  const demande = searchParams.get('categorie')
+  const activeGroupe = groupes.some((g) => g.value === demande) ? (demande as string) : 'all'
+
+  const filteredEquipes = useMemo(
+    () =>
+      equipesAvecGroupe
+        .filter(({ groupe }) => activeGroupe === 'all' || groupe === activeGroupe)
+        .map(({ equipe }) => equipe),
+    [equipesAvecGroupe, activeGroupe]
+  )
+
+  const handleGroupeChange = useCallback(
+    (groupe: string) => {
       const params = new URLSearchParams(searchParams.toString())
-      if (category === 'all') {
+      if (groupe === 'all') {
         params.delete('categorie')
       } else {
-        params.set('categorie', category)
+        params.set('categorie', groupe)
       }
       const query = params.toString()
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
@@ -81,112 +52,16 @@ export function TeamsPageClient({ equipes }: TeamsPageClientProps) {
   )
 
   return (
-    <div>
-      {/* Liste des équipes */}
-      <section id="liste-equipes" className="py-16 bg-zinc-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center relative inline-block w-full">
-            Découvrez nos équipes
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-primary-500 to-transparent"></span>
-          </h2>
+    <section id="liste-equipes" aria-label="Liste des équipes">
+      {groupes.length > 1 && (
+        <TeamsFilters
+          groupes={groupes}
+          activeGroupe={activeGroupe}
+          onGroupeChange={handleGroupeChange}
+        />
+      )}
 
-          <TeamsFilters
-            categories={categories}
-            activeCategory={activeCategory}
-            onCategoryChange={handleCategoryChange}
-          />
-
-          {/* Conteneur des équipes */}
-          {filteredEquipes.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-white text-xl">Aucune équipe dans cette catégorie.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredEquipes.map((equipe) => (
-                <TeamCardDetailed key={equipe.id} equipe={equipe} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Appel à l'action */}
-      <section className="py-16 bg-gradient-to-r from-zinc-900 to-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-primary-500 rounded-xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-primary-400 rounded-full opacity-40 blur-xl"></div>
-            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 bg-primary-600 rounded-full opacity-30 blur-xl"></div>
-
-            <div className="relative z-10 md:flex items-center justify-between">
-              <div className="md:w-2/3 md:pr-8 mb-8 md:mb-0">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                  Rejoignez nos équipes !
-                </h2>
-                <p className="text-white/90 text-lg mb-6">
-                  Envie de pratiquer le handball dans une ambiance conviviale ? Nous accueillons de
-                  nouveaux joueurs tout au long de l'année, quel que soit votre niveau.
-                </p>
-                <ul className="space-y-2 mb-6 text-white/90">
-                  <li className="flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-2 text-white"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Des équipes pour tous les âges
-                  </li>
-                  <li className="flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-2 text-white"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Des entraîneurs qualifiés
-                  </li>
-                  <li className="flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-2 text-white"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Un club familial et convivial
-                  </li>
-                </ul>
-              </div>
-              <div className="md:w-1/3 flex justify-center">
-                <a
-                  href="/contact?sujet=inscription"
-                  className="inline-block px-8 py-4 bg-black text-white text-lg font-bold rounded-lg shadow-lg hover:bg-zinc-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
-                >
-                  S'inscrire au club
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+      <TeamsGrid equipes={filteredEquipes} />
+    </section>
   )
 }

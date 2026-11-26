@@ -243,7 +243,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
             checked={domicile}
             onCheckedChange={setDomicile}
             aside={
-              <StatusMark tone={domicile ? 'fill' : 'solid'}>
+              <StatusMark tone={domicile ? 'ink' : 'neutral'}>
                 {domicile ? 'Domicile' : 'Extérieur'}
               </StatusMark>
             }
@@ -264,7 +264,7 @@ export function MatchForm({ match, equipes, action }: MatchFormProps) {
             checked={termine}
             onCheckedChange={setTermine}
             aside={
-              <StatusMark tone={termine ? 'solid' : 'dashed'}>
+              <StatusMark tone={termine ? 'ok' : 'neutral'}>
                 {termine ? 'Terminé' : 'À venir'}
               </StatusMark>
             }

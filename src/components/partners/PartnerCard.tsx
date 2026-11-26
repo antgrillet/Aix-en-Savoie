@@ -31,6 +31,8 @@ interface PartnerCardProps {
 export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const [copied, setCopied] = useState(false)
+  // Un code vide ou fait d'espaces équivaut à une offre sans code
+  const promoCode = partenaire.promoCode?.trim() || null
 
   // Vérifier si l'offre est expirée
   const isPromoExpired = partenaire.promoExpiration
@@ -48,9 +50,9 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
   const copyCode = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!partenaire.promoCode) return
+    if (!promoCode) return
     try {
-      await navigator.clipboard.writeText(partenaire.promoCode)
+      await navigator.clipboard.writeText(promoCode)
       setCopied(true)
       toast.success('Code copié !')
       setTimeout(() => setCopied(false), 2000)
@@ -146,13 +148,13 @@ export function PartnerCard({ partenaire, featured = false }: PartnerCardProps) 
               )}
             </div>
 
-            {partenaire.promoCode ? (
+            {promoCode ? (
               <button
                 onClick={copyCode}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-600 rounded-md transition-colors duration-200 group"
               >
                 <span className="font-mono font-bold text-white tracking-wider text-sm">
-                  {partenaire.promoCode}
+                  {promoCode}
                 </span>
                 {copied ? (
                   <Check className="w-4 h-4 text-green-500" />

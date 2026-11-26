@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { ArticlesGrid } from '@/components/news/ArticlesGrid'
 import { NewsFilters } from '@/components/news/NewsFilters'
+import { FeaturedArticle } from '@/components/news/FeaturedArticle'
+import { NewsPagination } from '@/components/news/NewsPagination'
+import { calculateReadingTime } from '@/lib/reading-time'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
@@ -43,6 +46,16 @@ export async function generateMetadata({
   })
 }
 
+const articleSelect = {
+  id: true,
+  titre: true,
+  categorie: true,
+  date: true,
+  image: true,
+  resume: true,
+  slug: true,
+} as const
+
 export default async function ActusPage({
   searchParams,
 }: {
@@ -59,37 +72,46 @@ export default async function ActusPage({
     ...(categorie && categorie !== 'TOUS' ? { categorie } : {}),
   }
 
-  // Récupérer les articles
-  const [articles, total, backgroundImage] = await Promise.all([
-    prisma.article.findMany({
-      where,
-      orderBy: {
-        date: 'desc',
-      },
-      skip: (page - 1) * perPage,
-      take: perPage,
-      select: {
-        id: true,
-        titre: true,
-        categorie: true,
-        date: true,
-        image: true,
-        resume: true,
-        slug: true,
-      },
+  // « À la une » : l'article vedette le plus récent du filtre, sinon le plus
+  // récent. Il est retiré de la grille sur toutes les pages pour ne jamais
+  // apparaître deux fois, et n'est affiché qu'en page 1.
+  const featuredSelect = { ...articleSelect, contenu: true } as const
+  const [vedette, plusRecent, categories, backgroundImage] = await Promise.all([
+    prisma.article.findFirst({
+      where: { ...where, vedette: true },
+      orderBy: { date: 'desc' },
+      select: featuredSelect,
     }),
-    prisma.article.count({ where }),
+    prisma.article.findFirst({
+      where,
+      orderBy: { date: 'desc' },
+      select: featuredSelect,
+    }),
+    // Toutes les catégories disponibles
+    prisma.article.findMany({
+      where: { published: true },
+      select: { categorie: true },
+      distinct: ['categorie'],
+      orderBy: { categorie: 'asc' },
+    }),
     getPageBackgroundImage('actus'),
   ])
+  const featured = vedette ?? plusRecent
 
-  // Récupérer toutes les catégories disponibles
-  const categories = await prisma.article.findMany({
-    where: { published: true },
-    select: { categorie: true },
-    distinct: ['categorie'],
-  })
+  const gridWhere = featured ? { ...where, id: { not: featured.id } } : where
+  const [articles, total] = await Promise.all([
+    prisma.article.findMany({
+      where: gridWhere,
+      orderBy: { date: 'desc' },
+      skip: (page - 1) * perPage,
+      take: perPage,
+      select: articleSelect,
+    }),
+    prisma.article.count({ where: gridWhere }),
+  ])
 
   const totalPages = Math.ceil(total / perPage)
+  const showFeatured = Boolean(featured) && page === 1
 
   return (
     <div className="pt-24 min-h-screen bg-zinc-900 relative overflow-hidden">
@@ -102,61 +124,52 @@ export default async function ActusPage({
       {/* Background */}
       <PageBackground imageUrl={backgroundImage} />
 
-      {/* Header */}
-      <section className="py-12 text-white relative overflow-hidden z-10">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h1 className="text-3xl md:text-4xl font-display font-bold mb-4 text-white">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 md:pt-11 lg:px-8">
+        {/* Header */}
+        <header className="mb-8 text-center">
+          <h1 className="mb-2 font-display text-4xl font-extrabold leading-[1.1] tracking-[-0.02em] text-white md:text-5xl">
             Nos Actualités
           </h1>
-          <p className="text-neutral-400 max-w-2xl mx-auto">
-            Suivez toute l'actualité du HBC Aix-en-Savoie
+          <p className="text-base text-neutral-300 md:text-lg">
+            Suivez toute l&apos;actualité du HBC Aix-en-Savoie
           </p>
+        </header>
+
+        {/* Filters */}
+        <div className="mb-8">
+          <NewsFilters
+            categories={categories.map((c) => c.categorie)}
+            currentCategory={categorie}
+          />
         </div>
-      </section>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        <NewsFilters
-          categories={categories.map((c) => c.categorie)}
-          currentCategory={categorie}
-        />
-      </div>
-
-      {/* Articles Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 relative z-10">
-        {articles.length > 0 ? (
-          <>
-            <ArticlesGrid articles={articles} />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => (
-                    <a
-                      key={pageNum}
-                      href={`/actus?${categorie ? `categorie=${encodeURIComponent(categorie)}&` : ''}page=${pageNum}`}
-                      className={`px-4 py-2 rounded font-display font-bold transition-colors ${
-                        pageNum === page
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-zinc-800 text-white hover:bg-zinc-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </a>
-                  )
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-neutral-400 text-lg font-display">
-              Aucun article trouvé dans cette catégorie.
-            </p>
-          </div>
+        {showFeatured && featured && (
+          <FeaturedArticle
+            article={featured}
+            readingTime={calculateReadingTime(featured.contenu)}
+          />
         )}
+
+        {articles.length > 0 ? (
+          <section aria-labelledby="actus-liste">
+            <h2 id="actus-liste" className="sr-only">
+              {showFeatured ? 'Autres actualités' : 'Actualités'}
+            </h2>
+            <ArticlesGrid articles={articles} />
+          </section>
+        ) : (
+          !showFeatured && (
+            <div className="py-20 text-center">
+              <p className="font-display text-lg text-neutral-400">
+                {page > 1
+                  ? 'Cette page ne contient aucun article.'
+                  : 'Aucun article trouvé dans cette catégorie.'}
+              </p>
+            </div>
+          )
+        )}
+
+        <NewsPagination page={page} totalPages={totalPages} categorie={categorie} />
       </div>
     </div>
   )

@@ -7,23 +7,23 @@ const emptySubscribe = () => () => {}
 
 const toasterStyle = {
   fontFamily: 'var(--font-sans)',
-  '--border-radius': '3px',
-  '--normal-bg': 'var(--adm-ink)',
-  '--normal-text': 'var(--adm-paper)',
-  '--normal-border': 'var(--adm-ink)',
-  '--success-bg': 'var(--adm-ink)',
-  '--success-text': 'var(--adm-paper)',
-  '--success-border': 'var(--adm-ink)',
-  '--error-bg': 'var(--adm-red)',
-  '--error-text': 'var(--adm-paper)',
-  '--error-border': 'var(--adm-red)',
+  '--border-radius': '10px',
+  '--normal-bg': 'var(--adm-paper)',
+  '--normal-text': 'var(--adm-ink)',
+  '--normal-border': 'var(--adm-line)',
+  '--success-bg': 'var(--adm-ok-soft)',
+  '--success-text': 'var(--adm-ok)',
+  '--success-border': '#b7dfc3',
+  '--error-bg': 'var(--adm-bad-soft)',
+  '--error-text': 'var(--adm-bad)',
+  '--error-border': '#f1b8b2',
 } as React.CSSProperties
 
 /**
  * Retours d'action de l'admin (`toast.success`, `toast.error` de `sonner`).
  * Monté une fois par le layout, hors de l'arbre `data-admin` : c'est une
- * surcouche, elle garde son ombre. Bloc noir pour une confirmation, rouge pour
- * une erreur.
+ * surcouche, elle garde son ombre. Vert pour une confirmation, rouge pour une
+ * erreur, toujours avec une phrase.
  */
 export function AdminToaster() {
   const isMounted = useSyncExternalStore(
@@ -43,7 +43,7 @@ export function AdminToaster() {
       toastOptions={{
         classNames: {
           toast: 'text-[0.9375rem] font-medium',
-          description: 'text-[0.8125rem] font-normal opacity-90',
+          description: 'text-[0.875rem] font-normal opacity-90',
         },
       }}
     />

@@ -1,6 +1,5 @@
 import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
-import { getInscriptionsStats } from '@/app/(admin)/admin/inscriptions/actions'
 import type { AdminCounts } from './navigation'
 
 /**
@@ -14,12 +13,35 @@ export interface ATraiter {
   brouillons: number
   /** Matchs publiés joués ces 30 derniers jours, non terminés et sans score */
   scoresEnAttente: number
-  /** Postes de bénévoles manquants sur les matchs à domicile à venir */
-  postesAPourvoir: number
-  /** Nombre de matchs à domicile à venir concernés par ces postes */
-  matchsARenforcer: number
   /** Équipes publiées sans lien de championnat FFHANDBALL (synchronisation impossible) */
   equipesSansLien: number
+  /** Noms de ces équipes, pour dire lesquelles */
+  equipesSansLienNoms: string[]
+  /** Notes d'arbitrage à valider, ou validées mais pas encore parties chez le comptable */
+  notesArbitrage: number
+  /** Dépôt de la plus ancienne de ces notes */
+  plusAncienneNoteArbitrage: Date | null
+  /** Échéances : de quoi classer les tâches par urgence */
+  echeances: {
+    /** Plus ancien message non lu */
+    plusAncienMessage: Date | null
+    /** Plus ancien match joué encore sans score */
+    plusAncienScore: Date | null
+  }
+}
+
+/**
+ * Matchs publiés joués ces 30 derniers jours, non terminés et sans score. Au-delà
+ * de 30 jours, un score manquant n'est plus une tâche : les matchs des saisons
+ * passées restent sans résultat pour de bon. Partagé avec l'écran Résultats.
+ */
+export function filtreScoresEnAttente(maintenant: Date) {
+  return {
+    published: true,
+    termine: false,
+    date: { lt: maintenant, gte: new Date(maintenant.getTime() - 30 * 24 * 60 * 60 * 1000) },
+    OR: [{ scoreEquipe: null }, { scoreAdversaire: null }],
+  }
 }
 
 /**
@@ -28,40 +50,42 @@ export interface ATraiter {
  */
 export const getATraiter = cache(async (): Promise<ATraiter> => {
   const maintenant = new Date()
-  const ilYA30Jours = new Date(maintenant.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const [messagesNonLus, brouillons, scoresEnAttente, equipesSansLien, matchsAvecManques] =
-    await Promise.all([
-      prisma.contactMessage.count({ where: { read: false, archived: false } }),
-      prisma.article.count({ where: { published: false } }),
-      prisma.match.count({
-        where: {
-          published: true,
-          termine: false,
-          // Au-delà de 30 jours, un score manquant n'est plus une tâche :
-          // les matchs des saisons passées restent sans résultat pour de bon.
-          date: { lt: maintenant, gte: ilYA30Jours },
-          OR: [{ scoreEquipe: null }, { scoreAdversaire: null }],
-        },
-      }),
-      prisma.equipe.count({
-        where: { published: true, OR: [{ matches: null }, { matches: '' }] },
-      }),
-      // Règle métier des besoins en bénévoles : celle de la section Inscriptions
-      getInscriptionsStats(),
-    ])
+  const filtreMessages = { read: false, archived: false }
+  const filtreScores = filtreScoresEnAttente(maintenant)
 
-  const aVenir = matchsAvecManques.filter(
-    (match) => new Date(match.date).getTime() >= maintenant.getTime()
-  )
+  const [messages, brouillons, scores, equipesSansLien, notesArbitrage] = await Promise.all([
+    prisma.contactMessage.aggregate({
+      where: filtreMessages,
+      _count: { _all: true },
+      _min: { createdAt: true },
+    }),
+    prisma.article.count({ where: { published: false } }),
+    prisma.match.aggregate({ where: filtreScores, _count: { _all: true }, _min: { date: true } }),
+    prisma.equipe.findMany({
+      where: { published: true, OR: [{ matches: null }, { matches: '' }] },
+      orderBy: { ordre: 'asc' },
+      select: { nom: true },
+    }),
+    prisma.noteArbitrage.aggregate({
+      where: { OR: [{ statut: 'EN_ATTENTE' }, { statut: 'VALIDEE', envoiComptableLe: null }] },
+      _count: { _all: true },
+      _min: { createdAt: true },
+    }),
+  ])
 
   return {
-    messagesNonLus,
+    messagesNonLus: messages._count._all,
     brouillons,
-    scoresEnAttente,
-    postesAPourvoir: aVenir.reduce((somme, match) => somme + match.totalManques, 0),
-    matchsARenforcer: aVenir.length,
-    equipesSansLien,
+    scoresEnAttente: scores._count._all,
+    equipesSansLien: equipesSansLien.length,
+    equipesSansLienNoms: equipesSansLien.map((equipe) => equipe.nom),
+    notesArbitrage: notesArbitrage._count._all,
+    plusAncienneNoteArbitrage: notesArbitrage._min.createdAt,
+    echeances: {
+      plusAncienMessage: messages._min.createdAt,
+      plusAncienScore: scores._min.date,
+    },
   }
 })
 
@@ -71,7 +95,7 @@ export function compteursParSection(aTraiter: ATraiter): AdminCounts {
     articles: aTraiter.brouillons,
     equipes: aTraiter.equipesSansLien,
     resultats: aTraiter.scoresEnAttente,
-    inscriptions: aTraiter.postesAPourvoir,
     messages: aTraiter.messagesNonLus,
+    arbitrage: aTraiter.notesArbitrage,
   }
 }

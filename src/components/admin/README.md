@@ -1,53 +1,31 @@
-# Kit de l'administration — « Le tracé »
+# Kit de l'administration — « Bureau »
 
-L'admin est dessinée avec les lignes d'un terrain de handball. La ligne est le seul outil de structure et son style porte l'état. Tout écran de l'admin se construit avec ce kit ; les écrans Articles (`src/app/(admin)/admin/articles/`) et le tableau de bord (`DashboardView.tsx`) sont les modèles à recopier.
-
-Contrat de direction : `.impeccable/surfaces/src-app-admin-admin.md`. Thème : `src/styles/admin.css`.
+Un outil de bureau calme et lisible : fond clair chaud, panneaux blancs, l'orange et le logo du club. Ce fichier dit comment s'en servir ; `DESIGN.md` à la racine en donne les raisons. Les styles vivent dans `src/styles/admin.css`, sous `[data-admin]`.
 
 ## Les quatre règles
 
-| Signe | Sens | Où |
-|---|---|---|
-| Trait plein noir, 2 px | Structure, état confirmé (publié, lu, terminé) | Sous l'en-tête de page, entre les sections de formulaire, contour de `StatusMark tone="solid"` |
-| Pointillé (tiret = intervalle) | Provisoire : brouillon, facultatif, en attente, en chargement | `StatusMark tone="dashed"`, `FormSection optional`, zone de dépôt vide, squelettes |
-| Orange `#D77F29` | Ce qui s'actionne ou attend une action | Bouton principal (un par écran), entrée courante de la navigation, compteurs « à traiter », `StatusMark tone="action"`, anneau de focus |
-| Rouge `#B42318` | Suppression et erreur, rien d'autre | `DeleteDialog`, action `destructive` d'un menu, message d'erreur d'un champ |
-
-Le reste est noir sur blanc. Le gris n'existe que pour le texte secondaire (`text-muted-foreground`) et les filets (`border-border`). Aucune surface grise ou teintée, aucun dégradé, aucune ombre dans la page : seules les surcouches (dialogue, menu, liste déroulante, toast) en portent une. Coins de 2 à 4 px. Une seule courbe, l'arc de zone, déjà posée par la coque, la connexion et `EmptyState`.
-
-**Orange et contraste.** Sur fond orange, le texte est noir (`text-primary-foreground`), jamais blanc. L'orange en texte sur blanc est réservé aux grands chiffres (`adm-num-lg`, 40 px gras). Pour un petit texte orangé sur blanc, `text-[color:var(--adm-orange-ink)]` (5,2:1) ; à éviter si une marque de statut suffit.
+1. **La couleur dit un état, et jamais seule.** Vert = fait, rouge = bloquant, orange (ou ambre) = à traiter. Toujours avec un libellé : `StatusMark`, ou un point suivi d'un texte.
+2. **L'urgent en haut et en gros.** Le tableau de bord classe les tâches par échéance (`classerUrgences`) ; la première, si elle presse, prend le grand chiffre.
+3. **Une action principale orange par écran.** Le reste en `outline` ou `ghost`.
+4. **Lisible à 3 m.** Texte courant à 14 px au moins, cibles de 44 px sur téléphone, chiffres tabulaires.
 
 ## Jetons utiles
 
-Les jetons shadcn sont redéfinis dans l'admin, donc les utilitaires habituels donnent déjà les bonnes valeurs :
+| Jeton | Valeur | Usage |
+|---|---|---|
+| `--adm-bg` | `#f3f2ee` | Fond de page, clair et chaud |
+| `--adm-paper` | `#ffffff` | Panneaux, barre latérale, barre haute |
+| `--adm-sunken` | `#f7f5f0` | Bandeau de jour, survol, zone de dépôt (`bg-muted`) |
+| `--adm-line` / `--adm-line-2` | `#e4e1da` / `#efede7` | Bord des panneaux (`border-border`) / filet entre lignes |
+| `--adm-ink` / `--adm-text-2` | `#1f1e1b` / `#5c5852` | Texte / texte secondaire (`text-muted-foreground`) |
+| `--adm-orange` | `#e8731a` | Action principale (`bg-primary`, texte noir dessus), onglet courant |
+| `--adm-orange-ink` | `#9a4308` | Petit texte orangé sur blanc, grand chiffre « à traiter » |
+| `--adm-orange-soft` / `-wash` | `#fdebdc` / `#fffaf5` | Pastille « à traiter » / ligne qui attend une action (`data-attention`) |
+| `--adm-ok` / `-soft` | `#15803d` / `#e3f4e8` | Fait, complet, victoire |
+| `--adm-bad` / `-soft` | `#b42318` / `#fce8e6` | Bloquant, erreur, défaite |
+| `--adm-warn` / `-soft` | `#8a5a00` / `#fbf0d4` | À surveiller, synchro en retard |
 
-| Utilitaire | Rendu |
-|---|---|
-| `bg-background` / `text-foreground` | blanc / noir `#222221` |
-| `bg-foreground text-background` | bloc noir, texte blanc (survol, élément de menu actif) |
-| `bg-primary text-primary-foreground` | bloc orange, texte noir |
-| `text-muted-foreground` | texte secondaire `#5F5F5C` |
-| `border-border` | filet `#D9D9D6` |
-| `border-foreground` | trait noir (`border-b-2` = trait de structure) |
-| `border-input` | contour de champ au repos |
-| `text-destructive` | rouge |
-
-Classes du thème (`admin.css`, couche `components` : un utilitaire Tailwind garde le dernier mot) :
-
-| Classe | Usage |
-|---|---|
-| `adm-title` | Titre de page, Barlow Condensed 28 px (posé par `PageHeader`) |
-| `adm-h2` / `adm-h3` | Titre de section 18 px / sous-titre 15 px |
-| `adm-meta` / `adm-micro` | Texte secondaire 13 px / mention 12 px |
-| `adm-num-lg` / `adm-num-md` / `adm-num-sm` | Rampe de chiffres : 40 px (ce qui attend une action), 24 px (totaux), 15 px (chiffre dans une ligne). Pas d'autre taille. |
-| `adm-link` | Lien dans le texte : noir souligné |
-| `adm-rows` | Sur un `ul` : filet entre les lignes, noir au survol |
-| `adm-row-link` | Sur le lien principal d'une ligne : toute la ligne devient cliquable sur téléphone |
-| `adm-rule` (+ `adm-rule--dashed`, `adm-rule--hair`) | Filet horizontal seul |
-
-Corps de texte : 15 px. Échelle fixe en rem (12, 13, 15, 18, 28) : pas de `clamp`, pas de `text-3xl sm:text-4xl`. Les `h1`–`h6` n'ont dans l'admin que la taille qu'on leur donne. Les chiffres sont tabulaires partout.
-
-Espacements : 24 px sous l'en-tête de page, 40 px entre deux blocs (`mt-10`), 20 px entre deux champs (`space-y-5`), lignes de liste de 56 px. Sur téléphone, toute cible tactile fait 44 px : les composants du kit le font déjà.
+Classes : `adm-title` (32 px, 28 sur téléphone), `adm-h2`, `adm-h3`, `adm-meta` (14 px gris), `adm-micro` (capitales 12 px, en-têtes de colonne et de groupe), `adm-num-xl|lg|md|sm` (chiffres condensés tabulaires), `adm-panel` + `adm-panel-head`, `adm-table` (avec `tr.adm-day` pour un bandeau de jour et `tr[data-attention]`), `adm-rows`, `adm-row-link`, `adm-seg` (filtres segmentés à compteur, `aria-current="page"`), `adm-urgence` (carte du tableau de bord), `adm-link`, `adm-more`.
 
 ## Composants
 
@@ -55,7 +33,7 @@ Chaque composant s'importe par son fichier : `@/components/admin/<Fichier>`. Pas
 
 ### Coque (déjà en place, rien à faire)
 
-`AdminShell` est rendu par le layout : rail noir de 232 px à partir de `lg`, barre haute et barre d'onglets en dessous, surface blanche avec l'arc de zone, toasts. La section courante est reconnue par préfixe de chemin. Pour ajouter une entrée ou un compteur : `navigation.ts` (`ADMIN_SECTIONS`) et `a-traiter.ts` (`getATraiter`, lectures seules mises en cache par requête).
+`AdminShell` est rendu par le layout : barre latérale blanche de 240 px à partir de `lg` (logo, sections rangées en quatre groupes : Ce week-end, Calendrier, Site public, Club), barre d'onglets en bas en dessous avec la feuille « Plus ». En haut, `AdminTopBar` : état de la dernière synchro FFHandball (`etat-synchro.ts`), sélecteur de saison (`saisons-admin.ts`, il pilote le filtre `?saison=` de Matchs et renvoie vers `/admin/parametres#saison`), menu « Créer » et compte. Pour ajouter une entrée ou un compteur : `navigation.ts` (`ADMIN_GROUPS`, `countTone`) et `a-traiter.ts` (`getATraiter`, lectures seules mises en cache par requête). Le tableau de bord classe ces tâches avec `classerUrgences` (`urgences.ts`).
 
 Retours d'action : `import { toast } from 'sonner'` ; `toast.success('Article publié')`, `toast.error('…', { description: '…' })`. Le toaster est monté par la coque.
 
@@ -70,15 +48,15 @@ Retours d'action : `import { toast } from 'sonner'` ; `toast.success('Article pu
 />
 ```
 
-Props : `title`, `description?`, `actions?`, `back?`, `className?`. Un seul par écran : il porte le `h1` et le trait plein. Rien au-dessus du titre, sauf le lien de retour.
+Props : `title`, `description?`, `actions?`, `back?`, `className?`. Un seul par écran : il porte le `h1`, posé sur le fond sans filet. Rien au-dessus du titre, sauf le lien de retour.
 
 ```tsx
-<Section title="Prochains matchs" count={5} action={<Link href="/admin/matchs" className="adm-link">Tous les matchs</Link>}>
+<Section title="Messages" count="3 non lus" action={<Link href="/admin/messages" className="adm-more">Tout voir</Link>}>
   <ul className="adm-rows">…</ul>
 </Section>
 ```
 
-Props : `title`, `count?`, `action?`, `className?`. Bloc titré dans une page (titre 18 px, filet noir dessous).
+Props : `title`, `count?` (texte ou nombre, gris à côté du titre), `action?`, `bare?`, `className?`, `bodyClassName?`. Panneau blanc à en-tête ; `bare` le pose sans panneau.
 
 ### Button — `Button.tsx`
 
@@ -90,7 +68,7 @@ Props : `title`, `count?`, `action?`, `className?`. Bloc titré dans une page (t
 <Button asChild><Link href="…">…</Link></Button>
 ```
 
-Mêmes props que le bouton shadcn, plus `isLoading`. Variantes : `default` (orange, **une seule par écran**), `outline`, `ghost`, `destructive` (confirmation de suppression seulement), `link`. Tailles : `default`, `sm`, `lg`, `icon`. Un bouton nomme son action : « Publier l'article », pas « Valider ». `LoadingButton` reste disponible pour les écrans existants.
+Mêmes props que le bouton shadcn, plus `isLoading`. Variantes : `default` (orange, texte noir, **une seule par écran**), `outline` (blanc à bord clair), `secondary`, `ghost`, `destructive` (confirmation de suppression seulement), `link`. Tailles : `default`, `sm`, `lg`, `icon`. Un bouton nomme son action : « Publier l'article », pas « Valider ». `LoadingButton` reste disponible pour les écrans existants.
 
 ### Field, Input, Textarea, Checkbox, Switch — `Field.tsx`
 
@@ -138,7 +116,7 @@ Mêmes props que le bouton shadcn, plus `isLoading`. Variantes : `default` (oran
 </form>
 ```
 
-`FormSection` : `title`, `description?`, `optional?` (filet en pointillé + mention « facultatif »), `className?`. Titre à gauche sur grand écran, champs à droite sur 40 rem. La première section n'a pas de trait : celui de l'en-tête en tient lieu, donc les sections sont les enfants directs du `form`.
+`FormSection` : `title`, `description?`, `optional?` (mention « facultatif »), `id?` (ancre, par exemple `#saison`), `className?`. Chaque section est un panneau blanc ; titre à gauche sur grand écran, champs à droite. Les sections sont les enfants directs du `form`.
 
 `SaveBar` : `status?` (masqué sur téléphone), `children` (Annuler puis l'action principale), `className?`. Dernier enfant du `form` ; elle reste collée en bas, au-dessus de la barre d'onglets sur téléphone.
 
@@ -155,7 +133,7 @@ Mêmes props que le bouton shadcn, plus `isLoading`. Variantes : `default` (oran
 </FilterBar>
 ```
 
-`FilterBar` : `label`, `children`, `count?`, `onReset?`, `className?`. **Toute liste annonce son compte** : passer `count`, ou poser `<ListCount shown={n} singular="match" plural="matchs" />` seul si la liste n'a pas de filtre. `FilterGroup` met deux listes côte à côte sur téléphone ; garder des libellés courts (« Tous statuts »).
+`FilterBar` : `label`, `children`, `count?`, `onReset?`, `className?`. **Toute liste annonce son compte** : passer `count`, ou poser `<ListCount shown={n} singular="match" plural="matchs" />` seul si la liste n'a pas de filtre. Une liste qui dépend de la saison le dit avec `scope` : `scope: 'saison 2026-2027, celle du site'`. `FilterGroup` met deux listes côte à côte sur téléphone ; garder des libellés courts (« Tous statuts »).
 
 ### DataList, Thumb — `DataList.tsx`
 
@@ -174,7 +152,7 @@ const columns: DataColumn<Article>[] = [
   empty={<EmptyState title="Aucun article pour l'instant">…</EmptyState>} />
 ```
 
-Tableau à partir de `md`, lignes empilées en dessous, avec la même définition de colonnes. `DataColumn` : `id`, `header`, `cell`, `align?`, `className?` (grand écran), `phone?` : `title` (une colonne), `meta` (ligne grise, par défaut), `marks` (rangée de marques), `hidden`. `DataList` : `caption`, `items`, `columns`, `getKey`, `media?`, `actions?`, `empty?`, `className?`. Les colonnes sont des fonctions : `DataList` se rend depuis un composant client ou serveur, mais on ne passe pas `columns` d'un composant serveur à un composant client.
+Dans un panneau blanc : tableau à partir de `md`, lignes empilées en dessous, avec la même définition de colonnes. `DataColumn` : `id`, `header`, `cell`, `align?`, `className?` (grand écran), `phone?` : `title` (une colonne), `meta` (ligne grise, par défaut), `marks` (rangée de marques), `hidden`. `DataList` : `caption`, `items`, `columns`, `getKey`, `media?`, `actions?`, `empty?`, `bare?` (sans panneau, dans une `Section`), `className?`. Les colonnes sont des fonctions : `DataList` se rend depuis un composant client ou serveur, mais on ne passe pas `columns` d'un composant serveur à un composant client.
 
 `Thumb` : `src`, `alt?`, `fit?` (`cover` pour une photo, `contain` pour un logo), `className?`.
 
@@ -194,18 +172,18 @@ Pour une liste simple sans colonnes (tableau de bord, détail), un `ul className
 
 `label` (nom accessible, avec le titre de la ligne), `items` : `{ label, icon?, href?, external?, onSelect?, destructive?, disabled? }` ou `'separator'`. La suppression en dernier, après un séparateur, et elle ouvre toujours `DeleteDialog`.
 
-### StatusMark, StatusBadge — `StatusMark.tsx`, `StatusBadge.tsx`
+### StatusMark, StatusDot, StatusBadge — `StatusMark.tsx`, `StatusBadge.tsx`
 
 ```tsx
 <StatusBadge status="published" />   // published, draft, read, unread, archived, featured
-<StatusMark tone="dashed">En attente</StatusMark>
-<StatusMark tone="action">À compléter</StatusMark>
-<StatusMark tone="fill">Domicile</StatusMark>  <StatusMark tone="solid">Extérieur</StatusMark>
+<StatusMark tone="ok">Victoire</StatusMark>
+<StatusMark tone="bad">Défaite</StatusMark>
+<StatusMark tone="action">Score à saisir</StatusMark>
+<StatusMark tone="ink">Domicile</StatusMark>  <StatusMark>Extérieur</StatusMark>
+<StatusDot tone="bad" />               // point seul, toujours à côté d'un texte
 ```
 
-`tone` : `solid` (contour plein : confirmé), `dashed` (contour pointillé : provisoire), `action` (bloc orange : attend une action), `fill` (bloc noir : fait marquant, domicile). `icon?`, `className?`. Elle remplace toutes les pastilles de couleur : pas de vert pour « victoire », pas de bleu pour « extérieur ».
-
-**Signature.** Quand un état passe de provisoire à confirmé, garder le même élément monté et ne changer que `tone` (ou `status`) : le contour en tirets se referme en trait plein en 180 ms. C'est le seul mouvement décoratif de l'admin ; il est coupé sous `prefers-reduced-motion`. Voir la bascule « Publié » d'`ArticleForm` et le menu « Publier » d'`ArticlesList`.
+`tone` : `ok` (vert : fait, complet, publié), `bad` (rouge : bloquant, erreur, défaite), `action` (orange : attend une action), `warn` (ambre : à surveiller, provisoire), `ink` (noir : fait marquant, domicile), `neutral` (gris, par défaut : information). `icon?`, `className?`. **La couleur ne vient jamais seule** : la pastille porte toujours un libellé, le point est toujours suivi d'un texte.
 
 ### Tag — `Tag.tsx`
 
@@ -228,7 +206,7 @@ Pour une liste simple sans colonnes (tableau de bord, détail), un `ul className
 </Tabs>
 ```
 
-Onglets à filet, trait plein de 2 px sous l'onglet courant. `count?` sur `TabsTrigger`.
+Onglets à filet, trait orange de 2 px sous l'onglet courant. `count?` sur `TabsTrigger`.
 
 ### Dialog, DeleteDialog — `Dialog.tsx`, `DeleteDialog.tsx`
 
@@ -250,7 +228,7 @@ Onglets à filet, trait plein de 2 px sous l'onglet courant. `count?` sur `TabsT
 </EmptyState>
 ```
 
-`title`, `children?`, `action?`, `className?`. Deux cas à distinguer : la liste est vide (dire comment la remplir) ; les filtres ne donnent rien (proposer « Effacer les filtres »).
+`title`, `children?`, `action?`, `inset?` (sans panneau, dans une `Section`), `className?`. Deux cas à distinguer : la liste est vide (dire comment la remplir) ; les filtres ne donnent rien (proposer « Effacer les filtres »).
 
 ### Squelettes — `Skeleton.tsx`
 
@@ -260,11 +238,11 @@ export default function Loading() { return <PageSkeleton /> }           // liste
 export default function Loading() { return <PageSkeleton variant="form" /> }  // formulaire
 ```
 
-`PageSkeleton`, `ListSkeleton` (`rows?`, `media?`), `FormSkeleton` (`fields?`), `PageHeaderSkeleton`, `SkeletonLine`. Des lignes en pointillé à la place du texte ; pas de roue au milieu du contenu, pas de bloc gris. `admin/loading.tsx` et `admin/error.tsx` couvrent déjà toutes les sections ; dans ce Next.js, `error.tsx` reçoit `retry`, pas `reset`.
+`PageSkeleton`, `ListSkeleton` (`rows?`, `media?`), `FormSkeleton` (`fields?`), `PageHeaderSkeleton`, `SkeletonLine`. Des barres grises claires à la place du texte, dans les mêmes panneaux que la page ; pas de roue au milieu du contenu. `admin/loading.tsx` et `admin/error.tsx` couvrent déjà toutes les sections ; dans ce Next.js, `error.tsx` reçoit `retry`, pas `reset`.
 
-### ImageUpload, RichTextEditor, SlugInput, SyncMatchesButton, Contour
+### ImageUpload, RichTextEditor, SlugInput, SyncButton
 
-Mêmes props qu'avant. `ImageUpload` accepte en plus `previewAlt` et se place dans un `Field` ; ses erreurs s'affichent sous la zone. `RichTextEditor` accepte `label` (nom accessible). `Contour` (`dashed?`) trace le contour d'un bloc en `relative` : à utiliser pour toute zone qui passe de provisoire à confirmé.
+`ImageUpload` accepte `previewAlt` et se place dans un `Field` ; ses erreurs s'affichent sous la zone. `RichTextEditor` accepte `label` (nom accessible). `SyncProvider` + `SyncButton` (`admin/equipes/SyncButton.tsx`) lancent la synchronisation FFHandball ; ils servent sur Équipes, Résultats et le tableau de bord.
 
 ## Gabarit d'une page liste
 
@@ -285,7 +263,7 @@ Modèle : `articles/page.tsx` + `articles/ArticlesList.tsx`.
 </>
 ```
 
-Pas de `Card` autour, pas de titre répété au-dessus de la liste.
+Pas de `Card` autour (le panneau vient de `DataList`), pas de titre répété au-dessus de la liste.
 
 ## Gabarit d'une page formulaire
 
@@ -306,19 +284,19 @@ Les erreurs s'affichent sous chaque champ (`Field error`), la première est auss
 ## À ne plus utiliser dans l'admin
 
 - Couleurs de palette : `secondary-*`, `primary-50…950`, `blue-*`, `green-*`, `purple-*`, `red-*`, `orange-*`, `neutral-*`, `gray-*`, `zinc-*`. Utiliser les jetons ci-dessus.
+- Une couleur d'état sans texte : point, bordure ou fond coloré seul.
 - Dégradés : `bg-gradient-*`, `from-*`, `to-*`, `bg-clip-text text-transparent`.
-- Ombres : `shadow`, `shadow-*` (elles sont de toute façon annulées dans la page).
-- Fonds gris ou teintés : `bg-muted`, `bg-muted/50`, `bg-orange-50`, `bg-white/20`, `backdrop-blur`.
-- `Card`, `CardHeader`, `CardContent` comme structure de page ou de ligne ; grilles de tuiles de chiffres ; icône dans une pastille colorée à côté d'un titre.
-- Imports directs de `@/components/ui/*` quand le kit a l'équivalent (`button`, `input`, `textarea`, `label`, `select`, `switch`, `checkbox`, `tabs`, `dialog`, `alert-dialog`, `badge`, `table`, `skeleton`). `dropdown-menu` passe par `RowActions`.
+- Pointillés répétés pour dire « provisoire » (`border-dashed`, l'ancien `adm-rule--dashed`, `Contour`) : un état se dit avec `StatusMark`.
+- Traits noirs de structure (`border-foreground`, `border-b-2`) : les panneaux et filets clairs suffisent.
+- `Card`, `CardHeader`, `CardContent` comme structure de page ou de ligne ; bandeau de totaux sans décision derrière ; icône dans une pastille colorée à côté d'un titre.
+- Imports directs de `@/components/ui/*` quand le kit a l'équivalent (`button`, `input`, `textarea`, `label`, `select`, `switch`, `checkbox`, `tabs`, `dialog`, `alert-dialog`, `badge`, `table`, `skeleton`). `dropdown-menu` passe par `RowActions` ou la barre haute.
 - `Badge` coloré pour un état : `StatusMark`.
-- Bordure latérale colorée (`border-l-4 border-l-orange-500`), boutons pilule (`rounded-full`), `rounded-xl` et plus.
-- Étiquette en capitales au-dessus d'un titre, numéros de section, texte monospace décoratif, italique dans un titre.
-- Tailles de titre fluides ou empilées (`text-xl sm:text-3xl`), `font-display`.
+- Bordure latérale colorée (`border-l-4 border-l-orange-500`), boutons pilule (`rounded-full`).
+- Texte courant sous 14 px ; tailles de titre fluides ou empilées (`text-xl sm:text-3xl`).
 - `alert()` et `confirm()` : message sous le champ, toast, ou `DeleteDialog`.
-- `date-fns/format` côté serveur pour une heure de match : `Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', … })`.
+- `date-fns/format` côté serveur pour une heure de match : `Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', … })` ou les aides de `temps.ts`.
 - Chiffres inventés ou estimés : n'afficher que ce que le schéma Prisma sait.
 
 ## Avant de rendre une section
 
-`bun type-check`, `bun lint`, puis vérifier à 390, 768, 1280 et 1440 px : pas de défilement horizontal, focus clavier visible sur chaque contrôle, menus navigables au clavier, état vide et état d'erreur présents.
+`bun run check` (lint, type-check, tests), puis vérifier à 390, 768, 1280 et 1440 px : pas de défilement horizontal, focus clavier visible sur chaque contrôle, menus navigables au clavier, état vide et état d'erreur présents.

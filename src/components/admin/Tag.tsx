@@ -11,15 +11,15 @@ interface TagProps {
 }
 
 /**
- * Étiquette neutre : mot-clé, catégorie, rôle. Filet fin, pas de couleur.
+ * Étiquette neutre : mot-clé, catégorie, rôle. Bord fin, pas de couleur d'état.
  * Pour un état (publié, brouillon, non lu), utiliser `StatusMark`.
  */
 export function Tag({ children, onRemove, removeLabel = 'Retirer', className }: TagProps) {
   return (
     <span
       className={cn(
-        'inline-flex h-7 items-center gap-1 rounded-[2px] border border-foreground pl-2 text-[0.8125rem] font-medium leading-none text-foreground',
-        onRemove ? 'pr-0' : 'pr-2',
+        'inline-flex h-7 items-center gap-1 rounded-full border border-border bg-background pl-2.5 text-[0.8125rem] font-medium leading-none text-foreground',
+        onRemove ? 'pr-0' : 'pr-2.5',
         className
       )}
     >
@@ -29,7 +29,7 @@ export function Tag({ children, onRemove, removeLabel = 'Retirer', className }: 
           type="button"
           onClick={onRemove}
           aria-label={removeLabel}
-          className="relative grid size-7 place-content-center rounded-[2px] transition-colors duration-150 ease-out before:absolute before:-inset-2 hover:bg-foreground hover:text-background"
+          className="relative grid size-7 place-content-center rounded-full transition-colors duration-150 ease-out before:absolute before:-inset-2 hover:bg-muted"
         >
           <X className="size-3.5" aria-hidden="true" />
         </button>
