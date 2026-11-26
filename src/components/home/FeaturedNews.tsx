@@ -1,11 +1,6 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { TitreAffiche } from './affiche'
-import { Calendar, ArrowRight } from 'lucide-react'
-import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations'
+import { ANTON, LIEN } from './affiche'
 import { normalizeImagePath } from '@/lib/utils'
 
 interface Article {
@@ -22,107 +17,87 @@ interface FeaturedNewsProps {
   articles: Article[]
 }
 
+const formatDate = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long', year: 'numeric' })
+
+function Surtitre({ article }: { article: Article }) {
+  return (
+    <span className="block text-[13px] text-stone-400">
+      {article.categorie} · <time dateTime={article.date.toISOString()}>{formatDate.format(article.date)}</time>
+    </span>
+  )
+}
+
+const FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-4 focus-visible:ring-offset-[#141210]'
+
+/** Un article à la une en grand, les suivants en liste à côté */
 export function FeaturedNews({ articles }: FeaturedNewsProps) {
   if (!articles || articles.length === 0) {
     return null
   }
+  const [une, ...suivants] = articles
 
   return (
-    <section className="py-16 bg-zinc-900 bg-opacity-90 overflow-hidden relative">
-      {/* Éléments graphiques décoratifs */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-pattern" />
-      <div className="absolute top-20 right-20 w-40 h-40 bg-primary-500 rounded-full filter blur-3xl opacity-10" />
-      <div className="absolute bottom-20 left-20 w-60 h-60 bg-zinc-500 rounded-full filter blur-3xl opacity-10" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={fadeInUp}
-          className="mb-12"
-        >
-          <TitreAffiche mot="Actualités" script="du club" align="left" />
-          <p className="text-neutral-400 max-w-2xl mt-6">
-            Découvrez les dernières actualités et événements du HBC Aix-en-Savoie
-          </p>
-        </motion.div>
-
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {articles.map((article) => (
-            <motion.div key={article.id} variants={staggerItem} className="h-full">
-              <Link href={`/actus/${article.slug}`} className="group block h-full">
-                <article className="bg-zinc-800/60 rounded-lg overflow-hidden shadow-xl border border-zinc-700 h-full hover:border-primary-500 transition-colors duration-300 flex flex-col">
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden flex-shrink-0">
-                    <Image
-                      src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
-                      alt={article.titre}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110 filter brightness-90"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-bold uppercase rounded">
-                        {article.categorie}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 text-neutral-400 text-sm mb-3">
-                      <Calendar className="w-4 h-4" />
-                      <time dateTime={article.date.toISOString()}>
-                        {new Date(article.date).toLocaleDateString('fr-FR', {
-                          timeZone: 'Europe/Paris',
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </time>
-                    </div>
-
-                    <h3 className="font-display font-bold text-xl mb-3 text-white group-hover:text-primary-500 transition-colors line-clamp-2">
-                      {article.titre}
-                    </h3>
-
-                    <p className="text-neutral-300 text-sm line-clamp-3 mb-4 whitespace-pre-line flex-1">
-                      {article.resume}
-                    </p>
-
-                    <div className="flex items-center text-primary-500 font-semibold text-sm group-hover:gap-2 transition-all mt-auto">
-                      Lire la suite
-                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-12"
-        >
-          <Link
-            href="/actus"
-            className="inline-flex items-center px-8 py-4 bg-primary-500 hover:bg-black text-white font-bold transition-colors shadow-lg hover:shadow-xl"
-          >
+    <section aria-labelledby="titre-actus" className="bg-[#141210] py-20 text-white md:py-24">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
+          <h2 id="titre-actus" className={`${ANTON} text-5xl md:text-[72px]`}>
+            Actualités
+          </h2>
+          <Link href="/actus" className={LIEN}>
             Toutes les actualités
-            <ArrowRight className="w-5 h-5 ml-2" />
           </Link>
-        </motion.div>
+        </div>
+
+        <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+          <Link href={`/actus/${une.slug}`} className={`group block rounded ${FOCUS}`}>
+            <span className="relative block aspect-video overflow-hidden rounded">
+              <Image
+                src={normalizeImagePath(une.image, '/img/articles/default.jpg')}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 60vw, 100vw"
+                className="object-cover"
+              />
+            </span>
+            <span className="mt-5 block">
+              <Surtitre article={une} />
+            </span>
+            <span className="mt-2 block max-w-2xl font-display text-2xl font-bold leading-tight transition-colors group-hover:text-primary-400 md:text-3xl">
+              {une.titre}
+            </span>
+            {une.resume && (
+              <span className="mt-3 line-clamp-3 block max-w-2xl whitespace-pre-line leading-relaxed text-stone-300">
+                {une.resume}
+              </span>
+            )}
+          </Link>
+
+          {suivants.length > 0 && (
+            <ul>
+              {suivants.slice(0, 3).map((article) => (
+                <li key={article.id} className="border-b border-white/10 py-6 first:pt-0 last:border-b-0">
+                  <Link href={`/actus/${article.slug}`} className={`group grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 rounded sm:grid-cols-[8.75rem_minmax(0,1fr)] ${FOCUS}`}>
+                    <span className="relative block aspect-square overflow-hidden rounded">
+                      <Image
+                        src={normalizeImagePath(article.image, '/img/articles/default.jpg')}
+                        alt=""
+                        fill
+                        sizes="140px"
+                        className="object-cover"
+                      />
+                    </span>
+                    <span>
+                      <Surtitre article={article} />
+                      <span className="mt-1.5 line-clamp-3 block font-display text-lg font-bold leading-snug transition-colors group-hover:text-primary-400">
+                        {article.titre}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </section>
   )

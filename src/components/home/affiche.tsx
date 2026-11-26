@@ -7,6 +7,18 @@
 export const ANTON = 'font-[family-name:var(--font-anton)] font-normal uppercase leading-[0.92] tracking-[0.005em]'
 export const SCRIPT = 'font-[family-name:var(--font-script)] font-normal normal-case leading-none text-[#ff7a1a]'
 
+/** Fond sombre et papier légèrement teintés, plutôt que du noir et du blanc purs */
+export const ENCRE = 'bg-[#141210]'
+export const PAPIER = 'bg-[#f1efea]'
+
+/** Lien texte souligné d'orange : les actions secondaires, à côté d'un seul bouton plein par zone */
+export const LIEN =
+  'inline-flex min-h-11 items-center border-b-2 border-primary-500 font-semibold transition-colors hover:text-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2'
+
+/** Bouton plein, un seul par zone */
+export const BOUTON =
+  'inline-flex min-h-[52px] items-center rounded bg-primary-500 px-6 font-bold text-white transition-colors hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900'
+
 /** Vert et rouge des visuels de résultats */
 export const COULEUR_ISSUE = {
   victoire: '#1fa335',
@@ -34,7 +46,7 @@ export function TitreAffiche({
   script,
   scriptAvant = false,
   ton = 'clair',
-  align = 'center',
+  align = 'left',
   className = '',
 }: TitreAfficheProps) {
   const capitales = (

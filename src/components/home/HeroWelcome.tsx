@@ -1,332 +1,68 @@
-'use client'
-
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Users, Trophy, Calendar, Heart, ArrowRight, Sparkles, Newspaper } from 'lucide-react'
-import { ANTON, SCRIPT } from './affiche'
-import { normalizeImagePath } from '@/lib/utils'
+import { ANTON, BOUTON, LIEN, SCRIPT } from './affiche'
 
 interface HeroWelcomeProps {
   backgroundImage?: string | null
+  /** Feuille de match de droite (prochain match, dernier résultat, domicile) */
   children?: React.ReactNode
-  partenaires?: Array<{
-    id: number
-    nom: string
-    logo: string
-    site: string | null
-  }>
-  articles?: Array<{
-    id: number
-    titre: string
-    categorie: string
-    date: Date
-    image: string
-    slug: string
-  }>
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
+const CHIFFRES = [
+  { valeur: '320+', libelle: 'licenciés' },
+  { valeur: '19', libelle: 'équipes' },
+  { valeur: '50+', libelle: 'bénévoles' },
+]
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: 'easeOut' as const,
-    },
-  },
-}
-
-const statsVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: 'easeOut' as const,
-    },
-  },
-}
-
-export function HeroWelcome({ backgroundImage, children, partenaires = [], articles = [] }: HeroWelcomeProps) {
-  const [activeTab, setActiveTab] = useState<'matchs' | 'articles'>('matchs')
-
-  const stats = [
-    { label: 'Licenciés', value: '320+', icon: Users },
-    { label: 'Équipes', value: '19', icon: Trophy },
-    { label: 'Années d\'histoire', value: '60+', icon: Calendar },
-    { label: 'Bénévoles', value: '50+', icon: Heart },
-  ]
-
+/**
+ * Hero de l'accueil : la photo du gymnase, le titre façon affiche à gauche,
+ * la feuille de match à droite. Un seul bouton plein, le reste en liens.
+ */
+export function HeroWelcome({ backgroundImage, children }: HeroWelcomeProps) {
   return (
-    <section className="relative w-full min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center overflow-hidden pt-16">
-      {/* Background Image */}
+    <section className="relative flex min-h-[calc(100svh-4rem)] w-full items-end overflow-hidden bg-[#141210] pt-16 text-white">
       {backgroundImage && (
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={backgroundImage}
-            alt="HBC Aix-en-Savoie"
-            fill
-            className="object-cover opacity-40"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40" />
-        </div>
+        <Image src={backgroundImage} alt="" fill priority sizes="100vw" className="object-cover" />
       )}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(20,18,16,0.9)_0%,rgba(20,18,16,0.6)_55%,rgba(20,18,16,0.4)_100%)]"
+      />
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#141210]" />
 
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary-500/10 rounded-full filter blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/10 rounded-full filter blur-3xl" />
-      </div>
-
-      {/* Content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left Column - Main Content */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
-          >
-          {/* Badge */}
-          <motion.div variants={itemVariants} className="mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold">
-              <Sparkles className="w-4 h-4" />
-              Depuis 1964
-            </span>
-          </motion.div>
-
-          {/* Main Headline */}
-          <motion.h1
-            variants={itemVariants}
-            className="mb-6"
-          >
-            {/* Titre façon affiche : mot manuscrit orange sur les capitales Anton */}
-            <span className={`${SCRIPT} block text-5xl md:text-6xl lg:text-[76px] -mb-2 md:-mb-4 ml-1`}>Bienvenue au</span>
-            <span className={`${ANTON} block text-[52px] sm:text-6xl md:text-7xl lg:text-[88px] text-white`}>
+      <div className="container relative mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] items-end gap-12 px-4 py-16 sm:px-6 md:py-20 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16 lg:px-8">
+        <div>
+          <p className="text-sm font-semibold tracking-[0.04em] text-stone-200">
+            Club de handball d&apos;Aix-les-Bains, depuis 1964
+          </p>
+          <h1 className="mt-4">
+            <span className={`${SCRIPT} -mb-2 ml-1 block text-5xl md:-mb-4 md:text-6xl lg:text-[76px]`}>Bienvenue au</span>
+            <span className={`${ANTON} block text-[52px] sm:text-6xl md:text-7xl lg:text-[96px]`}>
               HBC <span className="whitespace-nowrap">Aix-en-Savoie</span>
             </span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p
-            variants={itemVariants}
-            className="text-lg md:text-xl text-neutral-300 mb-8 leading-relaxed"
-          >
-            Une solide institution sportive aixoise, passionnée par le handball
-            et dédiée à la formation de jeunes talents
-          </motion.p>
-
-          {/* Stats Grid - Plus compact */}
-          <motion.div
-            variants={containerVariants}
-            className="grid grid-cols-4 gap-3 w-full mb-8"
-          >
-            {stats.map((stat, index) => {
-              const Icon = stat.icon
-              return (
-                <motion.div
-                  key={index}
-                  variants={statsVariants}
-                  className="text-center"
-                >
-                  <Icon className="w-6 h-6 text-primary-500 mb-1 mx-auto" />
-                  <div className="text-xl font-bold text-white">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs text-neutral-300 font-medium leading-tight">
-                    {stat.label}
-                  </div>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-
-          {/* CTA Button */}
-          <motion.div
-            variants={itemVariants}
-            className="mb-8"
-          >
-            <Link
-              href="/equipes"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-all shadow-lg hover:shadow-xl hover:shadow-primary-500/50 transform hover:-translate-y-1 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
-            >
-              Découvrir nos équipes
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </h1>
+          <p className="mt-6 max-w-[32rem] text-lg leading-relaxed text-stone-200">
+            Du baby hand à la Nationale 3 : une école de hand qui forme les joueurs du club, et des matchs tous
+            les week-ends au gymnase.
+          </p>
+          <p className="mt-7 flex flex-wrap items-baseline gap-x-7 gap-y-2 text-sm text-stone-300">
+            {CHIFFRES.map((chiffre) => (
+              <span key={chiffre.libelle}>
+                <b className={`${ANTON} mr-1 text-3xl text-white`}>{chiffre.valeur}</b> {chiffre.libelle}
+              </span>
+            ))}
+          </p>
+          <p className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <Link href="/contact?sujet=inscription" className={BOUTON}>
+              S&apos;inscrire au club
             </Link>
-          </motion.div>
-
-          {/* Partenaires Grid */}
-          {partenaires.length > 0 && (
-            <motion.div
-              variants={itemVariants}
-              className="w-full"
-            >
-              <h3 className="text-sm font-semibold text-neutral-300 mb-4 text-center lg:text-left">
-                Nos partenaires principaux
-              </h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                {partenaires.slice(0, 6).map((partenaire) => {
-                  const logo = (
-                    <Image
-                      src={partenaire.logo}
-                      alt={partenaire.nom}
-                      fill
-                      className="object-contain p-1 filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                      unoptimized
-                    />
-                  )
-                  const classes =
-                    'aspect-video bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-2 transition-all duration-300 group relative overflow-hidden'
-                  // Sans site, le logo n'est pas un lien
-                  return partenaire.site ? (
-                    <a
-                      key={partenaire.id}
-                      href={partenaire.site}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${classes} hover:bg-white/10 hover:border-primary-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
-                    >
-                      {logo}
-                    </a>
-                  ) : (
-                    <div key={partenaire.id} className={classes}>
-                      {logo}
-                    </div>
-                  )
-                })}
-              </div>
-            </motion.div>
-          )}
-
-          </motion.div>
-
-          {/* Right Column - Tabs Widget */}
-          <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
-            {/* Tabs Header */}
-            <div className="flex gap-2 mb-6" role="group" aria-label="Matchs ou actualités">
-              <button
-                type="button"
-                aria-pressed={activeTab === 'matchs'}
-                onClick={() => setActiveTab('matchs')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                  activeTab === 'matchs'
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Trophy aria-hidden="true" className="w-4 h-4" />
-                <span className="text-sm">Matchs</span>
-              </button>
-              <button
-                type="button"
-                aria-pressed={activeTab === 'articles'}
-                onClick={() => setActiveTab('articles')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                  activeTab === 'articles'
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Newspaper aria-hidden="true" className="w-4 h-4" />
-                <span className="text-sm">Actualités</span>
-              </button>
-            </div>
-
-            {/* Tab Content */}
-            <div className="min-h-[400px]">
-              {activeTab === 'matchs' && (
-                <div>
-                  {children}
-                </div>
-              )}
-
-              {activeTab === 'articles' && articles.length === 0 && (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                  <p className="font-semibold text-white">Aucune actualité pour le moment</p>
-                  <Link
-                    href="/actus"
-                    className="mt-3 inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-primary-400 transition-colors hover:text-primary-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                  >
-                    Toutes les actualités
-                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                  </Link>
-                </div>
-              )}
-
-              {activeTab === 'articles' && articles.length > 0 && (
-                <div className="space-y-3">
-                  {articles.slice(0, 4).map((article) => (
-                    <Link
-                      key={article.id}
-                      href={`/actus/${article.slug}`}
-                      className="block group"
-                    >
-                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300">
-                        <div className="flex gap-3 p-3">
-                          <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                            <Image
-                              src={normalizeImagePath(article.image)}
-                              alt={article.titre}
-                              fill
-                              sizes="80px"
-                              className="object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs text-primary-400 font-semibold mb-1">
-                              {article.categorie}
-                            </div>
-                            <h4 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-primary-400 transition-colors">
-                              {article.titre}
-                            </h4>
-                            <div className="text-xs text-neutral-400">
-                              {new Date(article.date).toLocaleDateString('fr-FR', {
-                                timeZone: 'Europe/Paris',
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+            <Link href="/equipes" className={LIEN}>
+              Voir nos équipes
+            </Link>
+          </p>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6, repeat: Infinity, repeatType: 'reverse' as const }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <div className="w-6 h-10 border-2 border-neutral-500 rounded-full flex items-start justify-center p-2">
-            <div className="w-1.5 h-2 bg-neutral-400 rounded-full" />
-          </div>
-        </motion.div>
+        <div className="w-full max-w-lg lg:justify-self-end">{children}</div>
       </div>
     </section>
   )

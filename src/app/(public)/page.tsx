@@ -84,11 +84,11 @@ export default async function HomePage() {
   } as const
 
   const [featuredArticles, equipes, matchsExterieur, heroBackgroundImage, lieuDomicile] = await Promise.all([
-    // Les 6 derniers articles pour « À la Une » et l'onglet Actualités du hero
+    // Un article à la une et les trois suivants
     prisma.article.findMany({
       where: { published: true },
       orderBy: { date: 'desc' },
-      take: 6,
+      take: 4,
       select: { id: true, titre: true, categorie: true, date: true, image: true, resume: true, slug: true },
     }),
     // Toutes les équipes publiées, dans l'ordre du club (SM1, SF1, SM2, autres seniors, -18, -15…)
@@ -194,7 +194,7 @@ export default async function HomePage() {
 
   // Hero : matchs à domicile du week-end, hors prochain match déjà affiché
   const domicileHero = matchsDomicile.filter((m) => m.id !== prochainMatch?.id)
-  const domicileAffiches = domicileHero.slice(0, 2).map((m) => ({
+  const domicileAffiches = domicileHero.slice(0, 4).map((m) => ({
     id: m.id,
     heure: heureAffiche(m.date),
     equipe: codeEquipe(equipeParId.get(m.equipeId)?.nom ?? ''),
@@ -247,7 +247,7 @@ export default async function HomePage() {
     >
       <OrganizationSchema />
 
-      <HeroWelcome backgroundImage={heroBackgroundImage} partenaires={featuredPartenaires} articles={featuredArticles}>
+      <HeroWelcome backgroundImage={heroBackgroundImage}>
         <EncartsMatchs
           prochain={prochain}
           dernier={dernier}
