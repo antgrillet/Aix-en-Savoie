@@ -1,236 +1,299 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRef } from 'react'
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { NextMatchCountdown } from '@/components/home/NextMatchCountdown'
-
-export interface HeroNextMatch {
-  categorie: string
-  equipeSlug: string
-  adversaire: string
-  domicile: boolean
-  isoDate: string
-  dayLabel: string
-  timeLabel: string
-}
+import { motion } from 'framer-motion'
+import { Users, Trophy, Calendar, Heart, ArrowRight, Sparkles, Newspaper } from 'lucide-react'
 
 interface HeroWelcomeProps {
   backgroundImage?: string | null
-  tickerItems: string[]
-  nextMatch?: HeroNextMatch | null
+  children?: React.ReactNode
+  partenaires?: Array<{
+    id: number
+    nom: string
+    logo: string
+    site: string | null
+  }>
+  articles?: Array<{
+    id: number
+    titre: string
+    categorie: string
+    date: Date
+    image: string
+    slug: string
+  }>
 }
 
-const smoothEase = [0.22, 1, 0.36, 1] as const
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
+    },
+  },
+}
 
-export function HeroWelcome({
-  backgroundImage,
-  tickerItems,
-  nextMatch,
-}: HeroWelcomeProps) {
-  const reduceMotion = useReducedMotion()
-  const sectionRef = useRef<HTMLElement>(null)
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: 'easeOut' as const,
+    },
+  },
+}
 
-  // Parallaxe douce de la photo pendant le scroll du hero
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end start'],
-  })
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '16%'])
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.18])
+const statsVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut' as const,
+    },
+  },
+}
 
-  const lineReveal = (delay: number) => ({
-    initial: reduceMotion ? undefined : ({ opacity: 0, y: 24, filter: 'blur(12px)' } as const),
-    animate: reduceMotion ? undefined : ({ opacity: 1, y: 0, filter: 'blur(0px)' } as const),
-    transition: reduceMotion ? undefined : { delay, duration: 0.8, ease: smoothEase },
-  })
+export function HeroWelcome({ backgroundImage, children, partenaires = [], articles = [] }: HeroWelcomeProps) {
+  const [activeTab, setActiveTab] = useState<'matchs' | 'articles'>('matchs')
+
+  const stats = [
+    { label: 'Licenciés', value: '320+', icon: Users },
+    { label: 'Équipes', value: '19', icon: Trophy },
+    { label: 'Années d\'histoire', value: '60+', icon: Calendar },
+    { label: 'Bénévoles', value: '50+', icon: Heart },
+  ]
 
   return (
-    <section ref={sectionRef} className="relative flex min-h-[92svh] flex-col overflow-hidden bg-zinc-950">
-      {/* Fond : photo du club en duotone sombre + parallaxe */}
-      <div className="absolute inset-0" aria-hidden>
-        <motion.div
-          style={reduceMotion ? undefined : { y: bgY, scale: bgScale }}
-          className="absolute inset-0"
-        >
+    <section className="relative w-full min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center overflow-hidden pt-16">
+      {/* Background Image */}
+      {backgroundImage && (
+        <div className="absolute inset-0 z-0">
           <Image
-            src={backgroundImage || '/img/home/photo_equipe_fem.jpg'}
-            alt=""
+            src={backgroundImage}
+            alt="HBC Aix-en-Savoie"
             fill
+            className="object-cover opacity-40"
             priority
-            className="object-cover opacity-25"
-            sizes="100vw"
           />
-        </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-zinc-950/55 to-zinc-950" />
-        <div className="absolute -left-48 top-1/4 h-[36rem] w-[36rem] rounded-full bg-primary-500/15 blur-[140px]" />
-        <div className="absolute -right-40 bottom-0 h-[28rem] w-[28rem] rounded-full bg-secondary-500/10 blur-[120px]" />
-      </div>
-
-      {/* Hairlines décoratives */}
-      <div
-        className="pointer-events-none absolute inset-0 mx-auto hidden max-w-7xl grid-cols-4 px-4 sm:px-6 lg:grid lg:px-8"
-        aria-hidden
-      >
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="border-l border-white/[0.04]" />
-        ))}
-      </div>
-
-      {/* Contenu */}
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pb-14 pt-32 sm:px-6 lg:px-8 lg:pt-36">
-        <div
-          className={
-            nextMatch
-              ? 'grid w-full items-center gap-12 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16'
-              : 'w-full max-w-4xl'
-          }
-        >
-          <div>
-            <motion.p
-              {...lineReveal(0.1)}
-              className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-500/10 px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em] text-primary-400"
-            >
-              Club de handball · Depuis 1964
-            </motion.p>
-
-            <h1 className="font-display text-[clamp(3rem,8vw,6.75rem)] font-black uppercase leading-[0.92] tracking-tight text-balance text-white">
-              <motion.span {...lineReveal(0.2)} className="block">
-                Le handball
-              </motion.span>
-              <motion.span
-                {...lineReveal(0.34)}
-                className="block"
-                style={{
-                  color: 'transparent',
-                  WebkitTextStrokeWidth: '0.02em',
-                  WebkitTextStrokeColor: '#f97316',
-                }}
-              >
-                se vit
-              </motion.span>
-              <motion.span {...lineReveal(0.48)} className="block text-primary-500">
-                ici.
-              </motion.span>
-            </h1>
-
-            <motion.p
-              {...lineReveal(0.62)}
-              className="mt-8 max-w-xl text-lg leading-relaxed text-neutral-300 md:text-xl"
-            >
-              Une solide institution sportive aixoise, passionnée par le handball
-              et dédiée à la formation de jeunes talents.
-            </motion.p>
-
-            <motion.div
-              {...lineReveal(0.76)}
-              className="mt-10 flex flex-col gap-3 sm:flex-row"
-            >
-              <Link
-                href="/contact?sujet=inscription"
-                className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 font-bold text-white transition-[background-color,transform] duration-200 hover:bg-primary-600 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-              >
-                Inscrire un joueur
-                <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/equipes"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-white/20 px-8 py-4 font-bold text-white transition-[background-color,border-color,transform] duration-200 hover:border-white/40 hover:bg-white/5 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-              >
-                Découvrir nos équipes
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Carte « Prochain match » en glassmorphism */}
-          {nextMatch && (
-            <motion.aside
-              {...lineReveal(0.55)}
-              aria-label={`Prochain match : ${nextMatch.categorie} contre ${nextMatch.adversaire}, ${nextMatch.dayLabel} à ${nextMatch.timeLabel}`}
-              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl md:p-7"
-            >
-              {/* Liseré orange */}
-              <span
-                aria-hidden
-                className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary-500/80 to-transparent"
-              />
-
-              <div className="flex items-center justify-between gap-3">
-                <p className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.25em] text-primary-400">
-                  <span className="relative flex h-2 w-2">
-                    {!reduceMotion && (
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-500 opacity-60" />
-                    )}
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500" />
-                  </span>
-                  Prochain match
-                </p>
-                <span className="rounded-full border border-white/15 bg-black/20 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-300">
-                  {nextMatch.domicile ? 'Domicile' : 'Extérieur'}
-                </span>
-              </div>
-
-              <div className="mt-5">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="font-display text-2xl font-black uppercase tracking-tight text-white">
-                    HBC Aix
-                  </span>
-                  <span className="font-mono text-xs uppercase tracking-widest text-neutral-500">
-                    vs
-                  </span>
-                  <span className="text-lg font-bold leading-tight text-neutral-200">
-                    {nextMatch.adversaire}
-                  </span>
-                </div>
-                <p className="mt-2 font-mono text-xs uppercase tracking-[0.2em] tabular-nums text-neutral-400">
-                  {nextMatch.categorie} · {nextMatch.dayLabel} · {nextMatch.timeLabel}
-                </p>
-              </div>
-
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <NextMatchCountdown isoDate={nextMatch.isoDate} />
-              </div>
-
-              <Link
-                href={`/equipes/${nextMatch.equipeSlug}`}
-                className="group mt-5 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-neutral-300 transition-colors duration-200 hover:text-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-              >
-                Calendrier de l&apos;équipe
-                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
-            </motion.aside>
-          )}
-        </div>
-      </div>
-
-      {/* Ticker broadcast : prochains matchs + derniers résultats */}
-      {tickerItems.length > 0 && (
-        <div className="group relative z-10 overflow-hidden border-t border-white/10 bg-black/40 py-4 backdrop-blur-sm">
-          <div className="animate-marquee-45 flex w-max whitespace-nowrap group-hover:[animation-play-state:paused]">
-            {[...tickerItems, ...tickerItems].map((item, i) => (
-              <span
-                key={i}
-                aria-hidden={i >= tickerItems.length}
-                className="flex items-center gap-4 pr-12 pl-4 font-mono text-xs uppercase tracking-[0.15em] text-neutral-400"
-              >
-                <span className="text-primary-500" aria-hidden>
-                  ◆
-                </span>
-                {item}
-              </span>
-            ))}
-          </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-zinc-950 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-zinc-950 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40" />
         </div>
       )}
+
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary-500/10 rounded-full filter blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/10 rounded-full filter blur-3xl" />
+      </div>
+
+      {/* Content */}
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* Left Column - Main Content */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col items-center lg:items-start text-center lg:text-left"
+          >
+          {/* Badge */}
+          <motion.div variants={itemVariants} className="mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 rounded-full text-primary-400 text-sm font-semibold">
+              <Sparkles className="w-4 h-4" />
+              Depuis 1964
+            </span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1
+            variants={itemVariants}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+          >
+            Bienvenue au{' '}
+            <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-secondary-500 text-transparent bg-clip-text">
+              HBC Aix-en-Savoie
+            </span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            variants={itemVariants}
+            className="text-lg md:text-xl text-neutral-300 mb-8 leading-relaxed"
+          >
+            Une solide institution sportive aixoise, passionnée par le handball
+            et dédiée à la formation de jeunes talents
+          </motion.p>
+
+          {/* Stats Grid - Plus compact */}
+          <motion.div
+            variants={containerVariants}
+            className="grid grid-cols-4 gap-3 w-full mb-8"
+          >
+            {stats.map((stat, index) => {
+              const Icon = stat.icon
+              return (
+                <motion.div
+                  key={index}
+                  variants={statsVariants}
+                  className="text-center"
+                >
+                  <Icon className="w-6 h-6 text-primary-500 mb-1 mx-auto" />
+                  <div className="text-xl font-bold text-white">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-neutral-300 font-medium leading-tight">
+                    {stat.label}
+                  </div>
+                </motion.div>
+              )
+            })}
+          </motion.div>
+
+          {/* CTA Button */}
+          <motion.div
+            variants={itemVariants}
+            className="mb-8"
+          >
+            <Link
+              href="/equipes"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-bold rounded-lg hover:bg-primary-600 transition-all shadow-lg hover:shadow-xl hover:shadow-primary-500/50 transform hover:-translate-y-1 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-500"
+            >
+              Découvrir nos équipes
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
+
+          {/* Partenaires Grid */}
+          {partenaires.length > 0 && (
+            <motion.div
+              variants={itemVariants}
+              className="w-full"
+            >
+              <h3 className="text-sm font-semibold text-neutral-300 mb-4 text-center lg:text-left">
+                Nos partenaires principaux
+              </h3>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                {partenaires.slice(0, 6).map((partenaire) => (
+                  <Link
+                    key={partenaire.id}
+                    href={partenaire.site || '#'}
+                    target={partenaire.site ? '_blank' : undefined}
+                    className="aspect-video bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-2 hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300 group relative overflow-hidden"
+                  >
+                    <Image
+                      src={partenaire.logo}
+                      alt={partenaire.nom}
+                      fill
+                      className="object-contain p-1 filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                      unoptimized
+                    />
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          </motion.div>
+
+          {/* Right Column - Tabs Widget */}
+          <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mx-0">
+            {/* Tabs Header */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setActiveTab('matchs')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+                  activeTab === 'matchs'
+                    ? 'bg-primary-500 text-white shadow-lg'
+                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="text-sm">Matchs</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('articles')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+                  activeTab === 'articles'
+                    ? 'bg-primary-500 text-white shadow-lg'
+                    : 'bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Newspaper className="w-4 h-4" />
+                <span className="text-sm">Actualités</span>
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="min-h-[400px]">
+              {activeTab === 'matchs' && (
+                <div>
+                  {children}
+                </div>
+              )}
+
+              {activeTab === 'articles' && articles.length > 0 && (
+                <div className="space-y-3">
+                  {articles.slice(0, 4).map((article) => (
+                    <Link
+                      key={article.id}
+                      href={`/actus/${article.slug}`}
+                      className="block group"
+                    >
+                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 hover:border-primary-500/50 transition-all duration-300">
+                        <div className="flex gap-3 p-3">
+                          <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                            <Image
+                              src={article.image}
+                              alt={article.titre}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-primary-400 font-semibold mb-1">
+                              {article.categorie}
+                            </div>
+                            <h4 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-primary-400 transition-colors">
+                              {article.titre}
+                            </h4>
+                            <div className="text-xs text-neutral-400">
+                              {new Date(article.date).toLocaleDateString('fr-FR', {
+                                timeZone: 'Europe/Paris',
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.6, repeat: Infinity, repeatType: 'reverse' as const }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <div className="w-6 h-10 border-2 border-neutral-500 rounded-full flex items-start justify-center p-2">
+            <div className="w-1.5 h-2 bg-neutral-400 rounded-full" />
+          </div>
+        </motion.div>
+      </div>
     </section>
   )
 }

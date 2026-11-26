@@ -5,7 +5,7 @@ import { MapPin, Mail, Clock, Navigation, ArrowRight } from 'lucide-react'
 import { ContactForm } from '@/components/forms/ContactForm'
 import { PageBackground } from '@/components/layout/PageBackground'
 import { getPageBackgroundImage } from '@/lib/settings'
-import { prisma } from '@/lib/prisma'
+import { ADRESSE_CLUB, getLieuDomicile, lienItineraire } from '@/lib/lieu-domicile'
 import { BreadcrumbSchema } from '@/components/seo/StructuredData'
 import { buildMetadata } from '@/lib/seo'
 
@@ -17,35 +17,6 @@ export const metadata = buildMetadata({
 
 /** Photo d'équipe déjà livrée avec le site, utilisée si aucune image n'est réglée pour la page. */
 const PHOTO_PAR_DEFAUT = '/img/home/photo_equipe_fem.jpg'
-
-const ADRESSE_CLUB = '7 rue des Prés Riants, 73100 Aix-les-Bains'
-
-/**
- * Lieu où le club reçoit le plus souvent, d'après les matchs à domicile
- * synchronisés depuis FFHANDBALL. Sans donnée exploitable, on retombe sur
- * l'adresse du club.
- */
-async function getLieuDomicile(): Promise<string | null> {
-  try {
-    const lieux = await prisma.match.groupBy({
-      by: ['lieu'],
-      where: { domicile: true, lieu: { not: '' } },
-      _count: { lieu: true },
-      orderBy: { _count: { lieu: 'desc' } },
-      take: 5,
-    })
-    // Les matchs pas encore programmés portent un lieu provisoire (« À déterminer »)
-    const reel = lieux.find((l) => !/d[ée]termin|inconnu|^tbd$/i.test(l.lieu.trim()))
-    return reel?.lieu.trim() || null
-  } catch (error) {
-    console.error('Lieu des matchs à domicile indisponible :', error)
-    return null
-  }
-}
-
-function lienItineraire(destination: string) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
-}
 
 function InfoCard({
   icon: Icon,

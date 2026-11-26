@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Archivo, JetBrains_Mono } from 'next/font/google'
+import { Inter, Archivo, JetBrains_Mono, Montserrat } from 'next/font/google'
 import '../styles.css'
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
@@ -13,6 +13,14 @@ const inter = Inter({
 const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-display',
+  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+})
+
+// Police des titres de la page d'accueil d'origine (voir src/app/(public)/page.tsx)
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-montserrat',
   weight: ['400', '500', '600', '700', '800', '900'],
   display: 'swap',
 })
@@ -80,7 +88,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} ${montserrat.variable}`}
     >
       <body className="min-h-screen antialiased">
         {children}
